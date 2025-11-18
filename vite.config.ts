@@ -9,8 +9,7 @@ export default defineConfig({
     sourcemap: 'hidden',
   },
   test: {
-    environment: 'jsdom',
-    setupFiles: ['src/test/setup.ts']
+    environment: 'jsdom'
   },
   plugins: [
     react({

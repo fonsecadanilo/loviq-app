@@ -31,7 +31,6 @@ describe('OrdersProducts page', () => {
   it('switches to products tab and shows table with actions', () => {
     render(<MemoryRouter><OrdersProducts /></MemoryRouter>);
     const root = within(screen.getAllByRole('main')[0]);
-    fireEvent.click(root.getByRole('button', { name: /Clear/i }));
     const tablist = root.getAllByRole('tablist', { name: /Orders and Products/i })[0];
     const productsTab = within(tablist).getByRole('tab', { name: /Products/i });
     fireEvent.click(productsTab);
@@ -42,3 +41,4 @@ describe('OrdersProducts page', () => {
     expect(root.getAllByText(/Delete/i)[0]).toBeInTheDocument();
   });
 });
+import '@testing-library/jest-dom/vitest';

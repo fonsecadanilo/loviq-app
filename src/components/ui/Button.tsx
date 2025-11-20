@@ -2,7 +2,7 @@ import React from 'react';
 
 interface ButtonProps {
   children: React.ReactNode;
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'glow';
   size?: 'sm' | 'md' | 'lg';
   onClick?: () => void;
   type?: 'button' | 'submit' | 'reset';
@@ -25,7 +25,8 @@ export const Button: React.FC<ButtonProps> = ({
     primary: 'bg-[#7D2AE8] text-white hover:bg-[#8D3AEC] focus-visible:ring-[#7D2AE8]',
     secondary: 'bg-[#F1F5F9] text-gray-900 hover:bg-[#E2E8F0] focus-visible:ring-gray-500',
     outline: 'border border-[#E2E8F0] bg-white text-gray-900 hover:bg-[#F8FAFC] focus-visible:ring-gray-500',
-    ghost: 'text-gray-900 hover:bg-[#F8FAFC] focus-visible:ring-gray-500'
+    ghost: 'text-gray-900 hover:bg-[#F8FAFC] focus-visible:ring-gray-500',
+    glow: 'bg-gradient-to-br from-[#7D2AE8] to-[#8D3AEC] text-white shadow-[0_0_0_0_rgba(125,42,232,0.0)] hover:shadow-[0_0_18px_0_rgba(125,42,232,0.35)] focus-visible:ring-[#7D2AE8]'
   };
   
   const sizeClasses = {

@@ -13,6 +13,7 @@ import {
   X,
   Activity,
   HelpCircle,
+  Blocks,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -31,9 +32,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Campaigns', href: '/campaigns', icon: Megaphone },
-    { name: 'Orders & Products', href: '/orders-products', icon: Package },
-    { name: 'Live Shop', href: '/live-shop', icon: Radio },
     { name: 'Chat', href: '/chat', icon: MessageSquare },
+    { name: 'Orders & Products', href: '/orders-products', icon: Package },
+    { name: 'Integrations', href: '/integrations', icon: Blocks },
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -59,7 +60,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       document.removeEventListener('keydown', handleEscape);
       window.removeEventListener('resize', handleResize);
     };
-  }, []);
+  }, [profileOpen]);
 
   const calculatePopupPosition = () => {
     const trigger = profileRef.current;
@@ -206,9 +207,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             aria-modal="true"
             aria-label="Profile details"
             ref={popupRef}
-            className={`fixed z-50 w-80 max-w-sm bg-white border border-[#E2E8F0] rounded-2xl shadow-lg popup-anchored transition-[opacity,transform] duration-300 ease-out ${
-              profileOpen ? 'opacity-100 translate-y-0' : 'opacity-0 pointer-events-none translate-y-1'
-            }`}
+            className={`fixed z-50 w-80 max-w-sm bg-white border border-[#E2E8F0] rounded-2xl shadow-lg popup-anchored transition-[opacity,transform] duration-300 ease-out ${profileOpen ? 'opacity-100 translate-y-0' : 'opacity-0 pointer-events-none translate-y-1'
+              }`}
             style={{ top: anchorPos.top, left: anchorPos.left }}
           >
             <div className="p-4">
@@ -217,8 +217,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                   <User className="w-6 h-6 text-white" aria-hidden="true" />
                 </div>
                 <div className="min-w-0">
-                <div className="font-semibold text-gray-900 truncate">Vitório Muniz</div>
-                <div className="text-xs text-gray-600 truncate">vitorio@gmail.com</div>
+                  <div className="font-semibold text-gray-900 truncate">Vitório Muniz</div>
+                  <div className="text-xs text-gray-600 truncate">vitorio@gmail.com</div>
                 </div>
                 <button
                   type="button"

@@ -5,7 +5,7 @@ import { Button } from '../ui/Button';
 import { processStep1Prompt } from '../../lib/campaigns/api';
 import type { Step1ParseResult, Step2FormData } from '../../lib/campaigns/types';
 import { Step2Configuration } from './Step2Configuration';
-import iconPrompt from '../../iconprompt.svg';
+// icon image replaced with vector icon from lucide-react to keep design consistent
 
 // Helper function para formatar range de seguidores
 function formatFollowersRange(live: { followersMin: number | null; followersMax: number | null }): string {
@@ -363,7 +363,7 @@ export const CreateCampaign: React.FC = () => {
             <div className="mx-auto w-full max-w-[1120px] px-6">
               <div className="text-center mb-6">
                 <div className="inline-flex items-center gap-3 mb-3">
-                  <img src={iconPrompt} alt="Prompt Icon" width={30} height={30} />
+                  <BookOpen className="w-[30px] h-[30px] text-[#7D2AE8]" />
                   <h1 className="text-[28px] leading-[34px] font-normal text-gray-900">Create New Campaign</h1>
                 </div>
                 <p className="text-[16px] leading-[24px] text-gray-600">Describe your campaign with details</p>

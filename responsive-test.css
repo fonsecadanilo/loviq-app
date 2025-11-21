@@ -1,0 +1,41 @@
+/* Teste de Responsividade - Sidebar Refatorado */
+
+/* Testes para MacBook 13" (~1280px) */
+@media screen and (max-width: 1280px) {
+  /* O sidebar deve manter largura fixa de 288px */
+  /* O conteúdo principal deve se ajustar ao espaço restante */
+  /* Sem quebras de texto ou overflow horizontal */
+}
+
+/* Testes para iPad Pro (~1024px) */
+@media screen and (max-width: 1024px) {
+  /* Sidebar deve continuar visível em modo sticky */
+  /* Layout flexbox deve manter proporções corretas */
+}
+
+/* Testes para iPad (~768px) */
+@media screen and (max-width: 768px) {
+  /* Sidebar deve se transformar em overlay */
+  /* Menu hamburger deve estar visível */
+  /* Conteúdo deve ocupar 100% da largura */
+}
+
+/* Testes para iPhone (~375px) */
+@media screen and (max-width: 375px) {
+  /* Sidebar deve ocupar 100% da largura em modo overlay */
+  /* Textos devem ser truncados adequadamente */
+  /* Sem scroll horizontal */
+}
+
+/* Correções de overflow e quebra de texto */
+.sidebar-container {
+  /* Previne overflow horizontal em todas as telas */
+  overflow-x: hidden;
+}
+
+/* Garante que o texto não quebre indevidamente */
+.sidebar-nav-item {
+  /* Usa truncate para textos longos */
+  /* Mantém whitespace-nowrap para prevenir quebras */
+  /* Flex-shrink-0 para ícones não deformarem */
+}

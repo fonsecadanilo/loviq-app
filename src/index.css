@@ -75,12 +75,6 @@ html, body, #root {
   animation: fade-in 0.5s ease-out;
 }
 
-/* Anchored popup styles */
-.popup-anchored {
-  will-change: transform, opacity;
-  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.12);
-}
-
 /* Gradient text */
 .text-gradient-loviq {
   background: linear-gradient(135deg, #7D2AE8 0%, #8D3AEC 100%);

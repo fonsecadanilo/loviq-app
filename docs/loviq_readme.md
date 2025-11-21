@@ -100,7 +100,6 @@ Fluxo: Venda → Registro → Comissão → Wallet → Payout.
 - Cliques
 - Visualizações
 - ROI
-- Minutos gastos
 - Quantidade de Lives em tempo real
 
 ## Para Creators:

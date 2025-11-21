@@ -8,9 +8,6 @@ export default defineConfig({
   build: {
     sourcemap: 'hidden',
   },
-  test: {
-    environment: 'jsdom'
-  },
   plugins: [
     react({
       babel: {

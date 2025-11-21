@@ -8,6 +8,10 @@ export default defineConfig({
   build: {
     sourcemap: 'hidden',
   },
+  server: {
+    port: 8081,
+    host: true, // Listen on all addresses, including localhost
+  },
   plugins: [
     react({
       babel: {
@@ -24,7 +28,7 @@ export default defineConfig({
       clickUrl: 'https://www.trae.ai/solo?showJoin=1',
       autoTheme: true,
       autoThemeTarget: '#root'
-    }), 
+    }),
     tsconfigPaths()
   ],
 })

@@ -1,9 +1,11 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Plus, TrendingUp, Users, DollarSign, Eye, ShoppingCart, Store } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
 
 export const DashboardHome: React.FC = () => {
+  const navigate = useNavigate();
   const stats = [
     {
       title: 'Total Revenue',
@@ -91,7 +93,7 @@ export const DashboardHome: React.FC = () => {
           <h1 className="text-2xl font-bold text-gray-900">Welcome back!</h1>
           <p className="text-gray-600 text-sm sm:text-base">Here's what's happening with your campaigns today.</p>
         </div>
-        <Button variant="primary" size="sm" className="sm:text-base">
+        <Button variant="primary" size="sm" className="sm:text-base" onClick={() => navigate('/campaigns/create')}>
           <Plus className="w-4 h-4 mr-2" />
           Create New Campaign
         </Button>
@@ -208,7 +210,7 @@ export const DashboardHome: React.FC = () => {
             <div>
               <h3 className="font-semibold text-gray-900 mb-1 sm:mb-2 text-sm sm:text-base">Create Campaign</h3>
               <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">Start a new live commerce campaign</p>
-              <Button variant="primary" size="sm" className="w-full text-xs sm:text-sm">Get Started</Button>
+              <Button variant="primary" size="sm" className="w-full text-xs sm:text-sm" onClick={() => navigate('/campaigns/create')}>Get Started</Button>
             </div>
           </CardContent>
         </Card>

@@ -6,7 +6,7 @@ export const BrandDashboard: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] lg:pl-64">
+    <div className="min-h-screen bg-[#F8FAFC] lg:pl-[280px]">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       <main className="p-4 sm:p-6 lg:p-8">

@@ -97,19 +97,22 @@ export const Campaigns: React.FC = () => {
       title: 'Sales last month',
       value: '$12,435.20',
       icon: DollarSign,
-      color: 'text-green-600'
+      bgColor: 'bg-green-100',
+      iconColor: 'text-green-600'
     },
     {
       title: 'Products sold last month',
       value: '245',
       icon: Package,
-      color: 'text-purple-600'
+      bgColor: 'bg-purple-100',
+      iconColor: 'text-[#7D2AE8]'
     },
     {
       title: 'Average ticket',
       value: '$189.50',
       icon: Ticket,
-      color: 'text-orange-600'
+      bgColor: 'bg-orange-100',
+      iconColor: 'text-orange-600'
     }
   ];
 
@@ -171,7 +174,7 @@ export const Campaigns: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] lg:pl-64">
+    <div className="min-h-screen bg-[#F8FAFC] lg:pl-[280px]">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       <main className="px-4 py-8 sm:px-6 lg:px-10">
@@ -194,15 +197,13 @@ export const Campaigns: React.FC = () => {
             const IconComponent = stat.icon;
             return (
               <Card key={index} className="border-[#E2E8F0]">
-                <CardContent className="p-1.5">
-                  <div className="flex items-center justify-between mb-1">
-                    <div className={`p-1.5 rounded-lg bg-gray-100 ${stat.color}`}>
-                      <IconComponent className="w-3.5 h-3.5" />
-                    </div>
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">{stat.title}</p>
+                    <p className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</p>
                   </div>
-                  <div className="space-y-0">
-                    <p className="text-xl font-bold text-gray-900">{stat.value}</p>
-                    <p className="text-xs text-gray-600">{stat.title}</p>
+                  <div className={`p-2 rounded-lg ${stat.bgColor}`}>
+                    <IconComponent className={`w-5 h-5 ${stat.iconColor}`} />
                   </div>
                 </CardContent>
               </Card>

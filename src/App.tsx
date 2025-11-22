@@ -6,6 +6,8 @@ import { BrandSignup } from "./pages/BrandSignup";
 import { BrandDashboard } from "./pages/BrandDashboard";
 import { CreateCampaign } from "./components/campaign/CreateCampaign";
 
+import { OrdersProducts } from "./pages/OrdersProducts";
+
 export default function App() {
   return (
     <Router>
@@ -16,6 +18,7 @@ export default function App() {
         <Route path="/dashboard" element={<BrandDashboard />} />
         <Route path="/campaigns" element={<Campaigns />} />
         <Route path="/campaigns/create" element={<CreateCampaign />} />
+        <Route path="/orders" element={<OrdersProducts />} />
         <Route path="/influencers" element={<div className="text-center text-xl p-8">Influencers Page - Coming Soon</div>} />
         <Route path="/wallet" element={<div className="text-center text-xl p-8">Wallet Page - Coming Soon</div>} />
         <Route path="/settings" element={<div className="text-center text-xl p-8">Settings Page - Coming Soon</div>} />

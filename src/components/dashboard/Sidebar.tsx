@@ -11,7 +11,9 @@ import {
   X,
   ChevronRight,
   User,
-  CreditCard
+  CreditCard,
+  Package,
+  Store
 } from 'lucide-react';
 import LoviqLogo from '../../assets/LogoOficialLoviq.svg';
 
@@ -27,10 +29,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Campaigns', href: '/campaigns', icon: Megaphone },
+    { name: 'Orders & Products', href: '/orders', icon: Package },
     { name: 'Influencers', href: '/influencers', icon: Users },
     { name: 'Wallet', href: '/wallet', icon: Wallet },
     { name: 'Chat', href: '/chat', icon: MessageCircle },
-    { name: 'Integrations', href: '/integrations', icon: Plug },
+    { name: 'Store Integration', href: '/integrations', icon: Store },
   ];
 
   const isActive = (path: string) => {
@@ -50,7 +53,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       {/* Sidebar Container */}
       <aside className={`
         fixed top-0 left-0 z-50 h-screen
-        w-64 bg-white border-r border-[#E2E8F0]
+        w-[280px] bg-white border-r border-[#E2E8F0]
         transform transition-transform duration-300 ease-in-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
         lg:translate-x-0

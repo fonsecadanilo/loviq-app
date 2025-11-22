@@ -10,30 +10,30 @@ export const DashboardHome: React.FC = () => {
     {
       title: 'Total Revenue',
       value: '$24,580',
-      change: '+12.5%',
       icon: DollarSign,
-      color: 'text-green-600'
+      bgColor: 'bg-green-100',
+      iconColor: 'text-green-600'
     },
     {
       title: 'Active Campaigns',
       value: '8',
-      change: '+2',
       icon: TrendingUp,
-      color: 'text-blue-600'
+      bgColor: 'bg-blue-100',
+      iconColor: 'text-blue-600'
     },
     {
       title: 'Total Views',
       value: '45,230',
-      change: '+18.2%',
       icon: Eye,
-      color: 'text-purple-600'
+      bgColor: 'bg-purple-100',
+      iconColor: 'text-purple-600'
     },
     {
       title: 'Conversions',
       value: '1,247',
-      change: '+8.7%',
       icon: ShoppingCart,
-      color: 'text-orange-600'
+      bgColor: 'bg-orange-100',
+      iconColor: 'text-orange-600'
     }
   ];
 
@@ -93,10 +93,13 @@ export const DashboardHome: React.FC = () => {
           <h1 className="text-2xl font-bold text-gray-900">Welcome back!</h1>
           <p className="text-gray-600 text-sm sm:text-base">Here's what's happening with your campaigns today.</p>
         </div>
-        <Button variant="primary" size="sm" className="sm:text-base" onClick={() => navigate('/campaigns/create')}>
-          <Plus className="w-4 h-4 mr-2" />
-          Create New Campaign
-        </Button>
+        <button
+          onClick={() => navigate('/campaigns/create')}
+          className="inline-flex items-center gap-2 bg-[#7D2AE8] text-white px-4 py-2 rounded-lg hover:bg-[#6d24ca] transition-colors font-medium text-sm sm:text-base"
+        >
+          <Plus className="w-4 h-4" />
+          <span className="truncate">Create New Campaign</span>
+        </button>
       </div>
 
       {/* Stats Grid */}
@@ -105,18 +108,13 @@ export const DashboardHome: React.FC = () => {
           const IconComponent = stat.icon;
           return (
             <Card key={index} className="border-[#E2E8F0]">
-              <CardContent className="p-4 sm:p-6">
-                <div className="flex items-center justify-between mb-3 sm:mb-4">
-                  <div className={`p-2 rounded-lg bg-gray-100 ${stat.color}`}>
-                    <IconComponent className="w-4 h-4 sm:w-5 sm:h-5" />
-                  </div>
-                  <span className={`text-xs sm:text-sm font-medium ${stat.change.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>
-                    {stat.change}
-                  </span>
+              <CardContent className="p-4 flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-500">{stat.title}</p>
+                  <p className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</p>
                 </div>
-                <div className="space-y-1">
-                  <p className="text-xl sm:text-2xl font-bold text-gray-900">{stat.value}</p>
-                  <p className="text-xs sm:text-sm text-gray-600">{stat.title}</p>
+                <div className={`p-2 rounded-lg ${stat.bgColor}`}>
+                  <IconComponent className={`w-5 h-5 ${stat.iconColor}`} />
                 </div>
               </CardContent>
             </Card>
@@ -144,11 +142,10 @@ export const DashboardHome: React.FC = () => {
                     <div className="space-y-1 flex-1">
                       <h4 className="font-medium text-gray-900 text-sm sm:text-base">{campaign.name}</h4>
                       <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-gray-600">
-                        <span className={`px-2 py-1 rounded-full text-xs ${
-                          campaign.status === 'Active' 
-                            ? 'bg-green-100 text-green-700' 
-                            : 'bg-gray-100 text-gray-700'
-                        }`}>
+                        <span className={`px-2 py-1 rounded-full text-xs ${campaign.status === 'Active'
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-gray-100 text-gray-700'
+                          }`}>
                           {campaign.status}
                         </span>
                         <span>{campaign.views} views</span>

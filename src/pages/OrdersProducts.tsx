@@ -263,6 +263,40 @@ export const OrdersProducts: React.FC = () => {
         setSelectedLives([]);
     };
 
+    // Pagination for Orders
+    const [ordersCurrentPage, setOrdersCurrentPage] = useState(1);
+    const ordersPerPage = 10;
+
+    // Pagination for Products
+    const [productsCurrentPage, setProductsCurrentPage] = useState(1);
+    const productsPerPage = 10;
+
+    // Paginated Orders
+    const ordersTotalPages = Math.ceil(filteredOrders.length / ordersPerPage);
+    const paginatedOrders = filteredOrders.slice(
+        (ordersCurrentPage - 1) * ordersPerPage,
+        ordersCurrentPage * ordersPerPage
+    );
+
+    // Paginated Products
+    const productsTotalPages = Math.ceil(mockProducts.length / productsPerPage);
+    const paginatedProducts = mockProducts.slice(
+        (productsCurrentPage - 1) * productsPerPage,
+        productsCurrentPage * productsPerPage
+    );
+
+    const handleOrdersPageChange = (page: number) => {
+        if (page >= 1 && page <= ordersTotalPages) {
+            setOrdersCurrentPage(page);
+        }
+    };
+
+    const handleProductsPageChange = (page: number) => {
+        if (page >= 1 && page <= productsTotalPages) {
+            setProductsCurrentPage(page);
+        }
+    };
+
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'Ativo':
@@ -365,7 +399,7 @@ export const OrdersProducts: React.FC = () => {
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-200">
-                                        {mockProducts.map((product) => (
+                                        {paginatedProducts.map((product) => (
                                             <tr key={product.id} className="hover:bg-gray-50 transition-colors">
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                                     <div className="flex items-center gap-3">
@@ -397,6 +431,41 @@ export const OrdersProducts: React.FC = () => {
                                         ))}
                                     </tbody>
                                 </table>
+                            </div>
+
+                            {/* Products Pagination */}
+                            <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                                <div className="text-sm text-gray-500">
+                                    Showing <span className="font-medium">{(productsCurrentPage - 1) * productsPerPage + 1}</span> to <span className="font-medium">{Math.min(productsCurrentPage * productsPerPage, mockProducts.length)}</span> of <span className="font-medium">{mockProducts.length}</span> results
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => handleProductsPageChange(productsCurrentPage - 1)}
+                                        disabled={productsCurrentPage === 1}
+                                        className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        Previous
+                                    </button>
+                                    {Array.from({ length: productsTotalPages }, (_, i) => i + 1).map((page) => (
+                                        <button
+                                            key={page}
+                                            onClick={() => handleProductsPageChange(page)}
+                                            className={`px-3 py-1 border rounded-md text-sm font-medium ${productsCurrentPage === page
+                                                ? 'bg-[#7D2AE8] text-white border-[#7D2AE8]'
+                                                : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                                                }`}
+                                        >
+                                            {page}
+                                        </button>
+                                    ))}
+                                    <button
+                                        onClick={() => handleProductsPageChange(productsCurrentPage + 1)}
+                                        disabled={productsCurrentPage === productsTotalPages}
+                                        className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        Next
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </>
@@ -690,7 +759,7 @@ export const OrdersProducts: React.FC = () => {
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-200">
-                                        {filteredOrders.map((order) => (
+                                        {paginatedOrders.map((order) => (
                                             <tr key={order.id} className="hover:bg-gray-50 transition-colors">
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-[#7D2AE8]">
                                                     {order.id}
@@ -728,6 +797,41 @@ export const OrdersProducts: React.FC = () => {
                                         ))}
                                     </tbody>
                                 </table>
+                            </div>
+
+                            {/* Orders Pagination */}
+                            <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                                <div className="text-sm text-gray-500">
+                                    Showing <span className="font-medium">{(ordersCurrentPage - 1) * ordersPerPage + 1}</span> to <span className="font-medium">{Math.min(ordersCurrentPage * ordersPerPage, filteredOrders.length)}</span> of <span className="font-medium">{filteredOrders.length}</span> results
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => handleOrdersPageChange(ordersCurrentPage - 1)}
+                                        disabled={ordersCurrentPage === 1}
+                                        className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        Previous
+                                    </button>
+                                    {Array.from({ length: ordersTotalPages }, (_, i) => i + 1).map((page) => (
+                                        <button
+                                            key={page}
+                                            onClick={() => handleOrdersPageChange(page)}
+                                            className={`px-3 py-1 border rounded-md text-sm font-medium ${ordersCurrentPage === page
+                                                    ? 'bg-[#7D2AE8] text-white border-[#7D2AE8]'
+                                                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                                                }`}
+                                        >
+                                            {page}
+                                        </button>
+                                    ))}
+                                    <button
+                                        onClick={() => handleOrdersPageChange(ordersCurrentPage + 1)}
+                                        disabled={ordersCurrentPage === ordersTotalPages}
+                                        className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        Next
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </>

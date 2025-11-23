@@ -8,6 +8,7 @@ import { CreateCampaign } from "./components/campaign/CreateCampaign";
 
 import { Influencers } from "./pages/Influencers";
 import { OrdersProducts } from "./pages/OrdersProducts";
+import { Wallet } from "./pages/Wallet";
 
 export default function App() {
   return (
@@ -21,7 +22,7 @@ export default function App() {
         <Route path="/campaigns/create" element={<CreateCampaign />} />
         <Route path="/orders" element={<OrdersProducts />} />
         <Route path="/influencers" element={<Influencers />} />
-        <Route path="/wallet" element={<div className="text-center text-xl p-8">Wallet Page - Coming Soon</div>} />
+        <Route path="/wallet" element={<Wallet />} />
         <Route path="/settings" element={<div className="text-center text-xl p-8">Settings Page - Coming Soon</div>} />
       </Routes>
     </Router>

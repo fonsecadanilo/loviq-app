@@ -10,6 +10,7 @@ import { Influencers } from "./pages/Influencers";
 import { OrdersProducts } from "./pages/OrdersProducts";
 import { Wallet } from "./pages/Wallet";
 import { StoreIntegration } from "./pages/StoreIntegration";
+import { Chat } from "./pages/Chat";
 
 export default function App() {
   return (
@@ -25,6 +26,7 @@ export default function App() {
         <Route path="/influencers" element={<Influencers />} />
         <Route path="/wallet" element={<Wallet />} />
         <Route path="/integrations" element={<StoreIntegration />} />
+        <Route path="/chat" element={<Chat />} />
         <Route path="/settings" element={<div className="text-center text-xl p-8">Settings Page - Coming Soon</div>} />
       </Routes>
     </Router>

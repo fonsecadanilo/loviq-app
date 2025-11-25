@@ -1,88 +1,441 @@
-import { createClient } from '@supabase/supabase-js';
+/**
+ * Serviço de integração com Shopify
+ * 
+ * Este serviço gerencia a conexão com lojas Shopify através da tabela `stores`
+ * e sincroniza produtos para a tabela `products` com extensão em `shopify_products`.
+ * 
+ * Fluxo de dados:
+ * - brands (1) -> stores (N) -> products (N)
+ * - stores.store_type = 'shopify' para lojas Shopify
+ * - products.product_source_type = 'shopify' para produtos sincronizados
+ * - shopify_products armazena dados específicos do Shopify (variant_id, etc.)
+ * - shopify_sync_logs registra histórico de sincronizações
+ */
 
-// Initialize Supabase Client
-// In a real app, these should be in .env
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://your-project.supabase.co';
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key';
+import { supabase, isSupabaseConfigured, isSilentError } from '../lib/supabase'
+import type { 
+    Store, 
+    Product, 
+    ShopifyProduct, 
+    ShopifySyncLog,
+    TablesInsert 
+} from '../types/database'
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// ============================================================================
+// TIPOS E INTERFACES
+// ============================================================================
 
-export interface ShopifyIntegration {
-    id: string;
-    shop_domain: string;
-    created_at: string;
+/**
+ * Representa uma loja Shopify conectada (subset de Store)
+ */
+export interface ShopifyStore {
+    id: number
+    brand_id: number
+    name: string
+    external_store_id: string | null
+    created_at: string
 }
+
+/**
+ * Produto com informações do Shopify
+ */
+export interface ShopifyProductWithDetails extends Product {
+    shopify_details?: ShopifyProduct | null
+}
+
+/**
+ * Resultado da verificação de conexão
+ */
+export interface ConnectionStatus {
+    connected: boolean
+    store: ShopifyStore | null
+    productsCount: number
+    lastSync: string | null
+}
+
+/**
+ * Credenciais da API Shopify (armazenadas em stores.api_credentials)
+ */
+interface ShopifyApiCredentials {
+    access_token?: string
+    shop_domain?: string
+    api_key?: string
+    api_secret?: string
+    scopes?: string[]
+    [key: string]: string | string[] | undefined // Index signature para compatibilidade com Json
+}
+
+// ============================================================================
+// SERVIÇO PRINCIPAL
+// ============================================================================
 
 export const ShopifyService = {
     /**
-     * Checks if the current user has a connected Shopify store.
+     * Verifica o status da integração Shopify para uma marca
+     * Busca na tabela `stores` por lojas do tipo 'shopify'
      */
-    async getIntegrationStatus(userId: string): Promise<ShopifyIntegration | null> {
-        // Check if Supabase is configured
-        if (!SUPABASE_URL || SUPABASE_URL.includes('your-project') || SUPABASE_URL.includes('sua-url')) {
-            // Return null (not connected) silently for demo
-            return null;
-        }
-
-        const { data, error } = await supabase
-            .from('shopify_integrations')
-            .select('*')
-            .eq('brand_id', userId)
-            .single();
-
-        if (error) {
-            if (error.code === 'PGRST116') return null; // No rows found
-            console.error('Error fetching integration status:', error);
-            return null;
-        }
-
-        return data;
-    },
-
-    /**
-     * Initiates the OAuth flow by calling the Edge Function.
-     * Note: User provided store password 'loviq01' (for development stores), 
-     * but OAuth flow typically redirects to admin login.
-     */
-    async connectStore(shopDomain: string) {
-        // Check if Supabase is configured
-        if (!SUPABASE_URL || SUPABASE_URL.includes('your-project') || SUPABASE_URL.includes('sua-url')) {
-            console.warn('Supabase credentials missing. Simulating connection for demo.');
-
-            // Mock successful behavior for demo/preview
-            return new Promise((resolve) => {
-                setTimeout(() => {
-                    alert('Simulação: Redirecionando para Shopify OAuth...\n(Configure o Supabase para funcionar realmente)');
-                    // In a real app this would redirect, but for demo we just resolve
-                    resolve({ url: `https://${shopDomain}/admin` });
-                }, 1000);
-            });
+    async getConnectionStatus(brandId: number): Promise<ConnectionStatus> {
+        // Verifica se Supabase está configurado
+        if (!isSupabaseConfigured()) {
+            return { connected: false, store: null, productsCount: 0, lastSync: null }
         }
 
         try {
-            const { data, error } = await supabase.functions.invoke('shopify-auth', {
-                body: { shop: shopDomain },
-            });
+            // Busca loja Shopify da marca
+            const { data: store, error: storeError } = await supabase
+                .from('stores')
+                .select('id, brand_id, name, external_store_id, created_at')
+                .eq('brand_id', brandId)
+                .eq('store_type', 'shopify')
+                .maybeSingle()
 
-            if (error) throw error;
-            if (data?.url) {
-                window.location.href = data.url;
+            if (storeError && !isSilentError(storeError.code)) {
+                console.error('Erro ao buscar loja Shopify:', storeError)
+                return { connected: false, store: null, productsCount: 0, lastSync: null }
+            }
+
+            if (!store) {
+                return { connected: false, store: null, productsCount: 0, lastSync: null }
+            }
+
+            // Conta produtos sincronizados
+            const { count: productsCount } = await supabase
+                .from('products')
+                .select('*', { count: 'exact', head: true })
+                .eq('store_id', store.id)
+                .eq('product_source_type', 'shopify')
+
+            // Busca última sincronização
+            const { data: lastSyncLog } = await supabase
+                .from('shopify_sync_logs')
+                .select('finished_at')
+                .eq('store_id', store.id)
+                .eq('status', 'success')
+                .order('finished_at', { ascending: false })
+                .limit(1)
+                .maybeSingle()
+
+            return {
+                connected: true,
+                store: store as ShopifyStore,
+                productsCount: productsCount || 0,
+                lastSync: lastSyncLog?.finished_at || null
             }
         } catch (error) {
-            console.error('Error initiating connection:', error);
-            // Fallback for demo if Edge Function is not deployed
-            console.warn('Edge Function failed. Simulating connection for demo.');
-            alert('Atenção: A Edge Function "shopify-auth" não foi encontrada ou falhou.\nSimulando conexão para demonstração.');
+            console.error('Erro ao verificar status da conexão:', error)
+            return { connected: false, store: null, productsCount: 0, lastSync: null }
         }
     },
 
     /**
-     * Triggers product synchronization.
-     * In a real implementation, this would call another Edge Function or backend API.
+     * Inicia o processo de conexão com uma loja Shopify
+     * 
+     * Em produção, isso invocaria uma Edge Function para OAuth.
+     * Por enquanto, cria o registro da loja para demonstração.
      */
-    async syncProducts(brandId: string) {
-        // Mock implementation for now, as the backend sync logic is complex
-        console.log('Syncing products for brand:', brandId);
-        return new Promise((resolve) => setTimeout(resolve, 2000));
+    async connectStore(brandId: number, shopDomain: string): Promise<{ success: boolean; store?: ShopifyStore; error?: string }> {
+        // Verifica se Supabase está configurado
+        if (!isSupabaseConfigured()) {
+            console.warn('[ShopifyService] Supabase não configurado. Simulando conexão.')
+            
+            // Simula um delay para UX
+            await new Promise(resolve => setTimeout(resolve, 1500))
+            
+            return {
+                success: true,
+                store: {
+                    id: 0,
+                    brand_id: brandId,
+                    name: shopDomain,
+                    external_store_id: null,
+                    created_at: new Date().toISOString()
+                }
+            }
+        }
+
+        try {
+            // Limpa o domínio
+            const cleanDomain = shopDomain
+                .replace('https://', '')
+                .replace('http://', '')
+                .replace(/\/$/, '')
+
+            // Verifica se já existe uma loja conectada
+            const { data: existingStore } = await supabase
+                .from('stores')
+                .select('id')
+                .eq('brand_id', brandId)
+                .eq('store_type', 'shopify')
+                .maybeSingle()
+
+            if (existingStore) {
+                return { success: false, error: 'Já existe uma loja Shopify conectada para esta marca' }
+            }
+
+            // Tenta invocar Edge Function para OAuth (se existir)
+            try {
+                const { data, error } = await supabase.functions.invoke('shopify-auth', {
+                    body: { 
+                        shop: cleanDomain,
+                        brand_id: brandId 
+                    }
+                })
+
+                if (!error && data?.url) {
+                    // Redireciona para OAuth do Shopify
+                    window.location.href = data.url
+                    return { success: true }
+                }
+            } catch (fnError) {
+                console.warn('[ShopifyService] Edge Function não disponível, criando loja diretamente')
+            }
+
+            // Fallback: Cria registro da loja diretamente (para desenvolvimento/demo)
+            const newStore: TablesInsert<'stores'> = {
+                brand_id: brandId,
+                name: cleanDomain,
+                store_type: 'shopify',
+                external_store_id: cleanDomain,
+                api_credentials: {
+                    shop_domain: cleanDomain,
+                    // Em produção, access_token seria obtido via OAuth
+                } as ShopifyApiCredentials
+            }
+
+            const { data: store, error: insertError } = await supabase
+                .from('stores')
+                .insert(newStore)
+                .select('id, brand_id, name, external_store_id, created_at')
+                .single()
+
+            if (insertError) {
+                console.error('Erro ao criar loja:', insertError)
+                return { success: false, error: 'Erro ao conectar loja' }
+            }
+
+            return { success: true, store: store as ShopifyStore }
+        } catch (error) {
+            console.error('Erro ao conectar loja Shopify:', error)
+            return { success: false, error: 'Erro inesperado ao conectar loja' }
+        }
+    },
+
+    /**
+     * Desconecta uma loja Shopify
+     */
+    async disconnectStore(storeId: number): Promise<{ success: boolean; error?: string }> {
+        if (!isSupabaseConfigured()) {
+            return { success: true }
+        }
+
+        try {
+            // Remove produtos da loja primeiro
+            await supabase
+                .from('products')
+                .delete()
+                .eq('store_id', storeId)
+
+            // Remove logs de sincronização
+            await supabase
+                .from('shopify_sync_logs')
+                .delete()
+                .eq('store_id', storeId)
+
+            // Remove a loja
+            const { error } = await supabase
+                .from('stores')
+                .delete()
+                .eq('id', storeId)
+
+            if (error) {
+                console.error('Erro ao desconectar loja:', error)
+                return { success: false, error: 'Erro ao desconectar loja' }
+            }
+
+            return { success: true }
+        } catch (error) {
+            console.error('Erro ao desconectar loja:', error)
+            return { success: false, error: 'Erro inesperado' }
+        }
+    },
+
+    /**
+     * Sincroniza produtos do Shopify
+     * 
+     * Em produção, isso invocaria uma Edge Function que:
+     * 1. Busca produtos via Shopify API
+     * 2. Insere/atualiza na tabela products
+     * 3. Cria registros em shopify_products
+     * 4. Registra log em shopify_sync_logs
+     */
+    async syncProducts(storeId: number): Promise<{ success: boolean; synced: number; error?: string }> {
+        if (!isSupabaseConfigured()) {
+            console.warn('[ShopifyService] Supabase não configurado. Simulando sincronização.')
+            await new Promise(resolve => setTimeout(resolve, 2000))
+            return { success: true, synced: 0 }
+        }
+
+        try {
+            // Cria log de sincronização
+            const syncLog: TablesInsert<'shopify_sync_logs'> = {
+                store_id: storeId,
+                sync_type: 'products',
+                status: 'in_progress',
+                started_at: new Date().toISOString()
+            }
+
+            const { data: log, error: logError } = await supabase
+                .from('shopify_sync_logs')
+                .insert(syncLog)
+                .select('id')
+                .single()
+
+            if (logError) {
+                console.error('Erro ao criar log de sincronização:', logError)
+            }
+
+            // Tenta invocar Edge Function de sincronização
+            try {
+                const { data, error } = await supabase.functions.invoke('shopify-sync-products', {
+                    body: { store_id: storeId }
+                })
+
+                if (!error && data) {
+                    // Atualiza log como sucesso
+                    if (log?.id) {
+                        await supabase
+                            .from('shopify_sync_logs')
+                            .update({
+                                status: 'success',
+                                finished_at: new Date().toISOString(),
+                                message: `${data.synced || 0} produtos sincronizados`
+                            })
+                            .eq('id', log.id)
+                    }
+
+                    return { success: true, synced: data.synced || 0 }
+                }
+            } catch (fnError) {
+                console.warn('[ShopifyService] Edge Function de sync não disponível')
+            }
+
+            // Atualiza log como sucesso (demo mode)
+            if (log?.id) {
+                await supabase
+                    .from('shopify_sync_logs')
+                    .update({
+                        status: 'success',
+                        finished_at: new Date().toISOString(),
+                        message: 'Sincronização simulada (Edge Function não configurada)'
+                    })
+                    .eq('id', log.id)
+            }
+
+            return { success: true, synced: 0 }
+        } catch (error) {
+            console.error('Erro ao sincronizar produtos:', error)
+            return { success: false, synced: 0, error: 'Erro ao sincronizar' }
+        }
+    },
+
+    /**
+     * Lista produtos sincronizados de uma loja
+     */
+    async getProducts(storeId: number, limit = 50, offset = 0): Promise<ShopifyProductWithDetails[]> {
+        if (!isSupabaseConfigured()) {
+            return []
+        }
+
+        try {
+            const { data, error } = await supabase
+                .from('products')
+                .select(`
+                    *,
+                    shopify_details:shopify_products(*)
+                `)
+                .eq('store_id', storeId)
+                .eq('product_source_type', 'shopify')
+                .order('created_at', { ascending: false })
+                .range(offset, offset + limit - 1)
+
+            if (error && !isSilentError(error.code)) {
+                console.error('Erro ao buscar produtos:', error)
+                return []
+            }
+
+            return (data || []) as ShopifyProductWithDetails[]
+        } catch (error) {
+            console.error('Erro ao buscar produtos:', error)
+            return []
+        }
+    },
+
+    /**
+     * Busca logs de sincronização
+     */
+    async getSyncLogs(storeId: number, limit = 10): Promise<ShopifySyncLog[]> {
+        if (!isSupabaseConfigured()) {
+            return []
+        }
+
+        try {
+            const { data, error } = await supabase
+                .from('shopify_sync_logs')
+                .select('*')
+                .eq('store_id', storeId)
+                .order('started_at', { ascending: false })
+                .limit(limit)
+
+            if (error && !isSilentError(error.code)) {
+                console.error('Erro ao buscar logs:', error)
+                return []
+            }
+
+            return (data || []) as ShopifySyncLog[]
+        } catch (error) {
+            console.error('Erro ao buscar logs:', error)
+            return []
+        }
     }
-};
+}
+
+// ============================================================================
+// EXPORTS LEGADOS (para compatibilidade com código existente)
+// ============================================================================
+
+/**
+ * @deprecated Use ShopifyService.getConnectionStatus() em vez disso
+ */
+export interface ShopifyIntegration {
+    id: string
+    shop_domain: string
+    created_at: string
+}
+
+/**
+ * @deprecated Mantido para compatibilidade com ShopifyConnectButton
+ */
+export const getIntegrationStatus = async (userId: string): Promise<ShopifyIntegration | null> => {
+    // Converte userId para brandId (assumindo que são equivalentes temporariamente)
+    const brandId = parseInt(userId, 10)
+    
+    if (isNaN(brandId)) {
+        return null
+    }
+
+    const status = await ShopifyService.getConnectionStatus(brandId)
+    
+    if (!status.connected || !status.store) {
+        return null
+    }
+
+    // Retorna no formato legado
+    return {
+        id: status.store.id.toString(),
+        shop_domain: status.store.name,
+        created_at: status.store.created_at
+    }
+}
+
+export { supabase }
+export default ShopifyService

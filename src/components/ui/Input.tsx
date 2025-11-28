@@ -42,7 +42,7 @@ export const Input: React.FC<InputProps> = ({
         disabled={disabled}
         required={required}
         className={`
-          w-full h-11 px-4 py-2 rounded-lg border bg-white text-gray-900 
+          w-full h-11 px-4 py-2 rounded-md border bg-white text-gray-900 
           placeholder:text-gray-500 focus:outline-none focus:ring-2 
           focus:ring-[#7D2AE8] focus:border-transparent transition-colors
           ${error ? 'border-red-500' : 'border-[#E2E8F0]'}

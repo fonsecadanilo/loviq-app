@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sidebar } from '../components/dashboard/Sidebar';
 import { ChatLayout } from '../components/chat/ChatLayout';
 import { ContactList } from '../components/chat/ContactList';
 import { ChatWindow } from '../components/chat/ChatWindow';
 import { Menu, Bell, ChevronDown } from 'lucide-react';
 import { useSidebar } from '../contexts/SidebarContext';
+import { ContactListSkeleton, ChatMessagesSkeleton } from '../components/ui/PageSkeletons';
 
 // Mock Data
 const MOCK_CONTACTS = [
@@ -65,6 +66,15 @@ export const Chat = () => {
     const [selectedContactId, setSelectedContactId] = useState<string | null>('1');
     const [messages, setMessages] = useState(MOCK_MESSAGES);
     const { isCollapsed, toggleCollapse, mobileOpen, setMobileOpen } = useSidebar();
+    const [isLoading, setIsLoading] = useState(true);
+
+    // Simulate loading
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setIsLoading(false);
+        }, 1500);
+        return () => clearTimeout(timer);
+    }, []);
 
     const handleSendMessage = (content: string) => {
         const newMessage = {
@@ -126,20 +136,29 @@ export const Chat = () => {
                 {/* Chat Content */}
                 <div className="flex-1 overflow-hidden p-4 lg:p-6">
                     <div className="h-full bg-white rounded-[1.5rem] border border-slate-100 shadow-sm flex overflow-hidden">
-                        {/* Contact List (Left) */}
-                        <ContactList
-                            contacts={MOCK_CONTACTS}
-                            selectedContactId={selectedContactId}
-                            onSelectContact={setSelectedContactId}
-                        />
+                        {isLoading ? (
+                            <>
+                                <ContactListSkeleton />
+                                <ChatMessagesSkeleton />
+                            </>
+                        ) : (
+                            <>
+                                {/* Contact List (Left) */}
+                                <ContactList
+                                    contacts={MOCK_CONTACTS}
+                                    selectedContactId={selectedContactId}
+                                    onSelectContact={setSelectedContactId}
+                                />
 
-                        {/* Chat Window (Right) */}
-                        <ChatWindow
-                            contact={selectedContact}
-                            messages={messages}
-                            onSendMessage={handleSendMessage}
-                            onBack={() => setSelectedContactId(null)}
-                        />
+                                {/* Chat Window (Right) */}
+                                <ChatWindow
+                                    contact={selectedContact}
+                                    messages={messages}
+                                    onSendMessage={handleSendMessage}
+                                    onBack={() => setSelectedContactId(null)}
+                                />
+                            </>
+                        )}
                     </div>
                 </div>
             </div>

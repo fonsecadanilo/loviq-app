@@ -13,6 +13,7 @@ import { WalletContent } from '../components/dashboard/WalletContent';
 export const Wallet: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [isLoading, setIsLoading] = useState(true);
   
   // Determine active tab from URL
   const getActiveTab = (): DashboardTab => {
@@ -26,6 +27,14 @@ export const Wallet: React.FC = () => {
     setActiveTab(getActiveTab());
   }, [location.pathname]);
 
+  // Simulate loading
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
   // Handle tab change with URL navigation
   const handleTabChange = (tab: DashboardTab) => {
     const path = tab === 'wallet' ? '/wallet' : '/dashboard';
@@ -36,8 +45,8 @@ export const Wallet: React.FC = () => {
     <DashboardLayout
       activeTab={activeTab}
       onTabChange={handleTabChange}
-      dashboardContent={<DashboardContent />}
-      walletContent={<WalletContent />}
+      dashboardContent={<DashboardContent isLoading={isLoading} />}
+      walletContent={<WalletContent isLoading={isLoading} />}
     />
   );
 };

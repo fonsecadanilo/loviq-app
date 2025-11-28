@@ -105,7 +105,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleCollapse, m
                         key={item.name}
                         to={item.href}
                         title={item.name}
-                        className={`group flex items-center justify-center w-12 h-12 mx-auto rounded-xl transition-all duration-300 relative my-1 ${active ? 'bg-gradient-to-r from-[#FFF0F0] via-[#F3F0FF] to-[#FDF4FF] text-slate-900 border border-purple-200' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}
+                        className={`group flex items-center justify-center w-12 h-12 mx-auto rounded-md transition-all duration-300 relative my-1 ${
+                          active 
+                            ? 'bg-loviq-gradient text-slate-900 border border-purple-100/50 shadow-sm' 
+                            : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
+                        }`}
                     >
                         <Icon size={20} className="flex-shrink-0 transition-colors" />
                     </Link>
@@ -116,9 +120,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleCollapse, m
               <Link
                 key={item.name}
                 to={item.href}
-                className={`group flex items-center gap-3 transition-all text-sm font-medium rounded-xl pt-3 pr-4 pb-3 pl-4 ${
+                className={`group flex items-center gap-3 transition-all text-sm font-medium rounded-md pt-3 pr-4 pb-3 pl-4 ${
                   active
-                    ? 'text-slate-900 bg-gradient-to-r from-[#FFF0F0] via-[#F3F0FF] to-[#FDF4FF]'
+                    ? 'text-slate-900 bg-loviq-gradient border border-purple-100/50 shadow-sm'
                     : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                 }`}
               >
@@ -144,7 +148,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleCollapse, m
           
           {/* Upgrade Card - Only visible when fully expanded */}
           <div className={`upgrade-card pt-0 pb-6 ${expandedOnlyClass}`}>
-            <div className="overflow-hidden group bg-gradient-to-br from-[#FFF0F0] via-[#F3F0FF] to-[#FDF4FF] rounded-2xl pt-6 pr-6 pb-6 pl-6 relative">
+            <div className="overflow-hidden group bg-loviq-gradient rounded-lg pt-6 pr-6 pb-6 pl-6 relative border border-purple-100/50">
               <div className="relative z-10">
                 <h3 className="font-serif text-xl font-medium text-slate-900 mb-2">
                   Loviq Pro
@@ -152,12 +156,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleCollapse, m
                 <p className="text-xs text-slate-500 leading-relaxed mb-4">
                   Unlock unlimited access to top influencers and advanced analytics.
                 </p>
-                <button className="w-full bg-slate-900 text-white text-xs font-medium py-3 rounded-lg shadow-lg shadow-slate-200 hover:shadow-xl hover:bg-slate-800 transition-all flex items-center justify-center gap-2">
+                <button className="w-full bg-slate-900 text-white text-xs font-medium py-3 rounded-md shadow-lg shadow-slate-200 hover:shadow-xl hover:bg-slate-800 transition-all flex items-center justify-center gap-2">
                   <Sparkles size={12} />
                   View Plans
                 </button>
               </div>
-              <div className="absolute -bottom-8 -right-8 w-24 h-24 bg-purple-200 rounded-full blur-2xl opacity-50"></div>
+              {/* Subtle glow effect instead of purple blob */}
+              <div className="absolute -bottom-8 -right-8 w-24 h-24 bg-white/40 rounded-full blur-2xl"></div>
             </div>
           </div>
 
@@ -180,7 +185,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleCollapse, m
                             key={item.name}
                             to={item.href}
                             title={item.name}
-                            className="group flex items-center justify-center w-12 h-12 mx-auto rounded-xl transition-all duration-300 relative my-1 text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                            className="group flex items-center justify-center w-12 h-12 mx-auto rounded-md transition-all duration-300 relative my-1 text-slate-500 hover:bg-slate-50 hover:text-slate-900"
                         >
                             <Icon size={20} className="flex-shrink-0 transition-colors" />
                         </Link>
@@ -190,7 +195,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleCollapse, m
                 <Link
                     key={item.name}
                     to={item.href}
-                    className="group flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-50 rounded-xl transition-all"
+                    className="group flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-50 rounded-md transition-all"
                 >
                     <Icon size={20} className="w-5 h-5 text-slate-400 group-hover:text-[#1e293b] transition-colors flex-shrink-0" />
                     <span className="nav-text whitespace-nowrap">{item.name}</span>

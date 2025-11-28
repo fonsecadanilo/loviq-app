@@ -16,7 +16,7 @@ export const Card: React.FC<CardProps> = ({ children, className = '', padding = 
   
   return (
     <div className={`
-      bg-white rounded-2xl border border-[#E2E8F0] shadow-sm
+      bg-white rounded-lg border border-[#E2E8F0] shadow-sm
       ${paddingClasses[padding]} ${className}
     `}>
       {children}

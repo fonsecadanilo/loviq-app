@@ -19,12 +19,18 @@ export const Button: React.FC<ButtonProps> = ({
   disabled = false,
   className = ''
 }) => {
-  const baseClasses = 'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50';
+  const baseClasses = 'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50';
   
   const variantClasses = {
-    primary: 'bg-[#7D2AE8] text-white hover:bg-[#8D3AEC] focus-visible:ring-[#7D2AE8]',
-    secondary: 'bg-[#F1F5F9] text-gray-900 hover:bg-[#E2E8F0] focus-visible:ring-gray-500',
+    // PRIMÁRIO: Agora é Escuro (Slate 900) para contraste máximo e seriedade
+    primary: 'bg-[#0F172A] text-white hover:bg-[#1E293B] shadow-sm focus-visible:ring-[#0F172A]',
+    
+    // SECUNDÁRIO: Fundo Lilás suave com texto roxo
+    secondary: 'bg-[#F5F3FF] text-[#7D2AE8] hover:bg-[#EDE9FE] focus-visible:ring-[#7D2AE8]',
+    
+    // OUTLINE: Clean
     outline: 'border border-[#E2E8F0] bg-white text-gray-900 hover:bg-[#F8FAFC] focus-visible:ring-gray-500',
+    
     ghost: 'text-gray-900 hover:bg-[#F8FAFC] focus-visible:ring-gray-500'
   };
   

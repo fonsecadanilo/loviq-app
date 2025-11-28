@@ -11,6 +11,7 @@ import {
   ChevronDown,
   Calendar
 } from 'lucide-react';
+import { MetricsCardSkeleton, RecentOrdersSkeleton } from '../ui/PageSkeletons';
 
 /**
  * WalletContent
@@ -93,7 +94,11 @@ const mockTransactions: Transaction[] = [
   },
 ];
 
-export const WalletContent: React.FC = () => {
+interface WalletContentProps {
+  isLoading?: boolean;
+}
+
+export const WalletContent: React.FC<WalletContentProps> = ({ isLoading }) => {
   const [transactionTypeFilter, setTransactionTypeFilter] = useState<string>('All');
   const [typeDropdownOpen, setTypeDropdownOpen] = useState(false);
   const typeDropdownRef = useRef<HTMLDivElement>(null);
@@ -145,6 +150,18 @@ export const WalletContent: React.FC = () => {
         return null;
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex-1 pt-6 pr-8 pb-8 pl-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 gap-x-4 gap-y-4">
+          <MetricsCardSkeleton />
+          <MetricsCardSkeleton />
+        </div>
+        <RecentOrdersSkeleton />
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 pt-6 pr-8 pb-8 pl-8">
@@ -343,4 +360,3 @@ export const WalletContent: React.FC = () => {
 };
 
 export default WalletContent;
-

@@ -24,6 +24,11 @@ import {
   Video
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { MetricsGridSkeleton, LiveCardSkeleton, RecentOrdersSkeleton, CampaignItemSkeleton } from '../ui/PageSkeletons';
+
+interface DashboardContentProps {
+  isLoading?: boolean;
+}
 
 /**
  * DashboardContent
@@ -31,8 +36,29 @@ import { useNavigate } from 'react-router-dom';
  * The main dashboard content without header.
  * Used inside DashboardLayout with sliding tab animation.
  */
-export const DashboardContent: React.FC = () => {
+export const DashboardContent: React.FC<DashboardContentProps> = ({ isLoading }) => {
   const navigate = useNavigate();
+
+  if (isLoading) {
+    return (
+      <div className="flex-1 pt-6 pr-8 pb-8 pl-8">
+        <MetricsGridSkeleton />
+        <div className="flex flex-col xl:flex-row gap-6 mb-8">
+          <LiveCardSkeleton />
+          <RecentOrdersSkeleton />
+        </div>
+        <div className="">
+          <div className="flex items-center justify-between mb-6">
+             <div className="h-6 w-48 bg-slate-200 rounded animate-pulse"></div>
+          </div>
+          <div className="space-y-3">
+             <CampaignItemSkeleton />
+             <CampaignItemSkeleton />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 pt-6 pr-8 pb-8 pl-8">
@@ -576,8 +602,8 @@ export const DashboardContent: React.FC = () => {
 
         {/* Quick Actions Grid (At the bottom in HTML) */}
         <div className="grid grid-cols-2 md:grid-cols-4 mt-8 mb-8 gap-x-4 gap-y-4">
-          <button className="bg-white p-3.5 rounded-xl border border-slate-100 shadow-sm hover:shadow-md hover:bg-orange-50/60 hover:border-orange-200 transition-all text-left group flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-orange-50 flex items-center justify-center flex-shrink-0 group-hover:bg-orange-100 transition-colors">
+          <button className="bg-white p-3.5 rounded-md border border-slate-100 shadow-sm hover:shadow-md hover:bg-orange-50/60 hover:border-orange-200 transition-all text-left group flex items-center gap-3">
+            <div className="w-10 h-10 rounded-md bg-orange-50 flex items-center justify-center flex-shrink-0 group-hover:bg-orange-100 transition-colors">
               <Video className="w-5 h-5 text-orange-500 transition-colors" />
             </div>
             <div className="min-w-0">
@@ -590,8 +616,8 @@ export const DashboardContent: React.FC = () => {
             </div>
           </button>
 
-          <button className="bg-white p-3.5 rounded-xl border border-slate-100 shadow-sm hover:shadow-md hover:bg-purple-50/60 hover:border-purple-200 transition-all text-left group flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center flex-shrink-0 group-hover:bg-purple-100 transition-colors">
+          <button className="bg-white p-3.5 rounded-md border border-slate-100 shadow-sm hover:shadow-md hover:bg-purple-50/60 hover:border-purple-200 transition-all text-left group flex items-center gap-3">
+            <div className="w-10 h-10 rounded-md bg-purple-50 flex items-center justify-center flex-shrink-0 group-hover:bg-purple-100 transition-colors">
               <Search className="w-5 h-5 text-purple-600 transition-colors" />
             </div>
             <div className="min-w-0">
@@ -604,8 +630,8 @@ export const DashboardContent: React.FC = () => {
             </div>
           </button>
 
-          <button className="bg-white p-3.5 rounded-xl border border-slate-100 shadow-sm hover:shadow-md hover:bg-blue-50/60 hover:border-blue-200 transition-all text-left group flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-100 transition-colors">
+          <button className="bg-white p-3.5 rounded-md border border-slate-100 shadow-sm hover:shadow-md hover:bg-blue-50/60 hover:border-blue-200 transition-all text-left group flex items-center gap-3">
+            <div className="w-10 h-10 rounded-md bg-blue-50 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-100 transition-colors">
               <PackagePlus className="w-5 h-5 text-blue-500 transition-colors" />
             </div>
             <div className="min-w-0">
@@ -618,8 +644,8 @@ export const DashboardContent: React.FC = () => {
             </div>
           </button>
 
-          <button className="bg-white p-3.5 rounded-xl border border-slate-100 shadow-sm hover:shadow-md hover:bg-green-50/60 hover:border-green-200 transition-all text-left group flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center flex-shrink-0 group-hover:bg-green-100 transition-colors">
+          <button className="bg-white p-3.5 rounded-md border border-slate-100 shadow-sm hover:shadow-md hover:bg-green-50/60 hover:border-green-200 transition-all text-left group flex items-center gap-3">
+            <div className="w-10 h-10 rounded-md bg-green-50 flex items-center justify-center flex-shrink-0 group-hover:bg-green-100 transition-colors">
               <BarChart2 className="w-5 h-5 text-green-600 transition-colors" />
             </div>
             <div className="min-w-0">
@@ -638,4 +664,3 @@ export const DashboardContent: React.FC = () => {
 };
 
 export default DashboardContent;
-

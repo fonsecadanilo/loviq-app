@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
@@ -25,6 +25,7 @@ import {
 import { Sidebar } from '../components/dashboard/Sidebar';
 import { SlidingTabsTransition, SlideDirection } from '../components/dashboard/SlidingTabsTransition';
 import { useSidebar } from '../contexts/SidebarContext';
+import { MetricsGridSkeleton, CampaignTableSkeleton } from '../components/ui/PageSkeletons';
 
 // Mock Data Types
 interface Campaign {
@@ -122,6 +123,7 @@ export const Campaigns: React.FC = () => {
   const navigate = useNavigate();
   const { isCollapsed, toggleCollapse, mobileOpen, setMobileOpen } = useSidebar();
   const [activeFilter, setActiveFilter] = useState('All');
+  const [isLoading, setIsLoading] = useState(true);
   
   // Tab state
   const [activeTab, setActiveTab] = useState<CampaignsTab>('campaigns');
@@ -134,6 +136,14 @@ export const Campaigns: React.FC = () => {
     { id: 'lives-shops', label: 'Live Shops' },
     { id: 'search-influencers', label: 'Search Influencers' },
   ] as const;
+
+  // Simulate loading
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Direction logic for sliding tabs
   const getDirection = (): SlideDirection => {
@@ -186,17 +196,35 @@ export const Campaigns: React.FC = () => {
       });
 
   // Campaigns List Component (defined inside to access state)
-  const CampaignsList = () => (
+  const CampaignsList = () => {
+    if (isLoading) {
+      return (
+        <>
+          <MetricsGridSkeleton />
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+             <div className="h-10 w-full md:w-96 bg-slate-100 rounded-xl animate-pulse"></div>
+             <div className="flex gap-3">
+                <div className="h-10 w-24 bg-slate-100 rounded-xl animate-pulse"></div>
+                <div className="h-10 w-24 bg-slate-100 rounded-xl animate-pulse"></div>
+                <div className="h-10 w-32 bg-slate-900/10 rounded-xl animate-pulse"></div>
+             </div>
+          </div>
+          <CampaignTableSkeleton />
+        </>
+      );
+    }
+
+    return (
     <>
       {/* Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 gap-x-4 gap-y-4">
         {/* Active Campaigns */}
-        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between hover:border-purple-100 transition-colors">
+        <div className="bg-white p-4 rounded-lg border border-slate-100 shadow-sm flex flex-col justify-between hover:border-purple-100 transition-colors">
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">
               Active Campaigns
             </p>
-            <div className="p-2 bg-purple-50 rounded-lg">
+            <div className="p-2 bg-purple-50 rounded-md">
               <Activity className="w-4 h-4 text-purple-600" />
             </div>
           </div>
@@ -213,12 +241,12 @@ export const Campaigns: React.FC = () => {
         </div>
 
         {/* Lives Reach */}
-        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between hover:border-purple-100 transition-colors">
+        <div className="bg-white p-4 rounded-lg border border-slate-100 shadow-sm flex flex-col justify-between hover:border-purple-100 transition-colors">
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">
               Lives Reach
             </p>
-            <div className="p-2 bg-blue-50 rounded-lg">
+            <div className="p-2 bg-blue-50 rounded-md">
               <Users className="w-4 h-4 text-blue-600" />
             </div>
           </div>
@@ -235,12 +263,12 @@ export const Campaigns: React.FC = () => {
         </div>
 
         {/* AVG ROI */}
-        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between hover:border-purple-100 transition-colors">
+        <div className="bg-white p-4 rounded-lg border border-slate-100 shadow-sm flex flex-col justify-between hover:border-purple-100 transition-colors">
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">
               AVG ROI
             </p>
-            <div className="p-2 bg-emerald-50 rounded-lg">
+            <div className="p-2 bg-emerald-50 rounded-md">
               <TrendingUp className="w-4 h-4 text-emerald-600" />
             </div>
           </div>
@@ -259,12 +287,12 @@ export const Campaigns: React.FC = () => {
         </div>
 
         {/* Average Ticket */}
-        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between hover:border-purple-100 transition-colors">
+        <div className="bg-white p-4 rounded-lg border border-slate-100 shadow-sm flex flex-col justify-between hover:border-purple-100 transition-colors">
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">
               Average Ticket
             </p>
-            <div className="p-2 bg-orange-50 rounded-lg">
+            <div className="p-2 bg-orange-50 rounded-md">
               <CreditCard className="w-4 h-4 text-orange-600" />
             </div>
           </div>
@@ -283,12 +311,12 @@ export const Campaigns: React.FC = () => {
       {/* Toolbar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         {/* Filter Tabs */}
-        <div className="flex items-center bg-slate-100/50 p-1 rounded-xl overflow-x-auto no-scrollbar">
+        <div className="flex items-center bg-slate-100/50 p-1 rounded-xs overflow-x-auto no-scrollbar">
           {filters.map(filter => (
             <button
               key={filter}
               onClick={() => setActiveFilter(filter)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+              className={`px-4 py-2 rounded-xs text-sm font-medium transition-all whitespace-nowrap ${
                 activeFilter === filter 
                   ? 'bg-white text-slate-900 shadow-sm' 
                   : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
@@ -301,17 +329,17 @@ export const Campaigns: React.FC = () => {
 
         {/* Actions */}
         <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors shadow-sm">
+          <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-md text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors shadow-sm">
             <Filter className="w-4 h-4" />
             Filter
           </button>
-          <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors shadow-sm">
+          <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-md text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors shadow-sm">
             <Download className="w-4 h-4" />
             Export
           </button>
           <button 
             onClick={() => navigate('/campaigns/create')}
-            className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-xl text-sm font-medium hover:bg-slate-800 transition-colors shadow-sm"
+            className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-md text-sm font-medium hover:bg-slate-800 transition-colors shadow-sm"
           >
             <Plus className="w-4 h-4" />
             New Campaign
@@ -320,7 +348,7 @@ export const Campaigns: React.FC = () => {
       </div>
 
       {/* Main Table Card */}
-      <div className="bg-white rounded-[1.5rem] border border-slate-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-lg border border-slate-100 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead className="bg-slate-50/50 border-b border-slate-100">
@@ -429,7 +457,7 @@ export const Campaigns: React.FC = () => {
 
                   {/* Action */}
                   <td className="px-6 py-5 text-right">
-                    <button className="text-slate-400 hover:text-slate-600 p-2 hover:bg-slate-50 rounded-lg transition-colors">
+                    <button className="text-slate-400 hover:text-slate-600 p-2 hover:bg-slate-50 rounded-md transition-colors">
                       <MoreHorizontal className="w-5 h-5" />
                     </button>
                   </td>
@@ -445,17 +473,18 @@ export const Campaigns: React.FC = () => {
             Showing <span className="font-medium">1-{filteredCampaigns.length}</span> of <span className="font-medium">{campaignsData.length}</span> campaigns
           </div>
           <div className="flex gap-2">
-            <button className="w-8 h-8 flex items-center justify-center bg-white border border-slate-200 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+            <button className="w-8 h-8 flex items-center justify-center bg-white border border-slate-200 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <button className="w-8 h-8 flex items-center justify-center bg-white border border-slate-200 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+            <button className="w-8 h-8 flex items-center justify-center bg-white border border-slate-200 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
         </div>
       </div>
     </>
-  );
+    );
+  };
 
   return (
     <div className="h-screen flex flex-col lg:flex-row overflow-hidden bg-white w-full">
@@ -481,12 +510,12 @@ export const Campaigns: React.FC = () => {
             </button>
             
             {/* Tab Navigation with Sliding Indicator */}
-            <div className="grid grid-cols-3 bg-violet-50/80 rounded-lg p-1 items-center relative">
+            <div className="grid grid-cols-3 bg-violet-50/80 rounded-xs p-1 items-center relative">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => handleTabChange(tab.id as CampaignsTab)}
-                  className={`relative z-10 px-4 py-2 text-center text-xs font-semibold transition-colors duration-300 whitespace-nowrap rounded-[6px] ${
+                  className={`relative z-10 px-4 py-2 text-center text-xs font-semibold transition-colors duration-300 whitespace-nowrap rounded-xs ${
                     activeTab === tab.id
                       ? 'text-slate-50'
                       : 'text-slate-500 hover:text-slate-900'
@@ -495,7 +524,7 @@ export const Campaigns: React.FC = () => {
                   {activeTab === tab.id && (
                     <motion.div
                       layoutId="campaigns-active-pill"
-                      className="absolute inset-0 bg-slate-900 rounded-[6px] shadow-sm"
+                      className="absolute inset-0 bg-slate-900 rounded-xs shadow-sm"
                       transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                       style={{ zIndex: -1 }} // Ensure it stays behind text (which is z-10) but above container
                     />

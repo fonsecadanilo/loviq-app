@@ -1,0 +1,898 @@
+<html lang="en"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loviq - Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&amp;family=Playfair+Display:wght@500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+    <style>
+      body {
+          font-family: 'Inter', sans-serif;
+          background-color: #ffffff;
+      }
+      .font-serif {
+          font-family: 'Playfair Display', serif;
+      }
+      .font-mono {
+          font-family: 'JetBrains Mono', monospace;
+      }
+      ::-webkit-scrollbar {
+          width: 6px;
+      }
+      ::-webkit-scrollbar-track {
+          background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+          background-color: #E2E8F0;
+          border-radius: 20px;
+      }
+      .hide-scroll::-webkit-scrollbar {
+          display: none;
+      }
+    </style>
+  <link id="all-fonts-link-font-geist" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&amp;display=swap"><style id="all-fonts-style-font-geist">.font-geist { font-family: 'Geist', sans-serif !important; }</style><link id="all-fonts-link-font-roboto" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&amp;display=swap"><style id="all-fonts-style-font-roboto">.font-roboto { font-family: 'Roboto', sans-serif !important; }</style><link id="all-fonts-link-font-montserrat" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&amp;display=swap"><style id="all-fonts-style-font-montserrat">.font-montserrat { font-family: 'Montserrat', sans-serif !important; }</style><link id="all-fonts-link-font-poppins" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&amp;display=swap"><style id="all-fonts-style-font-poppins">.font-poppins { font-family: 'Poppins', sans-serif !important; }</style><link id="all-fonts-link-font-playfair" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;900&amp;display=swap"><style id="all-fonts-style-font-playfair">.font-playfair { font-family: 'Playfair Display', serif !important; }</style><link id="all-fonts-link-font-instrument-serif" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:wght@400;500;600;700&amp;display=swap"><style id="all-fonts-style-font-instrument-serif">.font-instrument-serif { font-family: 'Instrument Serif', serif !important; }</style><link id="all-fonts-link-font-merriweather" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700;900&amp;display=swap"><style id="all-fonts-style-font-merriweather">.font-merriweather { font-family: 'Merriweather', serif !important; }</style><link id="all-fonts-link-font-bricolage" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@300;400;500;600;700&amp;display=swap"><style id="all-fonts-style-font-bricolage">.font-bricolage { font-family: 'Bricolage Grotesque', sans-serif !important; }</style><link id="all-fonts-link-font-jakarta" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&amp;display=swap"><style id="all-fonts-style-font-jakarta">.font-jakarta { font-family: 'Plus Jakarta Sans', sans-serif !important; }</style><link id="all-fonts-link-font-manrope" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&amp;display=swap"><style id="all-fonts-style-font-manrope">.font-manrope { font-family: 'Manrope', sans-serif !important; }</style><link id="all-fonts-link-font-space-grotesk" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap"><style id="all-fonts-style-font-space-grotesk">.font-space-grotesk { font-family: 'Space Grotesk', sans-serif !important; }</style><link id="all-fonts-link-font-work-sans" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700;800&amp;display=swap"><style id="all-fonts-style-font-work-sans">.font-work-sans { font-family: 'Work Sans', sans-serif !important; }</style><link id="all-fonts-link-font-pt-serif" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=PT+Serif:wght@400;700&amp;display=swap"><style id="all-fonts-style-font-pt-serif">.font-pt-serif { font-family: 'PT Serif', serif !important; }</style><link id="all-fonts-link-font-geist-mono" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@300;400;500;600;700&amp;display=swap"><style id="all-fonts-style-font-geist-mono">.font-geist-mono { font-family: 'Geist Mono', monospace !important; }</style><link id="all-fonts-link-font-space-mono" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&amp;display=swap"><style id="all-fonts-style-font-space-mono">.font-space-mono { font-family: 'Space Mono', monospace !important; }</style><link id="all-fonts-link-font-quicksand" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&amp;display=swap"><style id="all-fonts-style-font-quicksand">.font-quicksand { font-family: 'Quicksand', sans-serif !important; }</style><link id="all-fonts-link-font-nunito" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700;800&amp;display=swap"><style id="all-fonts-style-font-nunito">.font-nunito { font-family: 'Nunito', sans-serif !important; }</style></head>
+  <body class="antialiased min-h-screen flex text-slate-600 bg-white">
+    <!-- Main App Container -->
+    <div class="h-screen flex flex-col lg:flex-row overflow-hidden bg-white w-full">
+      <!-- Sidebar -->
+      <aside class="lg:w-72 flex flex-col flex-shrink-0 hidden lg:flex transition-all duration-500 cubic-bezier(0.25, 1, 0.5, 1) z-20 overflow-hidden bg-white w-full h-full border-slate-50 border-r relative">
+        <!-- Header: Logo & Toggle -->
+        <div class="sidebar-header flex min-h-[64px] transition-all duration-300 pt-2 pr-8 pb-2 pl-8 items-center justify-between">
+          <h1 class="logo-text text-3xl font-medium text-slate-900 tracking-tight font-serif whitespace-nowrap origin-left transition-all duration-300">
+            Loviq.
+          </h1>
+
+          <button onclick="toggleSidebar(this)" class="toggle-btn p-2 rounded-lg text-slate-400 hover:text-[#1e293b] hover:bg-slate-50 transition-colors focus:outline-none opacity-100" title="Collapse Sidebar">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-panel-left-close">
+              <rect width="18" height="18" x="3" y="3" rx="2" class=""></rect>
+              <path d="M9 3v18"></path>
+              <path d="m16 15-3-3 3-3"></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Navigation Wrapper -->
+        <nav class="flex-1 flex flex-col overflow-y-auto overflow-x-hidden transition-all duration-300 scrollbar-hide pt-4 pr-4 pb-4 pl-4 space-y-1">
+          <script class="">
+            window.toggleSidebar = function(btn) {
+                const aside = btn.closest('aside');
+                const nav = aside.querySelector('nav');
+                const header = aside.querySelector('.sidebar-header');
+                const logo = header.querySelector('.logo-text');
+                const upgradeCard = aside.querySelector('.upgrade-card');
+                const supportTitles = aside.querySelectorAll('.nav-section-title');
+
+                const isCollapsed = aside.getAttribute('data-collapsed') === 'true';
+
+                if (!isCollapsed) {
+                    // COLLAPSE ACTION
+                    aside.setAttribute('data-collapsed', 'true');
+                    aside.classList.remove('lg:w-72');
+                    aside.classList.add('lg:w-[88px]');
+
+                    // Adjust Header
+                    header.classList.remove('p-8', 'justify-between', 'flex-row');
+                    header.classList.add('p-4', 'flex-col-reverse', 'justify-center', 'gap-4');
+
+                    // Logo Transformation
+                    logo.setAttribute('data-full-text', logo.innerText);
+                    logo.innerText = 'L.';
+                    logo.classList.remove('text-3xl');
+                    logo.classList.add('text-2xl', 'text-center');
+
+                    // Toggle Button styling
+                    btn.classList.add('text-slate-600', 'bg-slate-50');
+
+                    // Hide elements
+                    if(upgradeCard) {
+                        upgradeCard.style.opacity = '0';
+                        setTimeout(() => upgradeCard.style.display = 'none', 200);
+                    }
+
+                    // Hide Titles
+                    supportTitles.forEach(title => {
+                        title.style.transition = 'none';
+                        title.style.opacity = '0';
+                        title.style.display = 'none'; // Ensure it takes no space
+                    });
+
+                    // Transform Links
+                    const transformLink = (link) => {
+                        if(!link.getAttribute('data-orig-class')) link.setAttribute('data-orig-class', link.className);
+                        const text = link.querySelector('.nav-text');
+                        const badge = link.querySelector('.nav-badge');
+                        if(text) text.style.display = 'none';
+                        if(badge) badge.style.display = 'none';
+
+                        // Base collapsed styles
+                        link.className = 'group flex items-center justify-center w-12 h-12 mx-auto rounded-xl transition-all duration-300 relative my-1';
+
+                        // Check if active (matches the gradient or a specific indicator)
+                        if(link.getAttribute('data-orig-class').includes('bg-gradient-to-r')) {
+                             // Apply ACTIVE style in collapsed mode (same gradient)
+                             link.classList.add('bg-gradient-to-r', 'from-[#FFF0F0]', 'via-[#F3F0FF]', 'to-[#FDF4FF]', 'text-slate-900', 'border', 'border-purple-200');
+                        } else {
+                             // Apply INACTIVE style
+                             link.classList.add('text-slate-500', 'hover:bg-slate-50', 'hover:text-slate-900');
+                        }
+                        link.setAttribute('title', text ? text.innerText : '');
+                    };
+
+                    const links = aside.querySelectorAll('nav a, .sidebar-footer a');
+                    links.forEach(transformLink);
+
+                    // Change Icon
+                    btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-panel-left-open"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><line x1="9" x2="9" y1="3" y2="21"/></svg>';
+
+                } else {
+                    // EXPAND ACTION
+                    aside.setAttribute('data-collapsed', 'false');
+                    aside.classList.remove('lg:w-[88px]');
+                    aside.classList.add('lg:w-72');
+
+                    // Restore Header
+                    header.classList.remove('p-4', 'flex-col-reverse', 'justify-center', 'gap-4');
+                    header.classList.add('p-8', 'justify-between', 'flex-row');
+
+                    // Restore Logo
+                    logo.innerText = logo.getAttribute('data-full-text') || 'Loviq.';
+                    logo.classList.remove('text-2xl', 'text-center');
+                    logo.classList.add('text-3xl');
+
+                    btn.classList.remove('text-slate-600', 'bg-slate-50');
+
+                    // Show elements
+                    if(upgradeCard) {
+                        upgradeCard.style.display = 'block';
+                        setTimeout(() => upgradeCard.style.opacity = '1', 50);
+                    }
+
+                    // Show Titles
+                    supportTitles.forEach(title => {
+                         title.style.display = 'block';
+                         title.style.transition = 'opacity 0.4s ease';
+                         setTimeout(() => title.style.opacity = '1', 400);
+                    });
+
+                    // Restore Links
+                    const restoreLink = (link) => {
+                        if(link.getAttribute('data-orig-class')) link.className = link.getAttribute('data-orig-class');
+                        const text = link.querySelector('.nav-text');
+                        const badge = link.querySelector('.nav-badge');
+                        if(text) text.style.display = '';
+                        if(badge) badge.style.display = '';
+                        link.removeAttribute('title');
+                    };
+
+                    const links = aside.querySelectorAll('nav a, .sidebar-footer a');
+                    links.forEach(restoreLink);
+
+                    // Restore Icon
+                    btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-panel-left-close"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/><path d="m16 15-3-3 3-3"/></svg>';
+                }
+            }
+          </script>
+
+          <!-- Top Section -->
+          <div class="min-h-[24px] pt-0 pb-4 pl-2">
+            <p class="nav-section-title uppercase transition-opacity duration-300 text-xs font-medium text-slate-400 tracking-wider">
+              Main Menu
+            </p>
+          </div>
+
+          <!-- 1. Dashboard -->
+          <a href="#" class="group flex items-center gap-3 transition-all text-sm font-medium text-slate-900 bg-gradient-to-r from-[#FFF0F0] via-[#F3F0FF] to-[#FDF4FF] rounded-xl pt-3 pr-4 pb-3 pl-4">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="layout-grid" class="lucide lucide-layout-grid flex-shrink-0 transition-colors w-[20px] h-[20px]"><rect width="7" height="7" x="3" y="3" rx="1"></rect><rect width="7" height="7" x="14" y="3" rx="1"></rect><rect width="7" height="7" x="14" y="14" rx="1"></rect><rect width="7" height="7" x="3" y="14" rx="1"></rect></svg>
+            <span class="nav-text whitespace-nowrap text-sm">Dashboard</span>
+          </a>
+
+          <!-- 2. Campaigns -->
+          <a href="#" class="group flex items-center gap-3 hover:text-slate-900 hover:bg-slate-50 transition-all text-sm font-medium text-slate-500 rounded-xl pt-3 pr-4 pb-3 pl-4">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="megaphone" class="lucide lucide-megaphone w-5 h-5 text-slate-400 group-hover:text-[#1e293b] transition-colors flex-shrink-0"><path d="M11 6a13 13 0 0 0 8.4-2.8A1 1 0 0 1 21 4v12a1 1 0 0 1-1.6.8A13 13 0 0 0 11 14H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z"></path><path d="M6 14a12 12 0 0 0 2.4 7.2 2 2 0 0 0 3.2-2.4A8 8 0 0 1 10 14"></path><path d="M8 6v8"></path></svg>
+            <span class="nav-text whitespace-nowrap">Campaigns</span>
+          </a>
+
+          <!-- 3. My Store -->
+          <a href="#" class="group flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-50 rounded-xl transition-all">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="store" class="lucide lucide-store w-5 h-5 text-slate-400 group-hover:text-[#1e293b] transition-colors flex-shrink-0"><path d="M15 21v-5a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v5"></path><path d="M17.774 10.31a1.12 1.12 0 0 0-1.549 0 2.5 2.5 0 0 1-3.451 0 1.12 1.12 0 0 0-1.548 0 2.5 2.5 0 0 1-3.452 0 1.12 1.12 0 0 0-1.549 0 2.5 2.5 0 0 1-3.77-3.248l2.889-4.184A2 2 0 0 1 7 2h10a2 2 0 0 1 1.653.873l2.895 4.192a2.5 2.5 0 0 1-3.774 3.244"></path><path d="M4 10.95V19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8.05"></path></svg>
+            <span class="nav-text whitespace-nowrap">My Store</span>
+          </a>
+
+          <!-- 4. Chat -->
+          <a href="#" class="group flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-50 rounded-xl transition-all">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="message-circle" class="lucide lucide-message-circle w-5 h-5 text-slate-400 group-hover:text-[#1e293b] transition-colors flex-shrink-0"><path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719"></path></svg>
+            <span class="nav-text whitespace-nowrap">Chat</span>
+            <span class="nav-badge ml-auto bg-red-50 text-red-500 py-0.5 px-2 rounded-full text-xs font-semibold">
+              2
+            </span>
+          </a>
+
+          <!-- Spacer to push content down -->
+
+          <!-- Upgrade Card -->
+
+          <!-- Support Section (Moved Below Card) -->
+        </nav>
+        <div class="sidebar-footer flex-shrink-0 flex flex-col px-4 pb-4 space-y-1 overflow-hidden">
+          <div class="upgrade-card transition-opacity duration-300 pt-0 pb-6">
+            <div class="overflow-hidden group bg-gradient-to-br from-[#FFF0F0] via-[#F3F0FF] to-[#FDF4FF] rounded-2xl pt-6 pr-6 pb-6 pl-6 relative">
+              <div class="relative z-10">
+                <h3 class="font-serif text-xl font-medium text-slate-900 mb-2">
+                  Loviq Pro
+                </h3>
+                <p class="text-xs text-slate-500 leading-relaxed mb-4">
+                  Unlock unlimited access to top influencers and advanced
+                  analytics.
+                </p>
+                <button class="w-full bg-slate-900 text-white text-xs font-medium py-3 rounded-lg shadow-lg shadow-slate-200 hover:shadow-xl hover:bg-slate-800 transition-all flex items-center justify-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="sparkles" class="lucide lucide-sparkles w-3 h-3"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"></path><path d="M20 2v4"></path><path d="M22 4h-4"></path><circle cx="4" cy="20" r="2"></circle></svg>
+                  View Plans
+                </button>
+              </div>
+              <div class="absolute -bottom-8 -right-8 w-24 h-24 bg-purple-200 rounded-full blur-2xl opacity-50"></div>
+            </div>
+          </div>
+
+          <div class="min-h-[24px] mb-2 pr-2 pl-2">
+            <p class="nav-section-title uppercase transition-opacity duration-300 text-xs font-medium text-slate-400 tracking-wider pl-2">
+              Support
+            </p>
+          </div>
+          <a href="#" class="group flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-50 rounded-xl transition-all">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-settings w-5 h-5 text-slate-400 group-hover:text-[#1e293b] transition-colors flex-shrink-0">
+              <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+            <span class="nav-text whitespace-nowrap">Settings</span>
+          </a>
+          <a href="#" class="group flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-50 rounded-xl transition-all">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-help w-5 h-5 text-slate-400 group-hover:text-[#1e293b] transition-colors flex-shrink-0">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+              <path d="M12 17h.01"></path>
+            </svg>
+            <span class="nav-text whitespace-nowrap">Help &amp; Support</span>
+          </a>
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="flex-1 bg-[#FAFAFA] flex flex-col h-full relative overflow-y-auto">
+        <!-- Page Header with Sub-navigation -->
+        <header class="flex z-30 pt-4 pr-8 pb-2 pl-8 relative backdrop-blur-xl items-center justify-between">
+          <div class="flex bg-violet-50/80 rounded-lg pt-2 pr-2 pb-2 pl-2 items-center">
+            <button class="transition-all text-xs font-semibold text-slate-50 bg-slate-900 rounded-[6px] pt-2 pr-8 pb-2 pl-8 shadow-sm">
+              Dashboard
+            </button>
+            <button class="px-6 py-1.5 text-xs font-medium text-slate-500 hover:text-slate-900 transition-all">
+              Wallet
+            </button>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <button class="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="bell" class="lucide lucide-bell w-4 h-4"><path d="M10.268 21a2 2 0 0 0 3.464 0"></path><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"></path></svg>
+            </button>
+            <div class="w-px bg-slate-200 h-6 my-1"></div>
+            <button class="flex hover:bg-slate-50 transition-all group rounded-xl pt-1 pr-1 pb-1 pl-1 gap-y-3 items-center gap-x-2">
+              <div class="text-right hidden md:block"></div>
+              <div class="relative flex-shrink-0">
+                <img src="https://i.pravatar.cc/150?u=a042581f4e29026024d" alt="Marcus" class="w-8 h-8 rounded-full bg-slate-100 object-cover ring-2 ring-white shadow-sm">
+                <span class="absolute bottom-0 right-0 w-2 h-2 bg-green-500 border-2 border-white rounded-full"></span>
+              </div>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down w-3 h-3 text-slate-400 group-hover:text-slate-600 transition-colors">
+                <path d="m6 9 6 6 6-6"></path>
+              </svg>
+            </button>
+          </div>
+        </header>
+
+        <!-- Scrollable Content -->
+        <div class="flex-1 pt-6 pr-8 pb-8 pl-8">
+          <!-- Quick Welcome + Date -->
+
+          <!-- SECTION 1: Metrics Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 gap-x-4 gap-y-4">
+            <!-- Sales -->
+            <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between hover:border-purple-100 transition-colors">
+              <div class="flex items-center justify-between mb-2">
+                <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">
+                  Total Sales
+                </p>
+                <div class="p-2 bg-purple-50 rounded-lg">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="dollar-sign" class="lucide lucide-dollar-sign w-4 h-4 text-purple-600"><line x1="12" x2="12" y1="2" y2="22"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                </div>
+              </div>
+              <div class="">
+                <h3 class="text-xl font-semibold text-slate-900 tracking-tight">
+                  $124,500
+                </h3>
+                <div class="flex items-center gap-1 mt-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="trending-up" class="lucide lucide-trending-up w-3 h-3 text-green-500"><path d="M16 7h6v6"></path><path d="m22 7-8.5 8.5-5-5L2 17"></path></svg>
+                  <span class="text-xs font-medium text-green-500">+12.5%</span>
+                  <span class="text-xs text-slate-400 ml-1">vs last month</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- AOV -->
+            <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between hover:border-purple-100 transition-colors">
+              <div class="flex items-center justify-between mb-2">
+                <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">
+                  Avg. Order
+                </p>
+                <div class="p-2 bg-blue-50 rounded-lg">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="credit-card" class="lucide lucide-credit-card w-4 h-4 text-blue-600"><rect width="20" height="14" x="2" y="5" rx="2"></rect><line x1="2" x2="22" y1="10" y2="10"></line></svg>
+                </div>
+              </div>
+              <div class="">
+                <h3 class="text-xl font-semibold text-slate-900 tracking-tight">
+                  $85.40
+                </h3>
+                <div class="flex items-center gap-1 mt-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="minus" class="lucide lucide-minus w-3 h-3 text-slate-400"><path d="M5 12h14"></path></svg>
+                  <span class="text-xs font-medium text-slate-500">0.8%</span>
+                  <span class="text-xs text-slate-400 ml-1">stable</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Views -->
+            <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between hover:border-purple-100 transition-colors">
+              <div class="flex items-center justify-between mb-2">
+                <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">
+                  Total Views
+                </p>
+                <div class="p-2 bg-orange-50 rounded-lg">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="eye" class="lucide lucide-eye w-4 h-4 text-orange-600"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                </div>
+              </div>
+              <div class="">
+                <h3 class="text-xl font-semibold text-slate-900 tracking-tight">
+                  1.2M
+                </h3>
+                <div class="flex items-center gap-1 mt-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="trending-up" class="lucide lucide-trending-up w-3 h-3 text-green-500"><path d="M16 7h6v6"></path><path d="m22 7-8.5 8.5-5-5L2 17"></path></svg>
+                  <span class="text-xs font-medium text-green-500">+24%</span>
+                  <span class="text-xs text-slate-400 ml-1">new audiences</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Conversion -->
+            <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between hover:border-purple-100 transition-colors">
+              <div class="flex items-center justify-between mb-2">
+                <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">
+                  Conversion
+                </p>
+                <div class="p-2 bg-emerald-50 rounded-lg">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="percent" class="lucide lucide-percent w-4 h-4 text-emerald-600"><line x1="19" x2="5" y1="5" y2="19"></line><circle cx="6.5" cy="6.5" r="2.5"></circle><circle cx="17.5" cy="17.5" r="2.5"></circle></svg>
+                </div>
+              </div>
+              <div class="">
+                <h3 class="text-xl font-semibold text-slate-900 tracking-tight">
+                  3.2%
+                </h3>
+                <div class="flex items-center gap-1 mt-1">
+                  <span class="text-xs text-slate-400">Clicks to Order</span>
+                  <span class="w-1 h-1 rounded-full bg-slate-300 mx-1"></span>
+                  <span class="text-xs text-purple-600 font-medium">
+                    Top 5%
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SECTION 2: Live & Recent Orders -->
+          <div class="flex flex-col xl:flex-row gap-6 mb-8">
+            <!-- LIVE NOW CARD (Tall / Portrait with Navigation) -->
+            <div class="w-full xl:w-[360px] h-[520px] flex-shrink-0 relative group rounded-[1.5rem] overflow-hidden shadow-2xl shadow-purple-900/10 ring-4 ring-white border border-slate-100">
+              <!-- Navigation Indicators (Stories Style) -->
+              <div class="absolute top-3 left-3 right-3 z-30 flex gap-1.5">
+                <div class="h-1 flex-1 bg-white/90 rounded-full shadow-sm"></div>
+                <div class="h-1 flex-1 bg-white/30 rounded-full backdrop-blur-sm"></div>
+                <div class="h-1 flex-1 bg-white/30 rounded-full backdrop-blur-sm"></div>
+                <div class="h-1 flex-1 bg-white/30 rounded-full backdrop-blur-sm"></div>
+              </div>
+
+              <!-- Hover Navigation Arrows -->
+              <button class="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white/20 border border-white/10">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="chevron-left" class="lucide lucide-chevron-left w-5 h-5"><path d="m15 18-6-6 6-6"></path></svg>
+              </button>
+              <button class="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white/20 border border-white/10">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="chevron-right" class="lucide lucide-chevron-right w-5 h-5"><path d="m9 18 6-6-6-6"></path></svg>
+              </button>
+
+              <!-- Background Image -->
+              <img src="https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?q=80&amp;w=1000&amp;auto=format&amp;fit=crop" class="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" alt="Live Shopping">
+
+              <!-- Overlay Gradient -->
+              <div class="bg-gradient-to-b from-black/40 via-transparent to-black/80 absolute top-0 right-0 bottom-0 left-0"></div>
+
+              <!-- Top Controls -->
+              <div class="absolute top-8 left-5 right-5 flex justify-between items-start">
+                <div class="flex items-center gap-2">
+                  <span class="flex items-center gap-1.5 bg-red-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm animate-pulse border border-red-500/50">
+                    <span class="w-1.5 h-1.5 bg-white rounded-full"></span>
+                    LIVE
+                  </span>
+                  <div class="bg-black/40 backdrop-blur-xl text-white text-[10px] font-medium px-2.5 py-1 rounded-full flex items-center gap-1.5 border border-white/10 shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="users" class="lucide lucide-users w-3 h-3"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><path d="M16 3.128a4 4 0 0 1 0 7.744"></path><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><circle cx="9" cy="7" r="4"></circle></svg>
+                    12.4k
+                  </div>
+                </div>
+              </div>
+
+              <!-- Bottom Info -->
+              <div class="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black via-black/70 to-transparent">
+                <div class="flex items-center gap-2 mb-2">
+                  <img src="https://i.pravatar.cc/150?u=a042581f4e29026024d" class="w-6 h-6 rounded-full border border-white/50" alt="Host">
+                  <span class="text-white/80 text-xs font-medium">
+                    with Sarah J.
+                  </span>
+                </div>
+                <h3 class="text-white font-semibold text-lg leading-snug mb-4">
+                  Summer Collection Launch Event
+                </h3>
+
+                <!-- Featured Product Mini Card -->
+                <div class="flex items-center gap-3 bg-white/10 backdrop-blur-xl p-2.5 rounded-xl border border-white/20 shadow-lg">
+                  <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&amp;w=1000&amp;auto=format&amp;fit=crop" class="w-10 h-10 rounded-lg bg-white object-cover" alt="Product">
+                  <div class="flex-1 min-w-0">
+                    <p class="text-xs font-medium truncate text-white">
+                      Floral Silk Dress
+                    </p>
+                    <p class="text-[11px] text-white/70 font-medium">$129.00</p>
+                  </div>
+                  <button class="w-8 h-8 flex items-center justify-center bg-white text-slate-900 rounded-lg hover:bg-slate-200 transition-colors shadow-md">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="shopping-bag" class="lucide lucide-shopping-bag w-4 h-4"><path d="M16 10a4 4 0 0 1-8 0"></path><path d="M3.103 6.034h17.794"></path><path d="M3.4 5.467a2 2 0 0 0-.4 1.2V20a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6.667a2 2 0 0 0-.4-1.2l-2-2.667A2 2 0 0 0 17 2H7a2 2 0 0 0-1.6.8z"></path></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- RECENT ORDERS LIST -->
+            <div class="flex-1 bg-white rounded-[1.5rem] border border-slate-100 shadow-sm flex flex-col h-[520px] overflow-hidden">
+              <div class="flex border-slate-50 border-b pt-6 pr-6 pb-6 pl-6 items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center text-green-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="shopping-cart" class="lucide lucide-shopping-cart w-4 h-4"><circle cx="8" cy="21" r="1"></circle><circle cx="19" cy="21" r="1"></circle><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path></svg>
+                  </div>
+                  <h3 class="font-semibold text-slate-900">Recent Orders</h3>
+                </div>
+                <button class="text-xs font-medium text-slate-500 hover:text-slate-900">
+                  Real-time update
+                </button>
+              </div>
+
+              <div class="flex-1 overflow-y-auto">
+                <table class="w-full text-left border-collapse">
+                  <thead class="bg-slate-50 sticky top-0 z-10">
+                    <tr class="">
+                      <th class="text-[10px] uppercase font-semibold text-slate-400 tracking-wider pt-3 pr-6 pb-3 pl-6">
+                        Order ID
+                      </th>
+                      <th class="px-6 py-3 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                        Source
+                      </th>
+                      <th class="px-6 py-3 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                        Products
+                      </th>
+                      <th class="px-6 py-3 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                        Date
+                      </th>
+                      <th class="px-6 py-3 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th class="px-6 py-3 text-[10px] font-semibold text-slate-400 uppercase tracking-wider text-right">
+                        Value
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-50">
+                    <!-- Order 1 -->
+                    <tr class="hover:bg-slate-50/50 transition-colors group">
+                      <td class="pt-4 pr-6 pb-4 pl-6">
+                        <span class="font-mono text-xs font-normal text-slate-600 whitespace-nowrap">
+                          #ORD-9281
+                        </span>
+                      </td>
+                      <td class="px-6 py-4">
+                        <div class="flex items-center gap-1.5">
+                          <span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+                          <span class="text-xs text-slate-600 font-medium truncate max-w-[80px] block">
+                            Summer Launch
+                          </span>
+                        </div>
+                      </td>
+                      <td class="px-6 py-4">
+                        <div class="flex items-center gap-2">
+                          <div class="flex -space-x-2">
+                            <img src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&amp;fit=crop&amp;w=64&amp;h=64" alt="Product" class="w-6 h-6 rounded-full border border-white object-cover bg-slate-100">
+                            <img src="https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&amp;fit=crop&amp;w=64&amp;h=64" alt="Product" class="w-6 h-6 rounded-full border border-white object-cover bg-slate-100">
+                          </div>
+                          <span class="text-xs text-slate-400">+1</span>
+                        </div>
+                      </td>
+                      <td class="px-6 py-4 text-xs text-slate-500">
+                        2 min ago
+                      </td>
+                      <td class="px-6 py-4">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-green-50 text-green-700">
+                          Paid
+                        </span>
+                      </td>
+                      <td class="px-6 py-4 text-right">
+                        <span class="text-sm font-semibold text-slate-900">
+                          $245.00
+                        </span>
+                      </td>
+                    </tr>
+
+                    <!-- Order 2 -->
+                    <tr class="hover:bg-slate-50/50 transition-colors group">
+                      <td class="px-6 py-4">
+                        <span class="font-mono text-xs font-medium text-slate-600">
+                          #ORD-9280
+                        </span>
+                      </td>
+                      <td class="px-6 py-4">
+                        <div class="flex items-center gap-1.5">
+                          <span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+                          <span class="text-xs text-slate-600 font-medium truncate max-w-[80px] block">
+                            Summer Launch
+                          </span>
+                        </div>
+                      </td>
+                      <td class="px-6 py-4">
+                        <div class="flex items-center gap-2">
+                          <div class="flex -space-x-2">
+                            <img src="https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&amp;fit=crop&amp;w=64&amp;h=64" alt="Product" class="w-6 h-6 rounded-full border border-white object-cover bg-slate-100">
+                          </div>
+                        </div>
+                      </td>
+                      <td class="px-6 py-4 text-xs text-slate-500">
+                        5 min ago
+                      </td>
+                      <td class="px-6 py-4">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-green-50 text-green-700">
+                          Paid
+                        </span>
+                      </td>
+                      <td class="px-6 py-4 text-right">
+                        <span class="text-sm font-semibold text-slate-900">
+                          $129.00
+                        </span>
+                      </td>
+                    </tr>
+
+                    <!-- Order 3 -->
+                    <tr class="hover:bg-slate-50/50 transition-colors group">
+                      <td class="px-6 py-4">
+                        <span class="font-mono text-xs font-medium text-slate-600">
+                          #ORD-9279
+                        </span>
+                      </td>
+                      <td class="px-6 py-4">
+                        <div class="flex items-center gap-1.5">
+                          <span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
+                          <span class="text-xs text-slate-500 truncate max-w-[80px] block">
+                            Replay: Morning...
+                          </span>
+                        </div>
+                      </td>
+                      <td class="px-6 py-4">
+                        <div class="flex items-center gap-2">
+                          <div class="flex -space-x-2">
+                            <img src="https://images.unsplash.com/photo-1511499767150-a48a237f0083?auto=format&amp;fit=crop&amp;w=64&amp;h=64" alt="Product" class="w-6 h-6 rounded-full border border-white object-cover bg-slate-100">
+                            <img src="https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&amp;fit=crop&amp;w=64&amp;h=64" alt="Product" class="w-6 h-6 rounded-full border border-white object-cover bg-slate-100">
+                          </div>
+                        </div>
+                      </td>
+                      <td class="px-6 py-4 text-xs text-slate-500">
+                        12 min ago
+                      </td>
+                      <td class="px-6 py-4">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-yellow-50 text-yellow-700">
+                          Processing
+                        </span>
+                      </td>
+                      <td class="px-6 py-4 text-right">
+                        <span class="text-sm font-semibold text-slate-900">
+                          $340.50
+                        </span>
+                      </td>
+                    </tr>
+
+                    <!-- Order 4 -->
+                    <tr class="hover:bg-slate-50/50 transition-colors group">
+                      <td class="px-6 py-4">
+                        <span class="font-mono text-xs font-medium text-slate-600">
+                          #ORD-9278
+                        </span>
+                      </td>
+                      <td class="px-6 py-4">
+                        <div class="flex items-center gap-1.5">
+                          <span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+                          <span class="text-xs text-slate-600 font-medium truncate max-w-[80px] block">
+                            Summer Launch
+                          </span>
+                        </div>
+                      </td>
+                      <td class="px-6 py-4">
+                        <div class="flex items-center gap-2">
+                          <div class="flex -space-x-2">
+                            <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&amp;fit=crop&amp;w=64&amp;h=64" alt="Product" class="w-6 h-6 rounded-full border border-white object-cover bg-slate-100">
+                          </div>
+                        </div>
+                      </td>
+                      <td class="px-6 py-4 text-xs text-slate-500">
+                        18 min ago
+                      </td>
+                      <td class="px-6 py-4">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-green-50 text-green-700">
+                          Paid
+                        </span>
+                      </td>
+                      <td class="px-6 py-4 text-right">
+                        <span class="text-sm font-semibold text-slate-900">
+                          $89.90
+                        </span>
+                      </td>
+                    </tr>
+                    <!-- Order 5 -->
+                    <tr class="hover:bg-slate-50/50 transition-colors group">
+                      <td class="px-6 py-4">
+                        <span class="font-mono text-xs font-medium text-slate-600">
+                          #ORD-9277
+                        </span>
+                      </td>
+                      <td class="px-6 py-4">
+                        <div class="flex items-center gap-1.5">
+                          <span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
+                          <span class="text-xs text-slate-500 truncate max-w-[80px] block">
+                            Direct Store
+                          </span>
+                        </div>
+                      </td>
+                      <td class="px-6 py-4">
+                        <div class="flex items-center gap-2">
+                          <div class="flex -space-x-2">
+                            <img src="https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&amp;fit=crop&amp;w=64&amp;h=64" alt="Product" class="w-6 h-6 rounded-full border border-white object-cover bg-slate-100">
+                            <img src="https://images.unsplash.com/photo-1520903920243-00d872a2d1c9?auto=format&amp;fit=crop&amp;w=64&amp;h=64" alt="Product" class="w-6 h-6 rounded-full border border-white object-cover bg-slate-100">
+                            <img src="https://images.unsplash.com/photo-1542272454315-4c01d7abdf4a?auto=format&amp;fit=crop&amp;w=64&amp;h=64" alt="Product" class="w-6 h-6 rounded-full border border-white object-cover bg-slate-100">
+                          </div>
+                        </div>
+                      </td>
+                      <td class="px-6 py-4 text-xs text-slate-500">
+                        24 min ago
+                      </td>
+                      <td class="px-6 py-4">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-green-50 text-green-700">
+                          Paid
+                        </span>
+                      </td>
+                      <td class="px-6 py-4 text-right">
+                        <span class="text-sm font-semibold text-slate-900">
+                          $412.00
+                        </span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- CTA Footer -->
+              <div class="p-4 border-t border-slate-50 bg-slate-50/50 flex justify-center">
+                <button class="text-xs font-semibold text-purple-600 hover:text-purple-700 flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-purple-50 transition-colors">
+                  View all orders
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="arrow-right" class="lucide lucide-arrow-right w-3.5 h-3.5"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- COMPACT QUICK ACTIONS -->
+
+          <!-- Campaigns Section -->
+          <div class="">
+            <div class="flex items-center justify-between mb-6">
+              <div class="flex items-center gap-4">
+                <h3 class="text-base font-medium text-slate-900">
+                  Active Campaigns
+                </h3>
+                <span class="bg-slate-100 text-slate-500 text-[10px] font-semibold px-2 py-0.5 rounded-full">
+                  3
+                </span>
+              </div>
+
+              <!-- Filters -->
+              <div class="flex items-center gap-2">
+                <button class="flex hover:bg-slate-50 transition-colors text-xs font-medium text-slate-600 bg-white border-slate-200 border rounded-lg pt-2 pr-3 pb-2 pl-3 gap-x-2 gap-y-2 items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="filter" class="lucide lucide-filter w-3.5 h-3.5"><path d="M10 20a1 1 0 0 0 .553.895l2 1A1 1 0 0 0 14 21v-7a2 2 0 0 1 .517-1.341L21.74 4.67A1 1 0 0 0 21 3H3a1 1 0 0 0-.742 1.67l7.225 7.989A2 2 0 0 1 10 14z"></path></svg>
+                  Filter
+                </button>
+                <button class="flex gap-2 hover:bg-slate-50 transition-colors text-xs font-medium text-slate-600 bg-white border-slate-200 border rounded-lg pt-2 pr-3 pb-2 pl-3 gap-x-2 gap-y-2 items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="arrow-up-down" class="lucide lucide-arrow-up-down w-3.5 h-3.5"><path d="m21 16-4 4-4-4"></path><path d="M17 20V4"></path><path d="m3 8 4-4 4 4"></path><path d="M7 4v16"></path></svg>
+                  Sort
+                </button>
+                <button class="flex hover:bg-slate-800 transition-colors text-xs font-medium text-white bg-slate-900 rounded-lg pt-2 pr-3.5 pb-2 pl-3.5 shadow-sm gap-x-2 gap-y-2 items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="plus" class="lucide lucide-plus w-3.5 h-3.5"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
+                  Create Campaign
+                </button>
+              </div>
+            </div>
+
+            <!-- List Container -->
+            <div class="space-y-3">
+              <!-- Campaign Item 1 -->
+              <div class="group bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-md hover:border-purple-100 transition-all cursor-pointer">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-3 mb-1">
+                      <h4 class="text-sm font-semibold text-slate-900 truncate">
+                        Summer Collection Drop
+                      </h4>
+                      <div class="flex -space-x-2">
+                        <img class="w-6 h-6 rounded-full border-2 border-white" src="https://i.pravatar.cc/150?u=1" alt="">
+                        <img class="w-6 h-6 rounded-full border-2 border-white" src="https://i.pravatar.cc/150?u=2" alt="">
+                      </div>
+                    </div>
+                    <p class="text-xs text-slate-400">
+                      Live Shopping • Women's Fashion
+                    </p>
+                  </div>
+
+                  <div class="flex items-center gap-6 md:gap-10">
+                    <div class="flex items-center gap-2 min-w-[100px]">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="package" class="lucide lucide-package w-3.5 h-3.5 text-slate-400"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path><path d="M12 22V12"></path><polyline points="3.29 7 12 12 20.71 7"></polyline><path d="m7.5 4.27 9 5.15"></path></svg>
+                      <span class="text-xs text-slate-500">12 Products</span>
+                    </div>
+
+                    <div class="flex items-center gap-2 min-w-[120px]">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="clock" class="lucide lucide-clock w-3.5 h-3.5 text-slate-400"><path d="M12 6v6l4 2"></path><circle cx="12" cy="12" r="10"></circle></svg>
+                      <span class="text-xs text-slate-500">In 5 days</span>
+                    </div>
+
+                    <div class="min-w-[100px]">
+                      <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-purple-50 text-purple-700">
+                        Planning
+                      </span>
+                    </div>
+
+                    <div class="flex min-w-[140px] gap-x-3 gap-y-3 items-center">
+                      <div class="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div class="h-full bg-slate-900 w-[25%] rounded-full"></div>
+                      </div>
+                      <span class="text-xs font-medium text-slate-600">
+                        25%
+                      </span>
+                    </div>
+
+                    <button class="text-slate-300 hover:text-slate-600">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="more-horizontal" class="lucide lucide-more-horizontal w-5 h-5"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Campaign Item 2 -->
+              <div class="group bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-md hover:border-purple-100 transition-all cursor-pointer">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-3 mb-1">
+                      <h4 class="text-sm font-semibold text-slate-900 truncate">
+                        Early Black Friday
+                      </h4>
+                      <div class="flex -space-x-2">
+                        <img class="w-6 h-6 rounded-full border-2 border-white" src="https://i.pravatar.cc/150?u=4" alt="">
+                      </div>
+                    </div>
+                    <p class="text-xs text-slate-400">
+                      Recurring Partnership • Electronics
+                    </p>
+                  </div>
+
+                  <div class="flex items-center gap-6 md:gap-10">
+                    <div class="flex items-center gap-2 min-w-[100px]">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="package" class="lucide lucide-package w-3.5 h-3.5 text-slate-400"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path><path d="M12 22V12"></path><polyline points="3.29 7 12 12 20.71 7"></polyline><path d="m7.5 4.27 9 5.15"></path></svg>
+                      <span class="text-xs text-slate-500">45 Products</span>
+                    </div>
+
+                    <div class="flex items-center gap-2 min-w-[120px]">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="clock" class="lucide lucide-clock w-3.5 h-3.5 text-slate-400"><path d="M12 6v6l4 2"></path><circle cx="12" cy="12" r="10"></circle></svg>
+                      <span class="text-xs text-slate-500">Today, 7:00 PM</span>
+                    </div>
+
+                    <div class="min-w-[100px]">
+                      <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-green-50 text-green-700">
+                        Scheduled
+                      </span>
+                    </div>
+
+                    <div class="flex items-center gap-3 min-w-[140px]">
+                      <div class="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div class="h-full bg-slate-900 w-[90%] rounded-full"></div>
+                      </div>
+                      <span class="text-xs font-medium text-slate-600">
+                        90%
+                      </span>
+                    </div>
+
+                    <button class="text-slate-300 hover:text-slate-600">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="more-horizontal" class="lucide lucide-more-horizontal w-5 h-5"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-4 mt-8 mb-8 gap-x-4 gap-y-4">
+            <button class="bg-white p-3.5 rounded-xl border border-slate-100 shadow-sm hover:shadow-md hover:bg-orange-50/60 hover:border-orange-200 transition-all text-left group flex items-center gap-3">
+              <div class="w-10 h-10 rounded-lg bg-orange-50 flex items-center justify-center flex-shrink-0 group-hover:bg-orange-100 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="video" class="lucide lucide-video w-5 h-5 text-orange-500 transition-colors"><path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5"></path><rect x="2" y="6" width="14" height="12" rx="2"></rect></svg>
+              </div>
+              <div class="min-w-0">
+                <h4 class="text-sm font-medium text-slate-900 truncate">
+                  New Live Shop
+                </h4>
+                <p class="text-[10px] text-slate-400 truncate">
+                  Start setup wizard
+                </p>
+              </div>
+            </button>
+
+            <button class="bg-white p-3.5 rounded-xl border border-slate-100 shadow-sm hover:shadow-md hover:bg-purple-50/60 hover:border-purple-200 transition-all text-left group flex items-center gap-3">
+              <div class="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center flex-shrink-0 group-hover:bg-purple-100 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="search" class="lucide lucide-search w-5 h-5 text-purple-600 transition-colors"><path d="m21 21-4.34-4.34"></path><circle cx="11" cy="11" r="8"></circle></svg>
+              </div>
+              <div class="min-w-0">
+                <h4 class="text-sm font-medium text-slate-900 truncate">
+                  Find Influencer
+                </h4>
+                <p class="text-[10px] text-slate-400 truncate">
+                  Explore catalog
+                </p>
+              </div>
+            </button>
+
+            <button class="bg-white p-3.5 rounded-xl border border-slate-100 shadow-sm hover:shadow-md hover:bg-blue-50/60 hover:border-blue-200 transition-all text-left group flex items-center gap-3">
+              <div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-100 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="package-plus" class="lucide lucide-package-plus w-5 h-5 text-blue-500 transition-colors"><path d="M16 16h6"></path><path d="M19 13v6"></path><path d="M21 10V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l2-1.14"></path><path d="m7.5 4.27 9 5.15"></path><polyline points="3.29 7 12 12 20.71 7"></polyline><line x1="12" x2="12" y1="22" y2="12"></line></svg>
+              </div>
+              <div class="min-w-0">
+                <h4 class="text-sm font-medium text-slate-900 truncate">
+                  Import Products
+                </h4>
+                <p class="text-[10px] text-slate-400 truncate">
+                  Via integration
+                </p>
+              </div>
+            </button>
+
+            <button class="bg-white p-3.5 rounded-xl border border-slate-100 shadow-sm hover:shadow-md hover:bg-green-50/60 hover:border-green-200 transition-all text-left group flex items-center gap-3">
+              <div class="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center flex-shrink-0 group-hover:bg-green-100 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="bar-chart-2" class="lucide lucide-bar-chart-2 w-5 h-5 text-green-600 transition-colors"><path d="M5 21v-6"></path><path d="M12 21V3"></path><path d="M19 21V9"></path></svg>
+              </div>
+              <div class="min-w-0">
+                <h4 class="text-sm font-medium text-slate-900 truncate">
+                  Reports
+                </h4>
+                <p class="text-[10px] text-slate-400 truncate">
+                  Check performance
+                </p>
+              </div>
+            </button>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script class="">
+      lucide.createIcons();
+    </script>
+  
+</body></html>

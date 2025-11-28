@@ -1,157 +1,203 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
-  LayoutDashboard,
+  LayoutGrid,
   Megaphone,
-  Users,
-  Wallet,
+  Store,
   MessageCircle,
-  Plug,
-  LogOut,
-  X,
-  ChevronRight,
-  User,
-  CreditCard,
-  Package,
-  Store
+  Settings,
+  CircleHelp,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Sparkles
 } from 'lucide-react';
-import LoviqLogo from '../../assets/LogoOficialLoviq.svg';
 
 interface SidebarProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isCollapsed: boolean;
+  toggleCollapse: () => void;
+  mobileOpen: boolean;
+  setMobileOpen: (open: boolean) => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleCollapse, mobileOpen, setMobileOpen }) => {
   const location = useLocation();
-  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
-  const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  const navItems = [
+    { name: 'Dashboard', href: '/dashboard', icon: LayoutGrid, extraMatch: ['/wallet'] },
     { name: 'Campaigns', href: '/campaigns', icon: Megaphone },
-    { name: 'Orders & Products', href: '/orders', icon: Package },
-    { name: 'Influencers', href: '/influencers', icon: Users },
-    { name: 'Wallet', href: '/wallet', icon: Wallet },
-    { name: 'Chat', href: '/chat', icon: MessageCircle },
-    { name: 'Store Integration', href: '/integrations', icon: Store },
+    { name: 'My Store', href: '/store-integration', icon: Store },
+    { name: 'Chat', href: '/chat', icon: MessageCircle, badge: '2', badgeColor: 'bg-red-50 text-red-500' },
   ];
 
-  const isActive = (path: string) => {
-    return location.pathname === path;
+  const isActive = (path: string, extraMatch?: string[]) => {
+      if (location.pathname === path) return true;
+      if (path !== '/dashboard' && location.pathname.startsWith(path)) return true;
+      if (extraMatch && extraMatch.includes(location.pathname)) return true;
+      return false;
   };
+
+  const sidebarWidthClass = isCollapsed ? 'lg:w-[88px]' : 'lg:w-72';
+  // Header classes based on state
+  const headerPaddingClass = isCollapsed ? 'p-4 flex-col-reverse justify-center gap-4' : 'p-8 justify-between flex-row';
+
+  // Classes for elements that should only appear when sidebar is fully expanded
+  // Using opacity + visibility + delay so they fade in AFTER the width transition completes
+  const expandedOnlyClass = isCollapsed 
+    ? 'opacity-0 invisible max-h-0 overflow-hidden transition-all duration-200 ease-out' 
+    : 'opacity-100 visible max-h-[500px] transition-all duration-300 ease-in delay-300';
 
   return (
     <>
       {/* Mobile Overlay */}
-      {isOpen && (
+      {mobileOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm"
-          onClick={onClose}
+          onClick={() => setMobileOpen(false)}
         />
       )}
 
-      {/* Sidebar Container */}
-      <aside className={`
-        fixed top-0 left-0 z-50 h-screen
-        w-[280px] bg-white border-r border-[#E2E8F0]
-        transform transition-transform duration-300 ease-in-out
-        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-        lg:translate-x-0
-        flex flex-col flex-shrink-0
-      `}>
-
-        {/* Header */}
-        <div className="flex items-center justify-between h-16 px-4 border-b border-[#E2E8F0] flex-shrink-0">
-          <Link to="/dashboard" className="flex items-center gap-2 ml-2">
-            <img
-              src={LoviqLogo}
-              alt="Loviq Logo"
-              className="h-7 w-auto"
+      <aside
+        className={`
+            ${sidebarWidthClass}
+            flex flex-col flex-shrink-0
+            ${mobileOpen ? 'fixed inset-y-0 left-0 w-72 flex shadow-2xl' : 'hidden lg:flex'}
+            transition-all duration-500 cubic-bezier(0.25, 1, 0.5, 1)
+            z-20 overflow-hidden bg-white h-full border-slate-50 border-r relative
+        `}
+        data-collapsed={isCollapsed}
+      >
+        {/* Header: Logo & Toggle */}
+        <div className={`sidebar-header flex min-h-[64px] transition-all duration-300 items-center ${headerPaddingClass}`}>
+          <div className={`transition-all duration-300 ${isCollapsed ? 'w-6' : 'w-20'}`}>
+            <img 
+              src={isCollapsed ? "/LogoSimboloLoviqPreto.svg" : "/LogoLoviqPretaNova.svg"} 
+              alt="Loviq" 
+              className="w-full h-auto object-contain"
             />
-            <span className="px-1 py-0.5 text-[8px] font-bold bg-[#7D2AE8]/10 text-[#7D2AE8] rounded-full border border-[#7D2AE8]/20 tracking-wide">
-              BETA
-            </span>
-          </Link>
+          </div>
+
           <button
-            onClick={onClose}
-            className="lg:hidden p-2 rounded-md hover:bg-gray-100 flex-shrink-0"
+            onClick={toggleCollapse}
+            className={`toggle-btn p-2 rounded-lg text-slate-400 hover:text-[#1e293b] hover:bg-slate-50 transition-colors focus:outline-none opacity-100 ${isCollapsed ? 'text-slate-600 bg-slate-50' : ''}`}
+            title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
           >
-            <X className="w-5 h-5" />
+             {isCollapsed ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
           </button>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 p-3 space-y-1 overflow-y-auto min-h-0">
-          {navigation.map((item) => {
-            const IconComponent = item.icon;
+        {/* Navigation Wrapper */}
+        <nav className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden transition-all duration-300 scrollbar-hide pt-4 pr-4 pb-4 pl-4 space-y-1">
+          
+          {/* Top Section Title - Only visible when fully expanded */}
+          <div className={`min-h-0 pt-0 pb-4 pl-2 ${expandedOnlyClass}`}>
+            <p className="nav-section-title uppercase text-xs font-medium text-slate-400 tracking-wider whitespace-nowrap">
+              Main Menu
+            </p>
+          </div>
+
+          {navItems.map((item) => {
+            const active = isActive(item.href, item.extraMatch);
+            const Icon = item.icon;
+
+            if (isCollapsed) {
+                return (
+                     <Link
+                        key={item.name}
+                        to={item.href}
+                        title={item.name}
+                        className={`group flex items-center justify-center w-12 h-12 mx-auto rounded-xl transition-all duration-300 relative my-1 ${active ? 'bg-gradient-to-r from-[#FFF0F0] via-[#F3F0FF] to-[#FDF4FF] text-slate-900 border border-purple-200' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}
+                    >
+                        <Icon size={20} className="flex-shrink-0 transition-colors" />
+                    </Link>
+                )
+            }
+
             return (
               <Link
                 key={item.name}
                 to={item.href}
-                onClick={onClose}
-                className={`
-                  flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap
-                  ${isActive(item.href)
-                    ? 'bg-[#7D2AE8]/10 text-[#7D2AE8]'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                  }
-                `}
+                className={`group flex items-center gap-3 transition-all text-sm font-medium rounded-xl pt-3 pr-4 pb-3 pl-4 ${
+                  active
+                    ? 'text-slate-900 bg-gradient-to-r from-[#FFF0F0] via-[#F3F0FF] to-[#FDF4FF]'
+                    : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                }`}
               >
-                <IconComponent className="w-5 h-5 flex-shrink-0" />
-                <span className="truncate min-w-0">{item.name}</span>
+                <Icon
+                  size={20}
+                  className={`flex-shrink-0 transition-colors w-[20px] h-[20px] ${
+                    active ? '' : 'text-slate-400 group-hover:text-[#1e293b]'
+                  }`}
+                />
+                <span className="nav-text whitespace-nowrap text-sm">{item.name}</span>
+                {item.badge && (
+                    <span className={`nav-badge ml-auto py-0.5 px-2 rounded-full text-xs font-semibold ${item.badgeColor}`}>
+                    {item.badge}
+                    </span>
+                )}
               </Link>
             );
           })}
         </nav>
 
-        {/* Profile Section */}
-        <div className="border-t border-[#E2E8F0] p-3 flex-shrink-0 relative">
-          <button
-            onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm hover:bg-gray-100 transition-colors"
-          >
-            <div className="w-10 h-10 bg-gradient-to-br from-[#7D2AE8] to-[#8D3AEC] rounded-full flex items-center justify-center flex-shrink-0">
-              <User className="w-5 h-5 text-white" />
+        {/* Footer Section */}
+        <div className="sidebar-footer flex-shrink-0 flex flex-col px-4 pb-4 space-y-1 overflow-hidden">
+          
+          {/* Upgrade Card - Only visible when fully expanded */}
+          <div className={`upgrade-card pt-0 pb-6 ${expandedOnlyClass}`}>
+            <div className="overflow-hidden group bg-gradient-to-br from-[#FFF0F0] via-[#F3F0FF] to-[#FDF4FF] rounded-2xl pt-6 pr-6 pb-6 pl-6 relative">
+              <div className="relative z-10">
+                <h3 className="font-serif text-xl font-medium text-slate-900 mb-2">
+                  Loviq Pro
+                </h3>
+                <p className="text-xs text-slate-500 leading-relaxed mb-4">
+                  Unlock unlimited access to top influencers and advanced analytics.
+                </p>
+                <button className="w-full bg-slate-900 text-white text-xs font-medium py-3 rounded-lg shadow-lg shadow-slate-200 hover:shadow-xl hover:bg-slate-800 transition-all flex items-center justify-center gap-2">
+                  <Sparkles size={12} />
+                  View Plans
+                </button>
+              </div>
+              <div className="absolute -bottom-8 -right-8 w-24 h-24 bg-purple-200 rounded-full blur-2xl opacity-50"></div>
             </div>
-            <div className="flex-1 text-left min-w-0">
-              <p className="text-sm font-semibold text-gray-900 truncate">John Doe</p>
-              <p className="text-xs text-gray-600 truncate">john@example.com</p>
-            </div>
-            <ChevronRight className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform ${isProfileMenuOpen ? 'rotate-90' : ''}`} />
-          </button>
+          </div>
 
-          {/* Dropdown Menu */}
-          {isProfileMenuOpen && (
-            <div className="absolute bottom-full left-4 right-4 mb-2 bg-white border border-[#E2E8F0] rounded-lg shadow-lg py-2 z-50">
-              <Link
-                to="/integrations"
-                className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                onClick={onClose}
-              >
-                <User className="w-4 h-4" />
-                <span>My Profile</span>
-              </Link>
-              <Link
-                to="/wallet"
-                className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                onClick={onClose}
-              >
-                <CreditCard className="w-4 h-4" />
-                <span>Payment Settings</span>
-              </Link>
-              <div className="border-t border-[#E2E8F0] my-1"></div>
-              <button
-                className="flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors w-full text-left"
-                onClick={() => {
-                  // Handle logout
-                  console.log('Logout clicked');
-                }}
-              >
-                <LogOut className="w-4 h-4" />
-                <span>Sign Out</span>
-              </button>
-            </div>
-          )}
+          {/* Support Section Title - Only visible when fully expanded */}
+          <div className={`min-h-0 mb-2 pr-2 pl-2 ${expandedOnlyClass}`}>
+             <p className="nav-section-title uppercase text-xs font-medium text-slate-400 tracking-wider pl-2 whitespace-nowrap">
+              Support
+            </p>
+          </div>
+
+          {/* Support Links */}
+          {[
+              { name: 'Settings', href: '/settings', icon: Settings },
+              { name: 'Help & Support', href: '/support', icon: CircleHelp }
+          ].map((item) => {
+               const Icon = item.icon;
+               if (isCollapsed) {
+                    return (
+                        <Link
+                            key={item.name}
+                            to={item.href}
+                            title={item.name}
+                            className="group flex items-center justify-center w-12 h-12 mx-auto rounded-xl transition-all duration-300 relative my-1 text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                        >
+                            <Icon size={20} className="flex-shrink-0 transition-colors" />
+                        </Link>
+                    )
+               }
+               return (
+                <Link
+                    key={item.name}
+                    to={item.href}
+                    className="group flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-50 rounded-xl transition-all"
+                >
+                    <Icon size={20} className="w-5 h-5 text-slate-400 group-hover:text-[#1e293b] transition-colors flex-shrink-0" />
+                    <span className="nav-text whitespace-nowrap">{item.name}</span>
+                </Link>
+               )
+          })}
+
         </div>
       </aside>
     </>

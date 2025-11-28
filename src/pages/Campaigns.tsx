@@ -1,521 +1,548 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { 
+  Bell, 
+  ChevronDown, 
+  Menu, 
+  Plus, 
+  Filter, 
+  Download, 
+  MoreHorizontal, 
+  ChevronLeft, 
+  ChevronRight,
+  Instagram,
+  Youtube,
+  Globe,
+  Smartphone,
+  ShoppingBag,
+  Users,
+  TrendingUp,
+  CreditCard,
+  Activity,
+  Video
+} from 'lucide-react';
 import { Sidebar } from '../components/dashboard/Sidebar';
-import { Card, CardContent } from '../components/ui/Card';
-import { DollarSign, TrendingUp, Ticket, Plus, Search, ChevronDown, MoreVertical, Video, Package, X, FolderX, Inbox } from 'lucide-react';
+import { SlidingTabsTransition, SlideDirection } from '../components/dashboard/SlidingTabsTransition';
+import { useSidebar } from '../contexts/SidebarContext';
 
+// Mock Data Types
 interface Campaign {
   id: string;
   name: string;
-  status: 'Active' | 'Completed' | 'Pending';
-  products: string;
-  productIds: string[];
+  platform: 'Instagram' | 'YouTube' | 'TikTok' | 'Multi-platform';
+  livesCount: number;
+  productsCount: number;
+  status: 'Active' | 'Scheduled' | 'Draft' | 'Completed';
   influencers: string[];
-  lives: number;
-  sales: number;
-  revenue: string;
-  scheduledLives: number;
+  budget: number;
+  spent: number;
+  roi: number;
+  revenue: number;
 }
 
-interface Product {
-  id: string;
-  name: string;
-}
-
-const campaigns: Campaign[] = [
+// Mock Data
+const campaignsData: Campaign[] = [
   {
     id: '1',
-    name: 'Fall Collection Launch',
+    name: 'Summer Glow 2024',
+    platform: 'Instagram',
+    livesCount: 3,
+    productsCount: 12,
     status: 'Active',
-    products: '3 products',
-    productIds: ['prod-1', 'prod-2', 'prod-3'],
-    lives: 5,
-    sales: 127,
-    revenue: '$8,450',
-    scheduledLives: 3,
-    influencers: [
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuBpMz_cLwka22cjXHV7KiWVgu6tZyKSwUSthOgRpzPpep667j8Sju0aVeazxM2aeK-q1Yk_HGAygf9-bSWtPFiC5dJ5eFVhljjvcj4Py0S7jVFVwA48Tsi0uXmM47xHJCJKNJxzZscGV3HCpl9WkPTPN3C9XVxFRCulo3yWKLSnHJbEHpoz9visJnOqbhOwG9jt0-7zhx8Y2SofvWLebt0r4IiCw93qGKO3dBOV8TrxaZqSWOk9uPZ_j2EcPRJVxgsRyGI-eShN3_3v',
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuBytLbeKvZW_P67huebQW0bolAwVNpG38HJU3v2R8UnCTPDJaUB7zRTB0QmZqwtzblRvkdeu6AuEy59NISytAASWNVgDKnoei4qe3-zOUDPccP3vajwwtPUlr7pg3r4d0qey0DOaL3rrtx1b7lQrFB30BlLK-afp3enf9VHplT1F8R4wBUB2p8MrFkzye9LP_I-pxmiuPO-Ym2Haxgsfqd0AerVh-mdznJalUbEd2h9MRsu5pVd_9zsd_o4r8tqvIwfcIvsRXArqB0e',
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuCsR-fUax_dmokKp0NBUcCQb2BIDD6BFYMwn5d8AZO_NSLPUkvoLGU_oGOyBP-_YOhYhgI4H9wmEblbndwNFTasPunUq8jrVQzUSrZqeet-lj4QRTjInvX-d0_6D1FnigicPdPte_j2Te41CK24TNEYx9tKuTIQH2GqSlltoMOcU0mnfPI96GUA3F-5qL44pBw5PDTWGMRhaZSBgs-RJk7HhHnAdC7RKUzXIgVpfZZeVddGb0_KJYi5mZLgTWTdRooPtXUiUyKCAJce'
-    ]
+    influencers: ['https://i.pravatar.cc/150?u=1', 'https://i.pravatar.cc/150?u=2', 'https://i.pravatar.cc/150?u=3'],
+    budget: 15000,
+    spent: 12500,
+    roi: 420,
+    revenue: 52400
   },
   {
     id: '2',
-    name: 'New Facial Serum Review',
-    status: 'Completed',
-    products: '1 product',
-    productIds: ['prod-4'],
-    lives: 2,
-    sales: 89,
-    revenue: '$3,280',
-    scheduledLives: 0,
-    influencers: [
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuB4OzoUsM8iv_XzLHVOt8rF18brVM1rngYBHIhObkIMb1bb89mCrsUuQlFTKofxUwemkl981Vr_MUKu52WSylYKy-cUaxTUZ4O9QArnYdcQA1-VmDf8QkL2KXdQzBSwJGtrWEt2ilUNKJ31YMdgtLtI6Py85TMAFwtymIiqntgRZyXjaqPYM0bJxEEpEDK10bNea1RO5FoYSy9wT-0ANJiNdOVvuyN3z3fK4ZTdTMH8SfyIaQXP2rXNDKszqF2rWDD2T7ioTB7ss0Zf'
-    ]
+    name: 'Tech Review Series',
+    platform: 'YouTube',
+    livesCount: 1,
+    productsCount: 4,
+    status: 'Scheduled',
+    influencers: ['https://i.pravatar.cc/150?u=4'],
+    budget: 8000,
+    spent: 0,
+    roi: 0,
+    revenue: 0
   },
   {
     id: '3',
-    name: 'Beta Test New Feature',
-    status: 'Pending',
-    products: '2 products',
-    productIds: ['prod-2', 'prod-5'],
-    lives: 0,
-    sales: 0,
-    revenue: '$0',
-    scheduledLives: 5,
-    influencers: [
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuDwpkW04GqsSWPOyrKbTGAm3WwtAmgaBmNJLxqNS3UfeXpYP34-EHuNWI2bwDvhLJQ45T5XrQl298D7TRsBlM-smviDgteYyV04MUjtfIB404DWySlCQ31jKrOACsj5m22GAsKsIOn28pEtCx4nkXb4r4btAANYFTLVl6M4W15pyznOW_foH8EjTHHiRQPuaCv9XZitZvMncoASfCrGOEW28TYgpVwv4oEs9jfZgadrLjQ40ll-ky7mYAeG90dStZdXr5VnuKFPIlET',
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuC68_n5jcMZ97JLsLV9CE0NpE-CvCTXNnYWb3WAuGEEK3qjq-aZeqyz4dEf-6yvQS0NG_XykKwZxdRr8oVuE8iIgIQ98iwzPIRpx5cD9_6Q1ZxC4x2qZQ0I-iR6VPPKBFGmB38wtbu4IxCH9V7nsfkw6uW1L0Ej_8WlA7uf7KWLAns8efJNH50fZ2WlWf9MCNlwhBgTwZwW3eW_4x6ubxYYItzgaBWlGB3SETYFqMMvSD3c3cZIWFtB6gl8E5-Y2IdqKLZqFceDlM5N'
-    ]
+    name: 'Holiday Gift Guide',
+    platform: 'Multi-platform',
+    livesCount: 0,
+    productsCount: 24,
+    status: 'Draft',
+    influencers: [],
+    budget: 25000,
+    spent: 0,
+    roi: 0,
+    revenue: 0
+  },
+  {
+    id: '4',
+    name: 'Fitness Challenge',
+    platform: 'TikTok',
+    livesCount: 5,
+    productsCount: 3,
+    status: 'Completed',
+    influencers: ['https://i.pravatar.cc/150?u=5', 'https://i.pravatar.cc/150?u=6'],
+    budget: 5000,
+    spent: 5000,
+    roi: 210,
+    revenue: 10500
+  },
+  {
+    id: '5',
+    name: 'Autumn Essentials',
+    platform: 'Instagram',
+    livesCount: 2,
+    productsCount: 8,
+    status: 'Active',
+    influencers: ['https://i.pravatar.cc/150?u=7', 'https://i.pravatar.cc/150?u=8', 'https://i.pravatar.cc/150?u=9', 'https://i.pravatar.cc/150?u=10'],
+    budget: 12000,
+    spent: 8200,
+    roi: 185,
+    revenue: 23400
   }
 ];
 
-const availableProducts: Product[] = [
-  { id: 'prod-1', name: 'Winter Jacket' },
-  { id: 'prod-2', name: 'Running Shoes' },
-  { id: 'prod-3', name: 'Casual Shirt' },
-  { id: 'prod-4', name: 'Facial Serum Pro' },
-  { id: 'prod-5', name: 'Smart Watch' },
-  { id: 'prod-6', name: 'Yoga Mat' },
-  { id: 'prod-7', name: 'Protein Powder' },
-];
+type CampaignsTab = 'campaigns' | 'lives-shops' | 'search-influencers';
+
+const TAB_CONFIG: Record<CampaignsTab, { label: string; index: number }> = {
+  'campaigns': { label: 'Campaigns', index: 0 },
+  'lives-shops': { label: 'Live Shops', index: 1 },
+  'search-influencers': { label: 'Search Influencers', index: 2 },
+};
 
 export const Campaigns: React.FC = () => {
   const navigate = useNavigate();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('All');
-  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
-  const [productDropdownOpen, setProductDropdownOpen] = useState(false);
-  const [productSearchQuery, setProductSearchQuery] = useState('');
-  const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
-  const productDropdownRef = useRef<HTMLDivElement>(null);
-  const statusDropdownRef = useRef<HTMLDivElement>(null);
+  const { isCollapsed, toggleCollapse, mobileOpen, setMobileOpen } = useSidebar();
+  const [activeFilter, setActiveFilter] = useState('All');
+  
+  // Tab state
+  const [activeTab, setActiveTab] = useState<CampaignsTab>('campaigns');
+  const previousTabRef = useRef<CampaignsTab>(activeTab);
 
-  const stats = [
-    {
-      title: 'Sales last month',
-      value: '$12,435.20',
-      icon: DollarSign,
-      bgColor: 'bg-green-100',
-      iconColor: 'text-green-600'
-    },
-    {
-      title: 'Products sold last month',
-      value: '245',
-      icon: Package,
-      bgColor: 'bg-purple-100',
-      iconColor: 'text-[#7D2AE8]'
-    },
-    {
-      title: 'Average ticket',
-      value: '$189.50',
-      icon: Ticket,
-      bgColor: 'bg-orange-100',
-      iconColor: 'text-orange-600'
+  const filters = ['All', 'Active', 'Scheduled', 'Drafts', 'Completed'];
+
+  const tabs = [
+    { id: 'campaigns', label: 'Campaigns' },
+    { id: 'lives-shops', label: 'Live Shops' },
+    { id: 'search-influencers', label: 'Search Influencers' },
+  ] as const;
+
+  // Direction logic for sliding tabs
+  const getDirection = (): SlideDirection => {
+    const currentIndex = TAB_CONFIG[activeTab].index;
+    const previousIndex = TAB_CONFIG[previousTabRef.current].index;
+    return currentIndex > previousIndex ? 'left' : 'right';
+  };
+
+  const handleTabChange = (newTab: CampaignsTab) => {
+    if (newTab !== activeTab) {
+      previousTabRef.current = activeTab;
+      setActiveTab(newTab);
     }
-  ];
-
-  // Close dropdowns when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (productDropdownRef.current && !productDropdownRef.current.contains(event.target as Node)) {
-        setProductDropdownOpen(false);
-      }
-      if (statusDropdownRef.current && !statusDropdownRef.current.contains(event.target as Node)) {
-        setStatusDropdownOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const filteredProducts = useMemo(() => {
-    return availableProducts.filter(product =>
-      product.name.toLowerCase().includes(productSearchQuery.toLowerCase())
-    );
-  }, [productSearchQuery]);
-
-  const filteredCampaigns = useMemo(() => {
-    return campaigns.filter(campaign => {
-      const matchesSearch = campaign.name.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesStatus = statusFilter === 'All' || campaign.status === statusFilter;
-      const matchesProduct = selectedProducts.length === 0 ||
-        selectedProducts.some(productId => campaign.productIds.includes(productId));
-
-      return matchesSearch && matchesStatus && matchesProduct;
-    });
-  }, [searchQuery, statusFilter, selectedProducts]);
-
-  const toggleProduct = (productId: string) => {
-    setSelectedProducts(prev =>
-      prev.includes(productId)
-        ? prev.filter(id => id !== productId)
-        : [...prev, productId]
-    );
   };
 
-  const clearProductFilter = () => {
-    setSelectedProducts([]);
+  const direction = getDirection();
+
+  // Platform Icon Helper
+  const getPlatformIcon = (platform: string) => {
+    switch (platform) {
+      case 'Instagram': return <Instagram className="w-3.5 h-3.5" />;
+      case 'YouTube': return <Youtube className="w-3.5 h-3.5" />;
+      case 'TikTok': return <Smartphone className="w-3.5 h-3.5" />;
+      default: return <Globe className="w-3.5 h-3.5" />;
+    }
   };
 
-  const getStatusBadgeClass = (status: Campaign['status']) => {
+  // Status Badge Helper
+  const getStatusStyles = (status: string) => {
     switch (status) {
       case 'Active':
-        return 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300';
+        return 'bg-green-50 text-green-700 border-green-100';
+      case 'Scheduled':
+        return 'bg-blue-50 text-blue-700 border-blue-100';
+      case 'Draft':
+        return 'bg-slate-100 text-slate-600 border-slate-200';
       case 'Completed':
-        return 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300';
-      case 'Pending':
-        return 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-300';
+        return 'bg-slate-100 text-slate-600 border-slate-200';
       default:
-        return 'bg-gray-100 dark:bg-gray-900/50 text-gray-800 dark:text-gray-300';
+        return 'bg-slate-50 text-slate-600 border-slate-200';
     }
   };
 
-  return (
-    <div className="min-h-screen bg-[#F8FAFC] lg:pl-[280px]">
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+  // Filter logic
+  const filteredCampaigns = activeFilter === 'All' 
+    ? campaignsData 
+    : campaignsData.filter(c => {
+        if (activeFilter === 'Drafts') return c.status === 'Draft';
+        return c.status === activeFilter;
+      });
 
-      <main className="px-4 py-8 sm:px-6 lg:px-10">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Campaigns</h1>
-            <p className="text-gray-600 text-sm sm:text-base">Manage and track your live commerce campaigns</p>
+  // Campaigns List Component (defined inside to access state)
+  const CampaignsList = () => (
+    <>
+      {/* Metrics Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 gap-x-4 gap-y-4">
+        {/* Active Campaigns */}
+        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between hover:border-purple-100 transition-colors">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">
+              Active Campaigns
+            </p>
+            <div className="p-2 bg-purple-50 rounded-lg">
+              <Activity className="w-4 h-4 text-purple-600" />
+            </div>
           </div>
-          <button
+          <div className="">
+            <h3 className="text-xl font-semibold text-slate-900 tracking-tight">
+              12
+            </h3>
+            <div className="flex items-center gap-1 mt-1">
+              <TrendingUp className="w-3 h-3 text-green-500" />
+              <span className="text-xs font-medium text-green-500">+2</span>
+              <span className="text-xs text-slate-400 ml-1">vs last month</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Lives Reach */}
+        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between hover:border-purple-100 transition-colors">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">
+              Lives Reach
+            </p>
+            <div className="p-2 bg-blue-50 rounded-lg">
+              <Users className="w-4 h-4 text-blue-600" />
+            </div>
+          </div>
+          <div className="">
+            <h3 className="text-xl font-semibold text-slate-900 tracking-tight">
+              45.2k
+            </h3>
+            <div className="flex items-center gap-1 mt-1">
+              <TrendingUp className="w-3 h-3 text-green-500" />
+              <span className="text-xs font-medium text-green-500">+15%</span>
+              <span className="text-xs text-slate-400 ml-1">new audiences</span>
+            </div>
+          </div>
+        </div>
+
+        {/* AVG ROI */}
+        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between hover:border-purple-100 transition-colors">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">
+              AVG ROI
+            </p>
+            <div className="p-2 bg-emerald-50 rounded-lg">
+              <TrendingUp className="w-4 h-4 text-emerald-600" />
+            </div>
+          </div>
+          <div className="">
+            <h3 className="text-xl font-semibold text-slate-900 tracking-tight">
+              320%
+            </h3>
+            <div className="flex items-center gap-1 mt-1">
+              <span className="text-xs text-slate-400">Return on ad spend</span>
+              <span className="w-1 h-1 rounded-full bg-slate-300 mx-1"></span>
+              <span className="text-xs text-purple-600 font-medium">
+                High
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Average Ticket */}
+        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between hover:border-purple-100 transition-colors">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">
+              Average Ticket
+            </p>
+            <div className="p-2 bg-orange-50 rounded-lg">
+              <CreditCard className="w-4 h-4 text-orange-600" />
+            </div>
+          </div>
+          <div className="">
+            <h3 className="text-xl font-semibold text-slate-900 tracking-tight">
+              $85.40
+            </h3>
+            <div className="flex items-center gap-1 mt-1">
+              <span className="text-xs font-medium text-slate-500">0.8%</span>
+              <span className="text-xs text-slate-400 ml-1">stable</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Toolbar */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+        {/* Filter Tabs */}
+        <div className="flex items-center bg-slate-100/50 p-1 rounded-xl overflow-x-auto no-scrollbar">
+          {filters.map(filter => (
+            <button
+              key={filter}
+              onClick={() => setActiveFilter(filter)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                activeFilter === filter 
+                  ? 'bg-white text-slate-900 shadow-sm' 
+                  : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
+              }`}
+            >
+              {filter}
+            </button>
+          ))}
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-3">
+          <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors shadow-sm">
+            <Filter className="w-4 h-4" />
+            Filter
+          </button>
+          <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors shadow-sm">
+            <Download className="w-4 h-4" />
+            Export
+          </button>
+          <button 
             onClick={() => navigate('/campaigns/create')}
-            className="flex min-w-[84px] items-center justify-center gap-2 rounded-lg h-11 px-5 bg-[#7D2AE8] text-white text-sm font-bold shadow-sm hover:bg-[#6920C7] transition-colors"
+            className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-xl text-sm font-medium hover:bg-slate-800 transition-colors shadow-sm"
           >
             <Plus className="w-4 h-4" />
-            <span className="truncate">Create New Campaign</span>
+            New Campaign
           </button>
         </div>
+      </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
-          {stats.map((stat, index) => {
-            const IconComponent = stat.icon;
-            return (
-              <Card key={index} className="border-[#E2E8F0]">
-                <CardContent className="p-4 flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">{stat.title}</p>
-                    <p className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</p>
-                  </div>
-                  <div className={`p-2 rounded-lg ${stat.bgColor}`}>
-                    <IconComponent className={`w-5 h-5 ${stat.iconColor}`} />
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
-          <div className="flex-1">
-            <label className="flex flex-col min-w-40 h-12 w-full">
-              <div className="flex w-full flex-1 items-stretch rounded-lg h-full bg-white dark:bg-background-dark dark:border dark:border-white/20 border border-border-soft">
-                <div className="text-text-secondary-dark dark:text-white/60 flex items-center justify-center pl-4">
-                  <Search className="w-5 h-5" />
-                </div>
-                <input
-                  className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-primary-dark dark:text-white focus:outline-0 focus:ring-0 border-none bg-transparent h-full placeholder:text-text-secondary-dark dark:placeholder:text-white/60 px-2 text-base font-normal leading-normal"
-                  placeholder="Search campaigns..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-            </label>
-          </div>
-          <div className="flex gap-3 items-center">
-            <div className="relative" ref={productDropdownRef}>
-              <button
-                onClick={() => setProductDropdownOpen(!productDropdownOpen)}
-                className="flex h-12 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-white dark:bg-background-dark dark:border dark:border-white/20 px-4 border border-border-soft hover:bg-gray-50 transition-colors min-w-[200px]"
-              >
-                <p className="text-sm font-normal text-text-primary-dark dark:text-white">
-                  Filter by Product {selectedProducts.length > 0 && `(${selectedProducts.length})`}
-                </p>
-                {selectedProducts.length > 0 ? (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      clearProductFilter();
-                    }}
-                    className="text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                ) : (
-                  <ChevronDown className="w-4 h-4 text-text-secondary-dark dark:text-white/60" />
-                )}
-              </button>
-
-              {productDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-background-dark border border-border-soft dark:border-white/20 rounded-lg shadow-lg z-50">
-                  <div className="p-3 border-b border-border-soft dark:border-white/10">
-                    <div className="flex items-center gap-2 bg-gray-50 dark:bg-white/5 rounded-lg px-3 py-2">
-                      <Search className="w-4 h-4 text-gray-400" />
-                      <input
-                        type="text"
-                        placeholder="Search products..."
-                        value={productSearchQuery}
-                        onChange={(e) => setProductSearchQuery(e.target.value)}
-                        className="flex-1 bg-transparent border-none outline-none text-sm text-gray-900 dark:text-white"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="max-h-64 overflow-y-auto p-2">
-                    {filteredProducts.map((product) => (
-                      <label
-                        key={product.id}
-                        className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 dark:hover:bg-white/5 rounded-lg cursor-pointer"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedProducts.includes(product.id)}
-                          onChange={() => toggleProduct(product.id)}
-                          className="w-4 h-4 text-[#7D2AE8] border-gray-300 rounded focus:ring-[#7D2AE8]"
-                        />
-                        <span className="text-sm text-gray-900 dark:text-white">{product.name}</span>
-                      </label>
-                    ))}
-                  </div>
-
-                  {selectedProducts.length > 0 && (
-                    <div className="p-3 border-t border-border-soft dark:border-white/10">
-                      <button
-                        onClick={clearProductFilter}
-                        className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 dark:text-white/60 dark:hover:text-white transition-colors"
-                      >
-                        <X className="w-4 h-4" />
-                        Clear filter
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            <div className="relative" ref={statusDropdownRef}>
-              <button
-                onClick={() => setStatusDropdownOpen(!statusDropdownOpen)}
-                className="flex h-12 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-white dark:bg-background-dark dark:border dark:border-white/20 px-4 border border-border-soft hover:bg-gray-50 transition-colors min-w-[160px]"
-              >
-                <p className="text-sm font-normal text-text-primary-dark dark:text-white">
-                  {statusFilter === 'All' ? 'Filter by Status' : statusFilter}
-                </p>
-                {statusFilter !== 'All' ? (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setStatusFilter('All');
-                    }}
-                    className="text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                ) : (
-                  <ChevronDown className="w-4 h-4 text-text-secondary-dark dark:text-white/60" />
-                )}
-              </button>
-
-              {statusDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-background-dark border border-border-soft dark:border-white/20 rounded-lg shadow-lg z-50">
-                  <div className="p-2">
-                    <button
-                      onClick={() => {
-                        setStatusFilter('All');
-                        setStatusDropdownOpen(false);
-                      }}
-                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${statusFilter === 'All'
-                        ? 'bg-[#7D2AE8] text-white'
-                        : 'text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-white/5'
-                        }`}
-                    >
-                      All Statuses
-                    </button>
-                    <button
-                      onClick={() => {
-                        setStatusFilter('Active');
-                        setStatusDropdownOpen(false);
-                      }}
-                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${statusFilter === 'Active'
-                        ? 'bg-[#7D2AE8] text-white'
-                        : 'text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-white/5'
-                        }`}
-                    >
-                      Active
-                    </button>
-                    <button
-                      onClick={() => {
-                        setStatusFilter('Completed');
-                        setStatusDropdownOpen(false);
-                      }}
-                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${statusFilter === 'Completed'
-                        ? 'bg-[#7D2AE8] text-white'
-                        : 'text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-white/5'
-                        }`}
-                    >
-                      Completed
-                    </button>
-                    <button
-                      onClick={() => {
-                        setStatusFilter('Pending');
-                        setStatusDropdownOpen(false);
-                      }}
-                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${statusFilter === 'Pending'
-                        ? 'bg-[#7D2AE8] text-white'
-                        : 'text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-white/5'
-                        }`}
-                    >
-                      Pending
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="mb-4">
-          <h2 className="text-sm font-medium text-gray-500">
-            Campaigns ({filteredCampaigns.length})
-          </h2>
-        </div>
-
-        <div className="space-y-3">
-          {campaigns.length === 0 ? (
-            // Empty state - No campaigns at all
-            <Card className="border-[#E2E8F0]">
-              <CardContent className="p-12 text-center">
-                <div className="flex flex-col items-center justify-center">
-                  <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-4">
-                    <Inbox className="w-8 h-8 text-gray-400 dark:text-gray-500" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                    No campaigns yet
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-6 max-w-md">
-                    Get started by creating your first live commerce campaign and reach your audience.
-                  </p>
-                  <button
-                    onClick={() => navigate('/campaigns/create')}
-                    className="flex items-center justify-center gap-2 rounded-lg px-6 py-3 bg-[#7D2AE8] text-white text-sm font-bold shadow-sm hover:bg-[#6920C7] transition-colors"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Create Your First Campaign
-                  </button>
-                </div>
-              </CardContent>
-            </Card>
-          ) : filteredCampaigns.length === 0 ? (
-            // Empty state - No results from filters
-            <Card className="border-[#E2E8F0]">
-              <CardContent className="p-12 text-center">
-                <div className="flex flex-col items-center justify-center">
-                  <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-4">
-                    <FolderX className="w-8 h-8 text-gray-400 dark:text-gray-500" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                    No campaigns found
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-6 max-w-md">
-                    No campaigns match your current filters. Try adjusting your search or filters.
-                  </p>
-                  <div className="flex gap-3">
-                    {selectedProducts.length > 0 && (
-                      <button
-                        onClick={clearProductFilter}
-                        className="flex items-center justify-center gap-2 rounded-lg px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                      >
-                        <X className="w-4 h-4" />
-                        Clear Product Filter
-                      </button>
-                    )}
-                    {statusFilter !== 'All' && (
-                      <button
-                        onClick={() => setStatusFilter('All')}
-                        className="flex items-center justify-center gap-2 rounded-lg px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                      >
-                        <X className="w-4 h-4" />
-                        Clear Status Filter
-                      </button>
-                    )}
-                    {searchQuery && (
-                      <button
-                        onClick={() => setSearchQuery('')}
-                        className="flex items-center justify-center gap-2 rounded-lg px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                      >
-                        <X className="w-4 h-4" />
-                        Clear Search
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            // Campaign list
-            filteredCampaigns.map((campaign) => (
-              <Card key={campaign.id} className="border-[#E2E8F0] hover:shadow-md transition-shadow">
-                <CardContent className="p-2">
-                  <div className="flex items-center justify-between gap-4">
-                    {/* Left side - Campaign info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="text-base font-semibold text-gray-900 truncate">{campaign.name}</h3>
-                        <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${getStatusBadgeClass(campaign.status)}`}>
-                          {campaign.status}
-                        </span>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600">
-                        <span className="flex items-center gap-1.5 text-[#7D2AE8]">
-                          <Video className="w-4 h-4" />
-                          <span className="font-medium">{campaign.lives} Lives</span>
-                        </span>
-                        <span className="flex items-center gap-1.5">
-                          <span className="font-medium">Products:</span> {campaign.products}
-                        </span>
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-medium">Influencers:</span>
-                          <div className="flex -space-x-2">
-                            {campaign.influencers.map((avatar, idx) => (
-                              <div
-                                key={idx}
-                                className="inline-block h-6 w-6 rounded-full ring-2 ring-white dark:ring-background-dark bg-cover bg-center"
-                                style={{ backgroundImage: `url('${avatar}')` }}
-                              />
-                            ))}
-                          </div>
+      {/* Main Table Card */}
+      <div className="bg-white rounded-[1.5rem] border border-slate-100 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead className="bg-slate-50/50 border-b border-slate-100">
+              <tr>
+                <th className="px-6 py-4 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Campaign Details</th>
+                <th className="px-6 py-4 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-4 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Influencers</th>
+                <th className="px-6 py-4 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Budget / Spent</th>
+                <th className="px-6 py-4 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Performance (ROI)</th>
+                <th className="px-6 py-4 text-[11px] font-semibold text-slate-400 uppercase tracking-wider text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {filteredCampaigns.map((campaign) => (
+                <tr key={campaign.id} className="hover:bg-slate-50/50 transition-colors group">
+                  {/* Campaign Details */}
+                  <td className="px-6 py-5">
+                    <div className="flex flex-col gap-1.5">
+                      <span className="font-semibold text-slate-900 text-sm">{campaign.name}</span>
+                      <div className="flex items-center gap-3 text-xs text-slate-500">
+                        <div className="flex items-center gap-1">
+                          {getPlatformIcon(campaign.platform)}
+                          <span>{campaign.platform}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Video className="w-3.5 h-3.5" />
+                          <span>{campaign.livesCount} Lives</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <ShoppingBag className="w-3.5 h-3.5" />
+                          <span>{campaign.productsCount} Products</span>
                         </div>
                       </div>
                     </div>
+                  </td>
 
-                    {/* Right side - Metrics */}
-                    <div className="flex items-center gap-4">
-                      <div className="text-center">
-                        <p className="text-xs text-gray-500 mb-0.5">Sales</p>
-                        <p className="text-base font-bold text-gray-900">{campaign.sales}</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-xs text-gray-500 mb-0.5">Revenue</p>
-                        <p className="text-base font-bold text-green-600">{campaign.revenue}</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-xs text-gray-500 mb-0.5">Scheduled</p>
-                        <p className="text-base font-bold text-blue-600">{campaign.scheduledLives}</p>
-                      </div>
-                      <button className="ml-2 text-gray-400 hover:text-[#7D2AE8] transition-colors">
-                        <MoreVertical className="w-5 h-5" />
-                      </button>
+                  {/* Status */}
+                  <td className="px-6 py-5">
+                    <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusStyles(campaign.status)}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${
+                        campaign.status === 'Active' ? 'bg-green-500' :
+                        campaign.status === 'Scheduled' ? 'bg-blue-500' :
+                        'bg-slate-400'
+                      }`}></span>
+                      {campaign.status}
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
+                  </td>
+
+                  {/* Influencers */}
+                  <td className="px-6 py-5">
+                    {campaign.influencers.length > 0 ? (
+                      <div className="flex items-center -space-x-2">
+                        {campaign.influencers.slice(0, 3).map((img, i) => (
+                          <img key={i} src={img} alt="Influencer" className="w-8 h-8 rounded-full border-2 border-white object-cover bg-slate-100" />
+                        ))}
+                        {campaign.influencers.length > 3 && (
+                          <div className="w-8 h-8 rounded-full border-2 border-white bg-slate-50 flex items-center justify-center text-[10px] font-medium text-slate-500">
+                            +{campaign.influencers.length - 3}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <button className="flex items-center gap-2 text-xs font-medium text-slate-400 hover:text-purple-600 border border-dashed border-slate-300 rounded-full px-3 py-1 hover:border-purple-200 hover:bg-purple-50 transition-all">
+                        <Users className="w-3.5 h-3.5" />
+                        Assign
+                      </button>
+                    )}
+                  </td>
+
+                  {/* Budget / Spent */}
+                  <td className="px-6 py-5">
+                    <div className="flex flex-col gap-1.5 w-32">
+                      <div className="flex items-baseline justify-between">
+                        <span className="text-sm font-bold text-slate-900">
+                          ${(campaign.spent / 1000).toFixed(1)}k
+                        </span>
+                        <span className="text-xs text-slate-400">
+                          of ${(campaign.budget / 1000).toFixed(0)}k
+                        </span>
+                      </div>
+                      <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-purple-600 rounded-full"
+                          style={{ width: `${Math.min((campaign.spent / campaign.budget) * 100, 100)}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  </td>
+
+                  {/* Performance (ROI) */}
+                  <td className="px-6 py-5">
+                    {campaign.roi > 0 ? (
+                      <div className="flex flex-col gap-0.5">
+                        <div className="flex items-center gap-1 text-green-600">
+                          <span className="text-xs">↗</span>
+                          <span className="text-sm font-bold">{campaign.roi}%</span>
+                        </div>
+                        <span className="text-xs text-slate-500">
+                          ${(campaign.revenue / 1000).toFixed(1)}k Revenue
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-slate-400">--</span>
+                    )}
+                  </td>
+
+                  {/* Action */}
+                  <td className="px-6 py-5 text-right">
+                    <button className="text-slate-400 hover:text-slate-600 p-2 hover:bg-slate-50 rounded-lg transition-colors">
+                      <MoreHorizontal className="w-5 h-5" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination Footer */}
+        <div className="p-4 border-t border-slate-50 bg-slate-50/50 flex items-center justify-between">
+          <div className="text-xs text-slate-500">
+            Showing <span className="font-medium">1-{filteredCampaigns.length}</span> of <span className="font-medium">{campaignsData.length}</span> campaigns
+          </div>
+          <div className="flex gap-2">
+            <button className="w-8 h-8 flex items-center justify-center bg-white border border-slate-200 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button className="w-8 h-8 flex items-center justify-center bg-white border border-slate-200 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+
+  return (
+    <div className="h-screen flex flex-col lg:flex-row overflow-hidden bg-white w-full">
+      {/* Sidebar */}
+      <Sidebar 
+        isCollapsed={isCollapsed} 
+        toggleCollapse={toggleCollapse} 
+        mobileOpen={mobileOpen} 
+        setMobileOpen={setMobileOpen} 
+      />
+
+      {/* Main Content */}
+      <main className="flex-1 bg-[#FAFAFA] flex flex-col h-full relative overflow-y-auto">
+        
+        {/* Header with Tabs */}
+        <header className="flex-shrink-0 flex z-30 pt-4 pr-8 pb-2 pl-8 relative backdrop-blur-xl items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => setMobileOpen(true)}
+              className="lg:hidden p-2 -ml-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50"
+            >
+              <Menu size={24} />
+            </button>
+            
+            {/* Tab Navigation with Sliding Indicator */}
+            <div className="grid grid-cols-3 bg-violet-50/80 rounded-lg p-1 items-center relative">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => handleTabChange(tab.id as CampaignsTab)}
+                  className={`relative z-10 px-4 py-2 text-center text-xs font-semibold transition-colors duration-300 whitespace-nowrap rounded-[6px] ${
+                    activeTab === tab.id
+                      ? 'text-slate-50'
+                      : 'text-slate-500 hover:text-slate-900'
+                  }`}
+                >
+                  {activeTab === tab.id && (
+                    <motion.div
+                      layoutId="campaigns-active-pill"
+                      className="absolute inset-0 bg-slate-900 rounded-[6px] shadow-sm"
+                      transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                      style={{ zIndex: -1 }} // Ensure it stays behind text (which is z-10) but above container
+                    />
+                  )}
+                  <span className="relative z-10">{tab.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Right Side: Notifications & Profile */}
+          <div className="flex items-center gap-3">
+            <button className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all">
+              <Bell className="w-4 h-4" />
+            </button>
+            <div className="w-px bg-slate-200 h-6 my-1"></div>
+            <button className="flex hover:bg-slate-50 transition-all group rounded-xl pt-1 pr-1 pb-1 pl-1 gap-y-3 items-center gap-x-2">
+              <div className="relative flex-shrink-0">
+                <img src="https://i.pravatar.cc/150?u=a042581f4e29026024d" alt="Marcus" className="w-8 h-8 rounded-full bg-slate-100 object-cover ring-2 ring-white shadow-sm" />
+                <span className="absolute bottom-0 right-0 w-2 h-2 bg-green-500 border-2 border-white rounded-full"></span>
+              </div>
+              <ChevronDown className="w-3 h-3 text-slate-400 group-hover:text-slate-600 transition-colors" />
+            </button>
+          </div>
+        </header>
+
+        {/* Main Content with Transition */}
+        <div className="flex-1">
+          <SlidingTabsTransition
+            tabKey={activeTab}
+            direction={direction}
+            duration={0.25}
+            offset={50}
+            className="h-full overflow-y-auto px-8 py-6"
+          >
+            {activeTab === 'campaigns' && <CampaignsList />}
+            {activeTab === 'lives-shops' && (
+              <div className="flex items-center justify-center h-64 text-slate-400">
+                Lives Shops Content Coming Soon
+              </div>
+            )}
+            {activeTab === 'search-influencers' && (
+              <div className="flex items-center justify-center h-64 text-slate-400">
+                Search Influencers Content Coming Soon
+              </div>
+            )}
+          </SlidingTabsTransition>
         </div>
       </main>
     </div>

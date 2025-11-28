@@ -1,22 +1,32 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
+import { useSidebar } from '../../contexts/SidebarContext';
 
 interface BrandLayoutProps {
   children: React.ReactNode;
 }
 
 export const BrandLayout: React.FC<BrandLayoutProps> = ({ children }) => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { isCollapsed, toggleCollapse, mobileOpen, setMobileOpen } = useSidebar();
+
   return (
-    <div className="min-h-screen bg-[#F8FAFC] lg:pl-[280px]">
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <div className="min-w-0">
-        <TopBar onMenuClick={() => setSidebarOpen(true)} />
-        <main className="p-4 sm:p-6 lg:p-8">
-          {children}
-        </main>
-      </div>
+    <div className="h-screen flex flex-col lg:flex-row overflow-hidden bg-white w-full">
+      <Sidebar 
+        isCollapsed={isCollapsed} 
+        toggleCollapse={toggleCollapse}
+        mobileOpen={mobileOpen} 
+        setMobileOpen={setMobileOpen} 
+      />
+      
+      <main className="flex-1 bg-[#FAFAFA] flex flex-col h-full overflow-hidden relative">
+         <div className="flex-shrink-0">
+            <TopBar onMenuClick={() => setMobileOpen(true)} />
+         </div>
+         <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+            {children}
+         </div>
+      </main>
     </div>
   );
 };

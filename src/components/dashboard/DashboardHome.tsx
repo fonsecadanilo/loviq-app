@@ -1,243 +1,706 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, TrendingUp, Users, DollarSign, Eye, ShoppingCart, Store } from 'lucide-react';
-import { Button } from '../ui/Button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
+import {
+  Bell,
+  DollarSign,
+  TrendingUp,
+  CreditCard,
+  Minus,
+  Eye,
+  Percent,
+  ChevronLeft,
+  ChevronRight,
+  Users,
+  ShoppingBag,
+  ShoppingCart,
+  ArrowRight,
+  Video,
+  Search,
+  PackagePlus,
+  BarChart2,
+  Filter,
+  ArrowUpDown,
+  Plus,
+  Package,
+  Clock,
+  MoreHorizontal,
+  ChevronDown,
+  Menu
+} from 'lucide-react';
 
-export const DashboardHome: React.FC = () => {
+interface DashboardHomeProps {
+  onMenuClick?: () => void;
+}
+
+export const DashboardHome: React.FC<DashboardHomeProps> = ({ onMenuClick }) => {
   const navigate = useNavigate();
-  const stats = [
-    {
-      title: 'Total Revenue',
-      value: '$24,580',
-      icon: DollarSign,
-      bgColor: 'bg-green-100',
-      iconColor: 'text-green-600'
-    },
-    {
-      title: 'Active Campaigns',
-      value: '8',
-      icon: TrendingUp,
-      bgColor: 'bg-blue-100',
-      iconColor: 'text-blue-600'
-    },
-    {
-      title: 'Total Views',
-      value: '45,230',
-      icon: Eye,
-      bgColor: 'bg-purple-100',
-      iconColor: 'text-purple-600'
-    },
-    {
-      title: 'Conversions',
-      value: '1,247',
-      icon: ShoppingCart,
-      bgColor: 'bg-orange-100',
-      iconColor: 'text-orange-600'
-    }
-  ];
-
-  const recentCampaigns = [
-    {
-      name: 'Summer Fashion Collection',
-      status: 'Active',
-      revenue: '$8,450',
-      views: '12,340',
-      conversion: '3.2%'
-    },
-    {
-      name: 'Tech Gadgets Launch',
-      status: 'Active',
-      revenue: '$6,230',
-      views: '8,920',
-      conversion: '2.8%'
-    },
-    {
-      name: 'Beauty Essentials',
-      status: 'Completed',
-      revenue: '$9,900',
-      views: '24,150',
-      conversion: '4.1%'
-    }
-  ];
-
-  const recommendedInfluencers = [
-    {
-      name: 'Sarah Chen',
-      category: 'Fashion & Beauty',
-      followers: '125K',
-      rating: 4.9,
-      conversion: '4.2%'
-    },
-    {
-      name: 'Mike Johnson',
-      category: 'Tech & Gadgets',
-      followers: '89K',
-      rating: 4.8,
-      conversion: '3.8%'
-    },
-    {
-      name: 'Emma Wilson',
-      category: 'Lifestyle',
-      followers: '203K',
-      rating: 4.7,
-      conversion: '5.1%'
-    }
-  ];
 
   return (
-    <div className="space-y-6">
-      {/* Welcome Section */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Welcome back!</h1>
-          <p className="text-gray-600 text-sm sm:text-base">Here's what's happening with your campaigns today.</p>
+    <>
+      {/* Page Header with Sub-navigation */}
+      <header className="flex z-30 pt-4 pr-8 pb-2 pl-8 relative backdrop-blur-xl items-center justify-between">
+        
+        <div className="flex items-center gap-4">
+             {/* Mobile Menu Toggle */}
+            {onMenuClick && (
+                <button 
+                    onClick={onMenuClick}
+                    className="lg:hidden p-2 -ml-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50"
+                >
+                    <Menu size={24} />
+                </button>
+            )}
+
+            <div className="flex bg-violet-50/80 rounded-lg p-1 items-center relative">
+                <div className="absolute left-1 w-[calc(50%-4px)] h-[calc(100%-8px)] bg-slate-900 rounded-[6px] transition-all duration-300 ease-in-out transform translate-x-0 shadow-sm"></div>
+                <button className="relative z-10 transition-all duration-300 text-xs font-semibold text-slate-50 px-8 py-2">
+                    Dashboard
+                </button>
+                <button 
+                    className="relative z-10 px-8 py-2 text-xs font-medium text-slate-500 hover:text-slate-900 transition-all duration-300"
+                    onClick={() => navigate('/wallet')}
+                >
+                    Wallet
+                </button>
+            </div>
         </div>
-        <button
-          onClick={() => navigate('/campaigns/create')}
-          className="inline-flex items-center gap-2 bg-[#7D2AE8] text-white px-4 py-2 rounded-lg hover:bg-[#6d24ca] transition-colors font-medium text-sm sm:text-base"
-        >
-          <Plus className="w-4 h-4" />
-          <span className="truncate">Create New Campaign</span>
-        </button>
-      </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
-        {stats.map((stat, index) => {
-          const IconComponent = stat.icon;
-          return (
-            <Card key={index} className="border-[#E2E8F0]">
-              <CardContent className="p-4 flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-500">{stat.title}</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</p>
-                </div>
-                <div className={`p-2 rounded-lg ${stat.bgColor}`}>
-                  <IconComponent className={`w-5 h-5 ${stat.iconColor}`} />
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+        <div className="flex items-center gap-3">
+          <button className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all">
+            <Bell className="w-4 h-4" />
+          </button>
+          <div className="w-px bg-slate-200 h-6 my-1"></div>
+          <button className="flex hover:bg-slate-50 transition-all group rounded-xl pt-1 pr-1 pb-1 pl-1 gap-y-3 items-center gap-x-2">
+            <div className="text-right hidden md:block"></div>
+            <div className="relative flex-shrink-0">
+              <img src="https://i.pravatar.cc/150?u=a042581f4e29026024d" alt="Marcus" className="w-8 h-8 rounded-full bg-slate-100 object-cover ring-2 ring-white shadow-sm" />
+              <span className="absolute bottom-0 right-0 w-2 h-2 bg-green-500 border-2 border-white rounded-full"></span>
+            </div>
+            <ChevronDown className="w-3 h-3 text-slate-400 group-hover:text-slate-600 transition-colors" />
+          </button>
+        </div>
+      </header>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* Recent Campaigns */}
-        <div className="xl:col-span-2">
-          <Card className="border-[#E2E8F0]">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Recent Campaigns</CardTitle>
-                  <CardDescription>Your latest campaign performance</CardDescription>
-                </div>
-                <Button variant="outline" size="sm">View All</Button>
+      {/* Scrollable Content */}
+      <div className="flex-1 pt-6 pr-8 pb-8 pl-8">
+        
+        {/* SECTION 1: Metrics Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 gap-x-4 gap-y-4">
+          {/* Sales */}
+          <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between hover:border-purple-100 transition-colors">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">
+                Total Sales
+              </p>
+              <div className="p-2 bg-purple-50 rounded-lg">
+                <DollarSign className="w-4 h-4 text-purple-600" />
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {recentCampaigns.map((campaign, index) => (
-                  <div key={index} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 bg-gray-50 rounded-lg gap-3">
-                    <div className="space-y-1 flex-1">
-                      <h4 className="font-medium text-gray-900 text-sm sm:text-base">{campaign.name}</h4>
-                      <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-gray-600">
-                        <span className={`px-2 py-1 rounded-full text-xs ${campaign.status === 'Active'
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-gray-100 text-gray-700'
-                          }`}>
-                          {campaign.status}
+            </div>
+            <div className="">
+              <h3 className="text-xl font-semibold text-slate-900 tracking-tight">
+                $124,500
+              </h3>
+              <div className="flex items-center gap-1 mt-1">
+                <TrendingUp className="w-3 h-3 text-green-500" />
+                <span className="text-xs font-medium text-green-500">+12.5%</span>
+                <span className="text-xs text-slate-400 ml-1">vs last month</span>
+              </div>
+            </div>
+          </div>
+
+          {/* AOV */}
+          <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between hover:border-purple-100 transition-colors">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">
+                Avg. Order
+              </p>
+              <div className="p-2 bg-blue-50 rounded-lg">
+                <CreditCard className="w-4 h-4 text-blue-600" />
+              </div>
+            </div>
+            <div className="">
+              <h3 className="text-xl font-semibold text-slate-900 tracking-tight">
+                $85.40
+              </h3>
+              <div className="flex items-center gap-1 mt-1">
+                <Minus className="w-3 h-3 text-slate-400" />
+                <span className="text-xs font-medium text-slate-500">0.8%</span>
+                <span className="text-xs text-slate-400 ml-1">stable</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Views */}
+          <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between hover:border-purple-100 transition-colors">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">
+                Total Views
+              </p>
+              <div className="p-2 bg-orange-50 rounded-lg">
+                <Eye className="w-4 h-4 text-orange-600" />
+              </div>
+            </div>
+            <div className="">
+              <h3 className="text-xl font-semibold text-slate-900 tracking-tight">
+                1.2M
+              </h3>
+              <div className="flex items-center gap-1 mt-1">
+                <TrendingUp className="w-3 h-3 text-green-500" />
+                <span className="text-xs font-medium text-green-500">+24%</span>
+                <span className="text-xs text-slate-400 ml-1">new audiences</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Conversion */}
+          <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between hover:border-purple-100 transition-colors">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">
+                Conversion
+              </p>
+              <div className="p-2 bg-emerald-50 rounded-lg">
+                <Percent className="w-4 h-4 text-emerald-600" />
+              </div>
+            </div>
+            <div className="">
+              <h3 className="text-xl font-semibold text-slate-900 tracking-tight">
+                3.2%
+              </h3>
+              <div className="flex items-center gap-1 mt-1">
+                <span className="text-xs text-slate-400">Clicks to Order</span>
+                <span className="w-1 h-1 rounded-full bg-slate-300 mx-1"></span>
+                <span className="text-xs text-purple-600 font-medium">
+                  Top 5%
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* SECTION 2: Live & Recent Orders */}
+        <div className="flex flex-col xl:flex-row gap-6 mb-8">
+          {/* LIVE NOW CARD */}
+          <div className="w-full xl:w-[360px] h-[520px] flex-shrink-0 relative group rounded-[1.5rem] overflow-hidden shadow-2xl shadow-purple-900/10 ring-4 ring-white border border-slate-100">
+            {/* Navigation Indicators */}
+            <div className="absolute top-3 left-3 right-3 z-30 flex gap-1.5">
+              <div className="h-1 flex-1 bg-white/90 rounded-full shadow-sm"></div>
+              <div className="h-1 flex-1 bg-white/30 rounded-full backdrop-blur-sm"></div>
+              <div className="h-1 flex-1 bg-white/30 rounded-full backdrop-blur-sm"></div>
+              <div className="h-1 flex-1 bg-white/30 rounded-full backdrop-blur-sm"></div>
+            </div>
+
+            {/* Hover Navigation Arrows */}
+            <button className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white/20 border border-white/10">
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <button className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white/20 border border-white/10">
+              <ChevronRight className="w-5 h-5" />
+            </button>
+
+            {/* Background Image */}
+            <img src="https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?q=80&w=1000&auto=format&fit=crop" className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" alt="Live Shopping" />
+
+            {/* Overlay Gradient */}
+            <div className="bg-gradient-to-b from-black/40 via-transparent to-black/80 absolute top-0 right-0 bottom-0 left-0"></div>
+
+            {/* Top Controls */}
+            <div className="absolute top-8 left-5 right-5 flex justify-between items-start">
+              <div className="flex items-center gap-2">
+                <span className="flex items-center gap-1.5 bg-red-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm animate-pulse border border-red-500/50">
+                  <span className="w-1.5 h-1.5 bg-white rounded-full"></span>
+                  LIVE
+                </span>
+                <div className="bg-black/40 backdrop-blur-xl text-white text-[10px] font-medium px-2.5 py-1 rounded-full flex items-center gap-1.5 border border-white/10 shadow-sm">
+                  <Users className="w-3 h-3" />
+                  12.4k
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Info */}
+            <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black via-black/70 to-transparent">
+              <div className="flex items-center gap-2 mb-2">
+                <img src="https://i.pravatar.cc/150?u=a042581f4e29026024d" className="w-6 h-6 rounded-full border border-white/50" alt="Host" />
+                <span className="text-white/80 text-xs font-medium">
+                  with Sarah J.
+                </span>
+              </div>
+              <h3 className="text-white font-semibold text-lg leading-snug mb-4">
+                Summer Collection Launch Event
+              </h3>
+
+              {/* Featured Product Mini Card */}
+              <div className="flex items-center gap-3 bg-white/10 backdrop-blur-xl p-2.5 rounded-xl border border-white/20 shadow-lg">
+                <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=1000&auto=format&fit=crop" className="w-10 h-10 rounded-lg bg-white object-cover" alt="Product" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium truncate text-white">
+                    Floral Silk Dress
+                  </p>
+                  <p className="text-[11px] text-white/70 font-medium">$129.00</p>
+                </div>
+                <button className="w-8 h-8 flex items-center justify-center bg-white text-slate-900 rounded-lg hover:bg-slate-200 transition-colors shadow-md">
+                  <ShoppingBag className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* RECENT ORDERS LIST */}
+          <div className="flex-1 bg-white rounded-[1.5rem] border border-slate-100 shadow-sm flex flex-col h-[520px] overflow-hidden">
+            <div className="flex border-slate-50 border-b pt-6 pr-6 pb-6 pl-6 items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center text-green-600">
+                  <ShoppingCart className="w-4 h-4" />
+                </div>
+                <h3 className="font-semibold text-slate-900">Recent Orders</h3>
+              </div>
+              <button className="text-xs font-medium text-slate-500 hover:text-slate-900">
+                Real-time update
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto">
+              <table className="w-full text-left border-collapse">
+                <thead className="bg-slate-50 sticky top-0 z-10">
+                  <tr className="">
+                    <th className="text-[10px] uppercase font-semibold text-slate-400 tracking-wider pt-3 pr-6 pb-3 pl-6">
+                      Order ID
+                    </th>
+                    <th className="px-6 py-3 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                      Source
+                    </th>
+                    <th className="px-6 py-3 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                      Products
+                    </th>
+                    <th className="px-6 py-3 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                      Date
+                    </th>
+                    <th className="px-6 py-3 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-[10px] font-semibold text-slate-400 uppercase tracking-wider text-right">
+                      Value
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                    {/* Order 1 */}
+                    <tr className="hover:bg-slate-50/50 transition-colors group">
+                      <td className="pt-4 pr-6 pb-4 pl-6">
+                        <span className="font-mono text-xs font-normal text-slate-600 whitespace-nowrap">
+                          #ORD-9281
                         </span>
-                        <span>{campaign.views} views</span>
-                        <span>{campaign.conversion} conversion</span>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-gray-900 text-sm sm:text-base">{campaign.revenue}</p>
-                      <p className="text-xs sm:text-sm text-gray-600">Revenue</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+                          <span className="text-xs text-slate-600 font-medium truncate max-w-[80px] block">
+                            Summer Launch
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <div className="flex -space-x-2">
+                            <img src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=64&h=64" alt="Product" className="w-6 h-6 rounded-full border border-white object-cover bg-slate-100" />
+                            <img src="https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=64&h=64" alt="Product" className="w-6 h-6 rounded-full border border-white object-cover bg-slate-100" />
+                          </div>
+                          <span className="text-xs text-slate-400">+1</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-xs text-slate-500">
+                        2 min ago
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-green-50 text-green-700">
+                          Paid
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <span className="text-sm font-semibold text-slate-900">
+                          $245.00
+                        </span>
+                      </td>
+                    </tr>
+
+                    {/* Order 2 */}
+                    <tr className="hover:bg-slate-50/50 transition-colors group">
+                      <td className="px-6 py-4">
+                        <span className="font-mono text-xs font-medium text-slate-600">
+                          #ORD-9280
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+                          <span className="text-xs text-slate-600 font-medium truncate max-w-[80px] block">
+                            Summer Launch
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <div className="flex -space-x-2">
+                            <img src="https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&w=64&h=64" alt="Product" className="w-6 h-6 rounded-full border border-white object-cover bg-slate-100" />
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-xs text-slate-500">
+                        5 min ago
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-green-50 text-green-700">
+                          Paid
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <span className="text-sm font-semibold text-slate-900">
+                          $129.00
+                        </span>
+                      </td>
+                    </tr>
+
+                    {/* Order 3 */}
+                    <tr className="hover:bg-slate-50/50 transition-colors group">
+                      <td className="px-6 py-4">
+                        <span className="font-mono text-xs font-medium text-slate-600">
+                          #ORD-9279
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
+                          <span className="text-xs text-slate-500 truncate max-w-[80px] block">
+                            Replay: Morning...
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <div className="flex -space-x-2">
+                            <img src="https://images.unsplash.com/photo-1511499767150-a48a237f0083?auto=format&fit=crop&w=64&h=64" alt="Product" className="w-6 h-6 rounded-full border border-white object-cover bg-slate-100" />
+                            <img src="https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=64&h=64" alt="Product" className="w-6 h-6 rounded-full border border-white object-cover bg-slate-100" />
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-xs text-slate-500">
+                        12 min ago
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-yellow-50 text-yellow-700">
+                          Processing
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <span className="text-sm font-semibold text-slate-900">
+                          $340.50
+                        </span>
+                      </td>
+                    </tr>
+
+                    {/* Order 4 */}
+                    <tr className="hover:bg-slate-50/50 transition-colors group">
+                      <td className="px-6 py-4">
+                        <span className="font-mono text-xs font-medium text-slate-600">
+                          #ORD-9278
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+                          <span className="text-xs text-slate-600 font-medium truncate max-w-[80px] block">
+                            Summer Launch
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <div className="flex -space-x-2">
+                            <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=64&h=64" alt="Product" className="w-6 h-6 rounded-full border border-white object-cover bg-slate-100" />
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-xs text-slate-500">
+                        18 min ago
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-green-50 text-green-700">
+                          Paid
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <span className="text-sm font-semibold text-slate-900">
+                          $89.90
+                        </span>
+                      </td>
+                    </tr>
+
+                    {/* Order 5 */}
+                    <tr className="hover:bg-slate-50/50 transition-colors group">
+                      <td className="px-6 py-4">
+                        <span className="font-mono text-xs font-medium text-slate-600">
+                          #ORD-9277
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
+                          <span className="text-xs text-slate-500 truncate max-w-[80px] block">
+                            Direct Store
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <div className="flex -space-x-2">
+                            <img src="https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&w=64&h=64" alt="Product" className="w-6 h-6 rounded-full border border-white object-cover bg-slate-100" />
+                            <img src="https://images.unsplash.com/photo-1520903920243-00d872a2d1c9?auto=format&fit=crop&w=64&h=64" alt="Product" className="w-6 h-6 rounded-full border border-white object-cover bg-slate-100" />
+                            <img src="https://images.unsplash.com/photo-1542272454315-4c01d7abdf4a?auto=format&fit=crop&w=64&h=64" alt="Product" className="w-6 h-6 rounded-full border border-white object-cover bg-slate-100" />
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-xs text-slate-500">
+                        24 min ago
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-green-50 text-green-700">
+                          Paid
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <span className="text-sm font-semibold text-slate-900">
+                          $412.00
+                        </span>
+                      </td>
+                    </tr>
+                </tbody>
+              </table>
+            </div>
+
+            {/* CTA Footer */}
+            <div className="p-4 border-t border-slate-50 bg-slate-50/50 flex justify-center">
+              <button className="text-xs font-semibold text-purple-600 hover:text-purple-700 flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-purple-50 transition-colors">
+                View all orders
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
         </div>
 
-        {/* Recommended Influencers */}
-        <div>
-          <Card className="border-[#E2E8F0]">
-            <CardHeader>
-              <div>
-                <CardTitle>Recommended Influencers</CardTitle>
-                <CardDescription>Top performers in your niche</CardDescription>
+        {/* COMPACT QUICK ACTIONS */}
+        <div className="">
+           {/* Active Campaigns Header inside this section in HTML structure? No, it's separate. 
+               Wait, line 701 in HTML starts "Campaigns Section" after Quick Actions?
+               Actually line 698 says "COMPACT QUICK ACTIONS" but there is no grid here in HTML source I read earlier?
+               
+               Wait, let me re-read line 833 in dashboard.html.
+               Ah, the Quick Actions buttons are at the BOTTOM in the HTML file I read (lines 833-889), 
+               AFTER the "Active Campaigns" list (lines 701-832).
+               
+               My previous reading was slightly confused.
+               HTML Structure:
+               - Metrics
+               - Live & Orders
+               - Campaigns List (Active Campaigns)
+               - Grid of Buttons (New Live Shop, etc)
+               
+               Let me correct the order.
+           */}
+           
+          <div className="">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-4">
+                <h3 className="text-base font-medium text-slate-900">
+                  Active Campaigns
+                </h3>
+                <span className="bg-slate-100 text-slate-500 text-[10px] font-semibold px-2 py-0.5 rounded-full">
+                  3
+                </span>
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {recommendedInfluencers.map((influencer, index) => (
-                  <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                    <div className="w-10 h-10 bg-gradient-to-br from-[#7D2AE8] to-[#8D3AEC] rounded-full flex items-center justify-center flex-shrink-0">
-                      <Users className="w-5 h-5 text-white" />
-                    </div>
-                    <div className="flex-1 space-y-1 min-w-0">
-                      <h4 className="font-medium text-gray-900 text-sm sm:text-base truncate">{influencer.name}</h4>
-                      <p className="text-sm text-gray-600 truncate">{influencer.category}</p>
-                      <div className="flex items-center gap-2 text-xs text-gray-500 flex-wrap">
-                        <span>{influencer.followers} followers</span>
-                        <span>⭐ {influencer.rating}</span>
-                        <span>{influencer.conversion} conv.</span>
+
+              {/* Filters */}
+              <div className="flex items-center gap-2">
+                <button className="flex hover:bg-slate-50 transition-colors text-xs font-medium text-slate-600 bg-white border-slate-200 border rounded-lg pt-2 pr-3 pb-2 pl-3 gap-x-2 gap-y-2 items-center">
+                  <Filter className="w-3.5 h-3.5" />
+                  Filter
+                </button>
+                <button className="flex gap-2 hover:bg-slate-50 transition-colors text-xs font-medium text-slate-600 bg-white border-slate-200 border rounded-lg pt-2 pr-3 pb-2 pl-3 gap-x-2 gap-y-2 items-center">
+                  <ArrowUpDown className="w-3.5 h-3.5" />
+                  Sort
+                </button>
+                <button onClick={() => navigate('/campaigns/create')} className="flex hover:bg-slate-800 transition-colors text-xs font-medium text-white bg-slate-900 rounded-lg pt-2 pr-3.5 pb-2 pl-3.5 shadow-sm gap-x-2 gap-y-2 items-center">
+                  <Plus className="w-3.5 h-3.5" />
+                  Create Campaign
+                </button>
+              </div>
+            </div>
+
+            {/* List Container */}
+            <div className="space-y-3">
+              {/* Campaign Item 1 */}
+              <div className="group bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-md hover:border-purple-100 transition-all cursor-pointer">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3 mb-1">
+                      <h4 className="text-sm font-semibold text-slate-900 truncate">
+                        Summer Collection Drop
+                      </h4>
+                      <div className="flex -space-x-2">
+                        <img className="w-6 h-6 rounded-full border-2 border-white" src="https://i.pravatar.cc/150?u=1" alt="" />
+                        <img className="w-6 h-6 rounded-full border-2 border-white" src="https://i.pravatar.cc/150?u=2" alt="" />
                       </div>
                     </div>
-                    <Button variant="outline" size="sm" className="flex-shrink-0">Invite</Button>
+                    <p className="text-xs text-slate-400">
+                      Live Shopping • Women's Fashion
+                    </p>
                   </div>
-                ))}
+
+                  <div className="flex items-center gap-6 md:gap-10">
+                    <div className="flex items-center gap-2 min-w-[100px]">
+                      <Package className="w-3.5 h-3.5 text-slate-400" />
+                      <span className="text-xs text-slate-500">12 Products</span>
+                    </div>
+
+                    <div className="flex items-center gap-2 min-w-[120px]">
+                      <Clock className="w-3.5 h-3.5 text-slate-400" />
+                      <span className="text-xs text-slate-500">In 5 days</span>
+                    </div>
+
+                    <div className="min-w-[100px]">
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-purple-50 text-purple-700">
+                        Planning
+                      </span>
+                    </div>
+
+                    <div className="flex min-w-[140px] gap-x-3 gap-y-3 items-center">
+                      <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-slate-900 w-[25%] rounded-full"></div>
+                      </div>
+                      <span className="text-xs font-medium text-slate-600">
+                        25%
+                      </span>
+                    </div>
+
+                    <button className="text-slate-300 hover:text-slate-600">
+                      <MoreHorizontal className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
               </div>
-            </CardContent>
-          </Card>
+
+              {/* Campaign Item 2 */}
+              <div className="group bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-md hover:border-purple-100 transition-all cursor-pointer">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3 mb-1">
+                      <h4 className="text-sm font-semibold text-slate-900 truncate">
+                        Early Black Friday
+                      </h4>
+                      <div className="flex -space-x-2">
+                        <img className="w-6 h-6 rounded-full border-2 border-white" src="https://i.pravatar.cc/150?u=4" alt="" />
+                      </div>
+                    </div>
+                    <p className="text-xs text-slate-400">
+                      Recurring Partnership • Electronics
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-6 md:gap-10">
+                    <div className="flex items-center gap-2 min-w-[100px]">
+                      <Package className="w-3.5 h-3.5 text-slate-400" />
+                      <span className="text-xs text-slate-500">45 Products</span>
+                    </div>
+
+                    <div className="flex items-center gap-2 min-w-[120px]">
+                      <Clock className="w-3.5 h-3.5 text-slate-400" />
+                      <span className="text-xs text-slate-500">Today, 7:00 PM</span>
+                    </div>
+
+                    <div className="min-w-[100px]">
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-green-50 text-green-700">
+                        Scheduled
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-3 min-w-[140px]">
+                      <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-slate-900 w-[90%] rounded-full"></div>
+                      </div>
+                      <span className="text-xs font-medium text-slate-600">
+                        90%
+                      </span>
+                    </div>
+
+                    <button className="text-slate-300 hover:text-slate-600">
+                      <MoreHorizontal className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Actions Grid (At the bottom in HTML) */}
+          <div className="grid grid-cols-2 md:grid-cols-4 mt-8 mb-8 gap-x-4 gap-y-4">
+            <button className="bg-white p-3.5 rounded-xl border border-slate-100 shadow-sm hover:shadow-md hover:bg-orange-50/60 hover:border-orange-200 transition-all text-left group flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-orange-50 flex items-center justify-center flex-shrink-0 group-hover:bg-orange-100 transition-colors">
+                <Video className="w-5 h-5 text-orange-500 transition-colors" />
+              </div>
+              <div className="min-w-0">
+                <h4 className="text-sm font-medium text-slate-900 truncate">
+                  New Live Shop
+                </h4>
+                <p className="text-[10px] text-slate-400 truncate">
+                  Start setup wizard
+                </p>
+              </div>
+            </button>
+
+            <button className="bg-white p-3.5 rounded-xl border border-slate-100 shadow-sm hover:shadow-md hover:bg-purple-50/60 hover:border-purple-200 transition-all text-left group flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center flex-shrink-0 group-hover:bg-purple-100 transition-colors">
+                <Search className="w-5 h-5 text-purple-600 transition-colors" />
+              </div>
+              <div className="min-w-0">
+                <h4 className="text-sm font-medium text-slate-900 truncate">
+                  Find Influencer
+                </h4>
+                <p className="text-[10px] text-slate-400 truncate">
+                  Explore catalog
+                </p>
+              </div>
+            </button>
+
+            <button className="bg-white p-3.5 rounded-xl border border-slate-100 shadow-sm hover:shadow-md hover:bg-blue-50/60 hover:border-blue-200 transition-all text-left group flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-100 transition-colors">
+                <PackagePlus className="w-5 h-5 text-blue-500 transition-colors" />
+              </div>
+              <div className="min-w-0">
+                <h4 className="text-sm font-medium text-slate-900 truncate">
+                  Import Products
+                </h4>
+                <p className="text-[10px] text-slate-400 truncate">
+                  Via integration
+                </p>
+              </div>
+            </button>
+
+            <button className="bg-white p-3.5 rounded-xl border border-slate-100 shadow-sm hover:shadow-md hover:bg-green-50/60 hover:border-green-200 transition-all text-left group flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center flex-shrink-0 group-hover:bg-green-100 transition-colors">
+                <BarChart2 className="w-5 h-5 text-green-600 transition-colors" />
+              </div>
+              <div className="min-w-0">
+                <h4 className="text-sm font-medium text-slate-900 truncate">
+                  Reports
+                </h4>
+                <p className="text-[10px] text-slate-400 truncate">
+                  Check performance
+                </p>
+              </div>
+            </button>
+          </div>
+
         </div>
       </div>
-
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-        <Card className="border-[#E2E8F0] hover:shadow-md transition-shadow cursor-pointer">
-          <CardContent className="p-4 sm:p-6 text-center space-y-3 sm:space-y-4">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#7D2AE8]/10 rounded-xl flex items-center justify-center mx-auto">
-              <Plus className="w-5 h-5 sm:w-6 sm:h-6 text-[#7D2AE8]" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-1 sm:mb-2 text-sm sm:text-base">Create Campaign</h3>
-              <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">Start a new live commerce campaign</p>
-              <Button variant="primary" size="sm" className="w-full text-xs sm:text-sm" onClick={() => navigate('/campaigns/create')}>Get Started</Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-[#E2E8F0] hover:shadow-md transition-shadow cursor-pointer">
-          <CardContent className="p-4 sm:p-6 text-center space-y-3 sm:space-y-4">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-xl flex items-center justify-center mx-auto">
-              <Store className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-1 sm:mb-2 text-sm sm:text-base">Integrate Store</h3>
-              <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">Connect your ecommerce platform</p>
-              <Button variant="outline" size="sm" className="w-full text-xs sm:text-sm">Connect</Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-[#E2E8F0] hover:shadow-md transition-shadow cursor-pointer">
-          <CardContent className="p-4 sm:p-6 text-center space-y-3 sm:space-y-4">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 rounded-xl flex items-center justify-center mx-auto">
-              <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-1 sm:mb-2 text-sm sm:text-base">View Analytics</h3>
-              <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">Detailed performance insights</p>
-              <Button variant="outline" size="sm" className="w-full text-xs sm:text-sm">View Reports</Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+    </>
   );
 };

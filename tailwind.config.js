@@ -18,7 +18,10 @@ export default {
         "border-soft": "#e2e8f0",
       },
       fontFamily: {
-        "display": ["Manrope", "sans-serif"]
+        "display": ["Manrope", "sans-serif"],
+        "sans": ["Inter", "sans-serif"],
+        "serif": ["Playfair Display", "serif"],
+        "mono": ["JetBrains Mono", "monospace"],
       },
       borderRadius: {
         "DEFAULT": "0.25rem",

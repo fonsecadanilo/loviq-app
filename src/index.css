@@ -2,124 +2,81 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
-  line-height: 1.5;
-  font-weight: 400;
+@layer base {
+  :root {
+    /* --- Core Base (Minimalismo) --- */
+    --background: 250 250 250; /* #FAFAFA - Fundo padrão limpo */
+    --surface: 255 255 255;    /* #FFFFFF - Cards */
+    --foreground: 15 23 42;    /* #0F172A - Texto Principal */
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+    /* --- Brand Identity --- */
+    /* Roxo: Apenas para ícones ativos, bordas de foco e textos de link */
+    --primary: 125 42 232;     /* #7D2AE8 */
+    
+    /* Lilás Sutil: Para fundos secundários (badges, áreas de suporte) */
+    --secondary-brand: 245 243 255; /* #F5F3FF */
+
+    /* --- Status Colors (Pastéis Suaves) --- */
+    --success: 34 197 94;      /* Texto #22c55e */
+    --success-light: 220 252 231; /* Fundo #dcfce7 */
+    
+    --warning: 249 115 22;     /* Texto #f97316 */
+    --warning-light: 255 237 213; /* Fundo #ffedd5 */
+    
+    --error: 239 68 68;        /* Texto #ef4444 */
+    --error-light: 254 226 226;   /* Fundo #fee2e2 */
+    
+    --info: 59 130 246;        /* Texto #3b82f6 */
+    --info-light: 219 234 254;    /* Fundo #dbeafe */
+
+    /* Radius Tokens (respaldam as utilidades rounded-*) */
+    --radius-xs: 0.375rem;  /* 6px - Tabs, filtros, badges */
+    --radius-sm: 0.5rem;    /* 8px - Inputs menores */
+    --radius-md: 0.75rem;   /* 12px - Botões, nav items */
+    --radius-lg: 1rem;      /* 16px - Cards principais */
+    --radius-xl: 1.25rem;   /* 20px - Players de vídeo */
+    --radius-2xl: 1.5rem;   /* 24px - Destaques maiores */
+    --radius-3xl: 2rem;     /* 32px - Elementos especiais */
+  }
+
+  html, body, #root {
+    @apply h-full w-full overflow-x-hidden bg-background text-foreground antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+}
+
+@layer utilities {
+  /* O Gradiente Loviq (Apenas para Hovers Principais e Cards Especiais) */
+  .bg-loviq-gradient {
+    background: linear-gradient(135deg, #FFF0F0 0%, #F3F0FF 50%, #FDF4FF 100%);
+  }
   
-  /* Loviq Design System Colors */
-  --background: 255 255 255;
-  --foreground: 17 24 39;
-  --primary: 125 42 232;
-  --secondary: 241 245 249;
-  --muted: 248 250 252;
-  --accent: 245 243 255;
-  --destructive: 239 68 68;
-  --border: 226 232 240;
-  --radius: 0.75rem;
-}
-
-html, body, #root {
-  width: 100%;
-  min-height: 100%;
-  overflow-x: hidden;
-}
-
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
-}
-
-/* Custom animations */
-@keyframes fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
+  /* Utilitários de scroll */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+
+  .no-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
   }
-}
 
-.animate-fade-in {
-  animation: fade-in 0.5s ease-out forwards;
-}
-
-/* Hide scrollbar */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-
-.no-scrollbar {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
-}
-
-/* Hide horizontal scrollbar specifically */
-.no-scrollbar::-webkit-scrollbar:horizontal {
-  display: none;
-}
-
-.hide-horizontal-scrollbar {
-  overflow-x: auto;
-  scrollbar-width: none;  /* Firefox */
-  -ms-overflow-style: none;  /* IE and Edge */
-}
-
-.hide-horizontal-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-
-/* Focus styles */
-.focus-visible\:ring-2:focus-visible {
-  outline: 2px solid transparent;
-  outline-offset: 2px;
-  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
-  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
-  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
-}
-
-/* Animation utilities */
-@keyframes fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
+  /* Text Gradients */
+  .text-gradient-loviq {
+    @apply bg-gradient-to-br from-primary to-[#8D3AEC] bg-clip-text text-transparent;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+  
+  /* Custom Scrollbar for specific containers */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
   }
-}
-
-.animate-fade-in {
-  animation: fade-in 0.5s ease-out;
-}
-
-/* Gradient text */
-.text-gradient-loviq {
-  background: linear-gradient(135deg, #7D2AE8 0%, #8D3AEC 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-slate-100 rounded-full;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-slate-300 rounded-full hover:bg-slate-400 transition-colors;
+  }
 }

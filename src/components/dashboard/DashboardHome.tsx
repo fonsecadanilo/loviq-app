@@ -51,8 +51,8 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onMenuClick }) => 
                 </button>
             )}
 
-            <div className="flex bg-violet-50/80 rounded-lg p-1 items-center relative">
-                <div className="absolute left-1 w-[calc(50%-4px)] h-[calc(100%-8px)] bg-slate-900 rounded-[6px] transition-all duration-300 ease-in-out transform translate-x-0 shadow-sm"></div>
+            <div className="flex bg-violet-50/80 rounded-xs p-1 items-center relative">
+                <div className="absolute left-1 w-[calc(50%-4px)] h-[calc(100%-8px)] bg-slate-900 rounded-xs transition-all duration-300 ease-in-out transform translate-x-0 shadow-sm"></div>
                 <button className="relative z-10 transition-all duration-300 text-xs font-semibold text-slate-50 px-8 py-2">
                     Dashboard
                 </button>
@@ -87,12 +87,12 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onMenuClick }) => 
         {/* SECTION 1: Metrics Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 gap-x-4 gap-y-4">
           {/* Sales */}
-          <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between hover:border-purple-100 transition-colors">
+          <div className="bg-white p-4 rounded-lg border border-slate-100 shadow-sm flex flex-col justify-between hover:border-purple-100 transition-colors">
             <div className="flex items-center justify-between mb-2">
               <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">
                 Total Sales
               </p>
-              <div className="p-2 bg-purple-50 rounded-lg">
+              <div className="p-2 bg-purple-50 rounded-md">
                 <DollarSign className="w-4 h-4 text-purple-600" />
               </div>
             </div>
@@ -109,12 +109,12 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onMenuClick }) => 
           </div>
 
           {/* AOV */}
-          <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between hover:border-purple-100 transition-colors">
+          <div className="bg-white p-4 rounded-lg border border-slate-100 shadow-sm flex flex-col justify-between hover:border-purple-100 transition-colors">
             <div className="flex items-center justify-between mb-2">
               <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">
                 Avg. Order
               </p>
-              <div className="p-2 bg-blue-50 rounded-lg">
+              <div className="p-2 bg-blue-50 rounded-md">
                 <CreditCard className="w-4 h-4 text-blue-600" />
               </div>
             </div>
@@ -131,12 +131,12 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onMenuClick }) => 
           </div>
 
           {/* Views */}
-          <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between hover:border-purple-100 transition-colors">
+          <div className="bg-white p-4 rounded-lg border border-slate-100 shadow-sm flex flex-col justify-between hover:border-purple-100 transition-colors">
             <div className="flex items-center justify-between mb-2">
               <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">
                 Total Views
               </p>
-              <div className="p-2 bg-orange-50 rounded-lg">
+              <div className="p-2 bg-orange-50 rounded-md">
                 <Eye className="w-4 h-4 text-orange-600" />
               </div>
             </div>
@@ -153,12 +153,12 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onMenuClick }) => 
           </div>
 
           {/* Conversion */}
-          <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between hover:border-purple-100 transition-colors">
+          <div className="bg-white p-4 rounded-lg border border-slate-100 shadow-sm flex flex-col justify-between hover:border-purple-100 transition-colors">
             <div className="flex items-center justify-between mb-2">
               <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">
                 Conversion
               </p>
-              <div className="p-2 bg-emerald-50 rounded-lg">
+              <div className="p-2 bg-emerald-50 rounded-md">
                 <Percent className="w-4 h-4 text-emerald-600" />
               </div>
             </div>
@@ -180,7 +180,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onMenuClick }) => 
         {/* SECTION 2: Live & Recent Orders */}
         <div className="flex flex-col xl:flex-row gap-6 mb-8">
           {/* LIVE NOW CARD */}
-          <div className="w-full xl:w-[360px] h-[520px] flex-shrink-0 relative group rounded-[1.5rem] overflow-hidden shadow-2xl shadow-purple-900/10 ring-4 ring-white border border-slate-100">
+          <div className="w-full xl:w-[360px] h-[520px] flex-shrink-0 relative group rounded-xl overflow-hidden shadow-2xl shadow-purple-900/10 ring-4 ring-white border border-slate-100">
             {/* Navigation Indicators */}
             <div className="absolute top-3 left-3 right-3 z-30 flex gap-1.5">
               <div className="h-1 flex-1 bg-white/90 rounded-full shadow-sm"></div>
@@ -246,7 +246,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onMenuClick }) => 
           </div>
 
           {/* RECENT ORDERS LIST */}
-          <div className="flex-1 bg-white rounded-[1.5rem] border border-slate-100 shadow-sm flex flex-col h-[520px] overflow-hidden">
+          <div className="flex-1 bg-white rounded-lg border border-slate-100 shadow-sm flex flex-col h-[520px] overflow-hidden">
             <div className="flex border-slate-50 border-b pt-6 pr-6 pb-6 pl-6 items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center text-green-600">
@@ -479,7 +479,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onMenuClick }) => 
 
             {/* CTA Footer */}
             <div className="p-4 border-t border-slate-50 bg-slate-50/50 flex justify-center">
-              <button className="text-xs font-semibold text-purple-600 hover:text-purple-700 flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-purple-50 transition-colors">
+              <button className="text-xs font-semibold text-purple-600 hover:text-purple-700 flex items-center gap-2 px-4 py-2 rounded-md hover:bg-purple-50 transition-colors">
                 View all orders
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
@@ -520,15 +520,15 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onMenuClick }) => 
 
               {/* Filters */}
               <div className="flex items-center gap-2">
-                <button className="flex hover:bg-slate-50 transition-colors text-xs font-medium text-slate-600 bg-white border-slate-200 border rounded-lg pt-2 pr-3 pb-2 pl-3 gap-x-2 gap-y-2 items-center">
+                <button className="flex hover:bg-slate-50 transition-colors text-xs font-medium text-slate-600 bg-white border-slate-200 border rounded-md pt-2 pr-3 pb-2 pl-3 gap-x-2 gap-y-2 items-center">
                   <Filter className="w-3.5 h-3.5" />
                   Filter
                 </button>
-                <button className="flex gap-2 hover:bg-slate-50 transition-colors text-xs font-medium text-slate-600 bg-white border-slate-200 border rounded-lg pt-2 pr-3 pb-2 pl-3 gap-x-2 gap-y-2 items-center">
+                <button className="flex gap-2 hover:bg-slate-50 transition-colors text-xs font-medium text-slate-600 bg-white border-slate-200 border rounded-md pt-2 pr-3 pb-2 pl-3 gap-x-2 gap-y-2 items-center">
                   <ArrowUpDown className="w-3.5 h-3.5" />
                   Sort
                 </button>
-                <button onClick={() => navigate('/campaigns/create')} className="flex hover:bg-slate-800 transition-colors text-xs font-medium text-white bg-slate-900 rounded-lg pt-2 pr-3.5 pb-2 pl-3.5 shadow-sm gap-x-2 gap-y-2 items-center">
+                <button onClick={() => navigate('/campaigns/create')} className="flex hover:bg-slate-800 transition-colors text-xs font-medium text-white bg-slate-900 rounded-md pt-2 pr-3.5 pb-2 pl-3.5 shadow-sm gap-x-2 gap-y-2 items-center">
                   <Plus className="w-3.5 h-3.5" />
                   Create Campaign
                 </button>
@@ -538,7 +538,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onMenuClick }) => 
             {/* List Container */}
             <div className="space-y-3">
               {/* Campaign Item 1 */}
-              <div className="group bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-md hover:border-purple-100 transition-all cursor-pointer">
+              <div className="group bg-white rounded-lg p-5 border border-slate-100 shadow-sm hover:shadow-md hover:border-purple-100 transition-all cursor-pointer">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 mb-1">
@@ -589,7 +589,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onMenuClick }) => 
               </div>
 
               {/* Campaign Item 2 */}
-              <div className="group bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-md hover:border-purple-100 transition-all cursor-pointer">
+              <div className="group bg-white rounded-lg p-5 border border-slate-100 shadow-sm hover:shadow-md hover:border-purple-100 transition-all cursor-pointer">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 mb-1">
@@ -642,8 +642,8 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onMenuClick }) => 
 
           {/* Quick Actions Grid (At the bottom in HTML) */}
           <div className="grid grid-cols-2 md:grid-cols-4 mt-8 mb-8 gap-x-4 gap-y-4">
-            <button className="bg-white p-3.5 rounded-xl border border-slate-100 shadow-sm hover:shadow-md hover:bg-orange-50/60 hover:border-orange-200 transition-all text-left group flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-orange-50 flex items-center justify-center flex-shrink-0 group-hover:bg-orange-100 transition-colors">
+            <button className="bg-white p-3.5 rounded-md border border-slate-100 shadow-sm hover:shadow-md hover:bg-orange-50/60 hover:border-orange-200 transition-all text-left group flex items-center gap-3">
+              <div className="w-10 h-10 rounded-md bg-orange-50 flex items-center justify-center flex-shrink-0 group-hover:bg-orange-100 transition-colors">
                 <Video className="w-5 h-5 text-orange-500 transition-colors" />
               </div>
               <div className="min-w-0">
@@ -656,8 +656,8 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onMenuClick }) => 
               </div>
             </button>
 
-            <button className="bg-white p-3.5 rounded-xl border border-slate-100 shadow-sm hover:shadow-md hover:bg-purple-50/60 hover:border-purple-200 transition-all text-left group flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center flex-shrink-0 group-hover:bg-purple-100 transition-colors">
+            <button className="bg-white p-3.5 rounded-md border border-slate-100 shadow-sm hover:shadow-md hover:bg-purple-50/60 hover:border-purple-200 transition-all text-left group flex items-center gap-3">
+              <div className="w-10 h-10 rounded-md bg-purple-50 flex items-center justify-center flex-shrink-0 group-hover:bg-purple-100 transition-colors">
                 <Search className="w-5 h-5 text-purple-600 transition-colors" />
               </div>
               <div className="min-w-0">
@@ -670,8 +670,8 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onMenuClick }) => 
               </div>
             </button>
 
-            <button className="bg-white p-3.5 rounded-xl border border-slate-100 shadow-sm hover:shadow-md hover:bg-blue-50/60 hover:border-blue-200 transition-all text-left group flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-100 transition-colors">
+            <button className="bg-white p-3.5 rounded-md border border-slate-100 shadow-sm hover:shadow-md hover:bg-blue-50/60 hover:border-blue-200 transition-all text-left group flex items-center gap-3">
+              <div className="w-10 h-10 rounded-md bg-blue-50 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-100 transition-colors">
                 <PackagePlus className="w-5 h-5 text-blue-500 transition-colors" />
               </div>
               <div className="min-w-0">
@@ -684,8 +684,8 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onMenuClick }) => 
               </div>
             </button>
 
-            <button className="bg-white p-3.5 rounded-xl border border-slate-100 shadow-sm hover:shadow-md hover:bg-green-50/60 hover:border-green-200 transition-all text-left group flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center flex-shrink-0 group-hover:bg-green-100 transition-colors">
+            <button className="bg-white p-3.5 rounded-md border border-slate-100 shadow-sm hover:shadow-md hover:bg-green-50/60 hover:border-green-200 transition-all text-left group flex items-center gap-3">
+              <div className="w-10 h-10 rounded-md bg-green-50 flex items-center justify-center flex-shrink-0 group-hover:bg-green-100 transition-colors">
                 <BarChart2 className="w-5 h-5 text-green-600 transition-colors" />
               </div>
               <div className="min-w-0">

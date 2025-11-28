@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
@@ -32,6 +32,13 @@ import { ShopifyConnectButton } from '../components/shopify/ShopifyConnectButton
 import { type ConnectionStatus } from '../services/shopify';
 import { Card, CardContent } from '../components/ui/Card';
 import { useSidebar } from '../contexts/SidebarContext';
+import { 
+    MetricsGridSkeleton, 
+    RecentOrdersSkeleton, 
+    ProductTableSkeleton, 
+    IntegrationCardSkeleton, 
+    StoreDetailsSkeleton 
+} from '../components/ui/PageSkeletons';
 
 // Types
 type MyStoreTab = 'orders' | 'products' | 'integrations' | 'details';
@@ -127,12 +134,21 @@ const tabs = [
 export const StoreIntegration: React.FC = () => {
   const navigate = useNavigate();
   const { isCollapsed, toggleCollapse, mobileOpen, setMobileOpen } = useSidebar();
+  const [isLoading, setIsLoading] = useState(true);
   
   // Tab state
   const [activeTab, setActiveTab] = useState<MyStoreTab>('orders');
   const previousTabRef = useRef<MyStoreTab>(activeTab);
   const [activeFilter, setActiveFilter] = useState('All');
   const [activeIntegrationFilter, setActiveIntegrationFilter] = useState('All');
+
+  // Simulate loading
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Direction logic
   const getDirection = (): SlideDirection => {
@@ -174,17 +190,31 @@ export const StoreIntegration: React.FC = () => {
   };
 
   // Sub-components for Tabs
-  const OrdersView = () => (
+  const OrdersView = () => {
+    if (isLoading) {
+        return (
+            <>
+                <MetricsGridSkeleton />
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                    <div className="h-10 w-full md:w-96 bg-slate-100 rounded-xl animate-pulse"></div>
+                    <div className="h-10 w-24 bg-slate-100 rounded-xl animate-pulse"></div>
+                </div>
+                <RecentOrdersSkeleton />
+            </>
+        )
+    }
+
+    return (
     <>
         {/* Metrics Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 gap-x-4 gap-y-4">
             {/* Total Sales */}
-            <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between hover:border-purple-100 transition-colors">
+            <div className="bg-white p-4 rounded-lg border border-slate-100 shadow-sm flex flex-col justify-between hover:border-purple-100 transition-colors">
                 <div className="flex items-center justify-between mb-2">
                     <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">
                         Total Sales
                     </p>
-                    <div className="p-2 bg-purple-50 rounded-lg">
+                    <div className="p-2 bg-purple-50 rounded-md">
                         <ShoppingBag className="w-4 h-4 text-purple-600" />
                     </div>
                 </div>
@@ -201,12 +231,12 @@ export const StoreIntegration: React.FC = () => {
             </div>
 
             {/* Total Revenue */}
-            <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between hover:border-purple-100 transition-colors">
+            <div className="bg-white p-4 rounded-lg border border-slate-100 shadow-sm flex flex-col justify-between hover:border-purple-100 transition-colors">
                 <div className="flex items-center justify-between mb-2">
                     <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">
                         Total Revenue
                     </p>
-                    <div className="p-2 bg-green-50 rounded-lg">
+                    <div className="p-2 bg-green-50 rounded-md">
                         <DollarSign className="w-4 h-4 text-green-600" />
                     </div>
                 </div>
@@ -223,12 +253,12 @@ export const StoreIntegration: React.FC = () => {
             </div>
 
             {/* Avg. Ticket */}
-            <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between hover:border-purple-100 transition-colors">
+            <div className="bg-white p-4 rounded-lg border border-slate-100 shadow-sm flex flex-col justify-between hover:border-purple-100 transition-colors">
                 <div className="flex items-center justify-between mb-2">
                     <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">
                         Avg. Ticket
                     </p>
-                    <div className="p-2 bg-blue-50 rounded-lg">
+                    <div className="p-2 bg-blue-50 rounded-md">
                         <TrendingUp className="w-4 h-4 text-blue-600" />
                     </div>
                 </div>
@@ -244,12 +274,12 @@ export const StoreIntegration: React.FC = () => {
             </div>
 
              {/* Conversion Rate */}
-             <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between hover:border-purple-100 transition-colors">
+             <div className="bg-white p-4 rounded-lg border border-slate-100 shadow-sm flex flex-col justify-between hover:border-purple-100 transition-colors">
                 <div className="flex items-center justify-between mb-2">
                     <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">
                         Conversion Rate
                     </p>
-                    <div className="p-2 bg-orange-50 rounded-lg">
+                    <div className="p-2 bg-orange-50 rounded-md">
                         <TrendingUp className="w-4 h-4 text-orange-600" />
                     </div>
                 </div>
@@ -269,12 +299,12 @@ export const StoreIntegration: React.FC = () => {
         {/* Toolbar */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
             {/* Filter Tabs */}
-            <div className="flex items-center bg-slate-100/50 p-1 rounded-xl overflow-x-auto no-scrollbar">
+            <div className="flex items-center bg-slate-100/50 p-1 rounded-xs overflow-x-auto no-scrollbar">
                 {['All', "Today's Orders", 'Top Products'].map((filter) => (
                     <button
                         key={filter}
                         onClick={() => setActiveFilter(filter)}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                        className={`px-4 py-2 rounded-xs text-sm font-medium transition-all whitespace-nowrap ${
                             activeFilter === filter
                                 ? 'bg-white text-slate-900 shadow-sm'
                                 : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
@@ -287,11 +317,11 @@ export const StoreIntegration: React.FC = () => {
 
             {/* Actions */}
             <div className="flex items-center gap-3">
-                <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors shadow-sm">
+                <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-md text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors shadow-sm">
                     <Filter className="w-4 h-4" />
                     Filter
                 </button>
-                <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors shadow-sm">
+                <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-md text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors shadow-sm">
                     <Download className="w-4 h-4" />
                     Export
                 </button>
@@ -299,7 +329,7 @@ export const StoreIntegration: React.FC = () => {
         </div>
 
         {/* Table */}
-        <div className="bg-white rounded-[1.5rem] border border-slate-100 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-lg border border-slate-100 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                     <thead className="bg-slate-50/50 border-b border-slate-100">
@@ -338,7 +368,7 @@ export const StoreIntegration: React.FC = () => {
                                     </span>
                                 </td>
                                 <td className="px-6 py-5 text-right">
-                                    <button className="text-slate-400 hover:text-slate-600 p-2 hover:bg-slate-50 rounded-lg transition-colors">
+                                    <button className="text-slate-400 hover:text-slate-600 p-2 hover:bg-slate-50 rounded-md transition-colors">
                                         <MoreHorizontal className="w-5 h-5" />
                                     </button>
                                 </td>
@@ -353,19 +383,33 @@ export const StoreIntegration: React.FC = () => {
                     Showing <span className="font-medium">1-{mockOrders.length}</span> of <span className="font-medium">{mockOrders.length}</span> orders
                 </div>
                 <div className="flex gap-2">
-                    <button className="w-8 h-8 flex items-center justify-center bg-white border border-slate-200 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                    <button className="w-8 h-8 flex items-center justify-center bg-white border border-slate-200 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                         <ChevronLeft className="w-4 h-4" />
                     </button>
-                    <button className="w-8 h-8 flex items-center justify-center bg-white border border-slate-200 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                    <button className="w-8 h-8 flex items-center justify-center bg-white border border-slate-200 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                         <ChevronRight className="w-4 h-4" />
                     </button>
                 </div>
             </div>
         </div>
     </>
-  );
+    );
+  };
 
-  const ProductsView = () => (
+  const ProductsView = () => {
+    if (isLoading) {
+        return (
+            <div className="space-y-6">
+                <div className="flex justify-between gap-4">
+                    <div className="h-10 w-96 bg-slate-100 rounded-xl animate-pulse"></div>
+                    <div className="h-10 w-32 bg-slate-900/10 rounded-xl animate-pulse"></div>
+                </div>
+                <ProductTableSkeleton />
+            </div>
+        )
+    }
+
+    return (
     <div className="space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <div className="relative w-full sm:w-96">
@@ -378,13 +422,13 @@ export const StoreIntegration: React.FC = () => {
                     className="block w-full pl-10 pr-3 py-2.5 border border-slate-200 rounded-xl leading-5 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm transition-all shadow-sm"
                 />
             </div>
-            <button className="w-full sm:w-auto flex items-center justify-center gap-2 bg-slate-900 text-white px-4 py-2.5 rounded-xl hover:bg-slate-800 transition-colors font-medium text-sm shadow-sm">
+            <button className="w-full sm:w-auto flex items-center justify-center gap-2 bg-slate-900 text-white px-4 py-2.5 rounded-md hover:bg-slate-800 transition-colors font-medium text-sm shadow-sm">
                 <Plus className="h-4 w-4" />
                 Cadastrar Produto
             </button>
         </div>
 
-        <div className="bg-white rounded-[1.5rem] border border-slate-100 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-lg border border-slate-100 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                     <thead className="bg-slate-50/50 border-b border-slate-100">
@@ -401,7 +445,7 @@ export const StoreIntegration: React.FC = () => {
                             <tr key={product.id} className="hover:bg-slate-50/50 transition-colors">
                                 <td className="px-6 py-4">
                                     <div className="flex items-center gap-3">
-                                        <img src={product.image} alt={product.name} className="w-10 h-10 rounded-xl object-cover border border-slate-100 shadow-sm" />
+                                        <img src={product.image} alt={product.name} className="w-10 h-10 rounded-md object-cover border border-slate-100 shadow-sm" />
                                         <span className="text-sm font-medium text-slate-900">{product.name}</span>
                                     </div>
                                 </td>
@@ -424,24 +468,41 @@ export const StoreIntegration: React.FC = () => {
             </div>
         </div>
     </div>
-  );
+    );
+  };
 
   const IntegrationsView = () => {
     const filteredIntegrations = activeIntegrationFilter === 'All' 
       ? mockIntegrations 
       : mockIntegrations.filter(i => i.category === activeIntegrationFilter || (activeIntegrationFilter === 'Connected' && i.status === 'Connected'));
 
+    if (isLoading) {
+        return (
+            <div className="space-y-6">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                    <div className="h-10 w-96 bg-slate-100 rounded-xl animate-pulse"></div>
+                    <div className="h-10 w-64 bg-slate-100 rounded-xl animate-pulse"></div>
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <IntegrationCardSkeleton />
+                    <IntegrationCardSkeleton />
+                    <IntegrationCardSkeleton />
+                </div>
+            </div>
+        )
+    }
+
     return (
       <div className="space-y-6">
         {/* Toolbar */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
             {/* Filter Tabs */}
-            <div className="flex items-center bg-slate-100/50 p-1 rounded-xl overflow-x-auto no-scrollbar">
+            <div className="flex items-center bg-slate-100/50 p-1 rounded-xs overflow-x-auto no-scrollbar">
                 {['All', 'Connected', 'Ecommerce', 'Payment', 'Marketing'].map((filter) => (
                     <button
                         key={filter}
                         onClick={() => setActiveIntegrationFilter(filter)}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                        className={`px-4 py-2 rounded-xs text-sm font-medium transition-all whitespace-nowrap ${
                             activeIntegrationFilter === filter
                                 ? 'bg-white text-slate-900 shadow-sm'
                                 : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
@@ -475,12 +536,12 @@ export const StoreIntegration: React.FC = () => {
                 return (
                     <div 
                         key={integration.id} 
-                        className="bg-white rounded-[1.5rem] border border-slate-100 shadow-sm p-6 hover:border-purple-100 transition-all group"
+                        className="bg-white rounded-lg border border-slate-100 shadow-sm p-6 hover:border-purple-100 transition-all group"
                     >
                         {/* Header Row: Logo + Info + Status */}
                         <div className="flex items-start gap-4">
                             {/* Logo Container */}
-                            <div className="w-14 h-14 flex-shrink-0 bg-slate-50 rounded-xl flex items-center justify-center border border-slate-100 group-hover:scale-105 transition-transform">
+                            <div className="w-14 h-14 flex-shrink-0 bg-slate-50 rounded-md flex items-center justify-center border border-slate-100 group-hover:scale-105 transition-transform">
                                 <img 
                                     src={integration.logo} 
                                     alt={integration.name} 
@@ -519,16 +580,16 @@ export const StoreIntegration: React.FC = () => {
                             {isShopify ? (
                                 <ShopifyConnectButton />
                             ) : integration.status === 'Connected' ? (
-                                <button className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:text-slate-900 transition-colors shadow-sm">
+                                <button className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-md hover:bg-slate-50 hover:text-slate-900 transition-colors shadow-sm">
                                     <Settings className="w-4 h-4" />
                                     Manage
                                 </button>
                             ) : integration.status === 'Coming Soon' ? (
-                                <button disabled className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-slate-400 bg-slate-50 border border-slate-100 rounded-xl cursor-not-allowed">
+                                <button disabled className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-slate-400 bg-slate-50 border border-slate-100 rounded-md cursor-not-allowed">
                                     Coming Soon
                                 </button>
                             ) : (
-                                <button className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-slate-900 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm">
+                                <button className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-slate-900 bg-white border border-slate-200 rounded-md hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm">
                                     Connect
                                     <ArrowRight className="w-4 h-4" />
                                 </button>
@@ -542,7 +603,12 @@ export const StoreIntegration: React.FC = () => {
     );
   };
 
-  const StoreDetailsView = () => (
+  const StoreDetailsView = () => {
+    if (isLoading) {
+        return <StoreDetailsSkeleton />
+    }
+
+    return (
     <div className="max-w-5xl mx-auto pb-10">
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
@@ -551,10 +617,10 @@ export const StoreIntegration: React.FC = () => {
                 <p className="text-sm text-slate-500 mt-1">Manage your store profile and public information</p>
             </div>
             <div className="flex gap-3">
-                <button className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors shadow-sm">
+                <button className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-md hover:bg-slate-50 transition-colors shadow-sm">
                     Cancel
                 </button>
-                <button className="px-5 py-2.5 text-sm font-medium text-white bg-slate-900 rounded-xl hover:bg-slate-800 transition-colors shadow-sm shadow-slate-200">
+                <button className="px-5 py-2.5 text-sm font-medium text-white bg-slate-900 rounded-md hover:bg-slate-800 transition-colors shadow-sm shadow-slate-200">
                     Save Changes
                 </button>
             </div>
@@ -563,7 +629,7 @@ export const StoreIntegration: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             {/* Left Column: Logo & Branding */}
             <div className="lg:col-span-4 space-y-6">
-                <div className="bg-white p-6 rounded-[1.5rem] border border-slate-100 shadow-sm">
+                <div className="bg-white p-6 rounded-lg border border-slate-100 shadow-sm">
                     <h3 className="text-base font-semibold text-slate-900 mb-6">Brand Assets</h3>
                     
                     <div className="flex flex-col items-center text-center">
@@ -590,9 +656,9 @@ export const StoreIntegration: React.FC = () => {
 
             {/* Right Column: Form Fields */}
             <div className="lg:col-span-8 space-y-6">
-                <div className="bg-white p-8 rounded-[1.5rem] border border-slate-100 shadow-sm">
+                <div className="bg-white p-8 rounded-lg border border-slate-100 shadow-sm">
                     <div className="flex items-center gap-3 mb-8 pb-6 border-b border-slate-50">
-                        <div className="p-2 bg-slate-50 rounded-xl">
+                        <div className="p-2 bg-slate-50 rounded-md">
                             <Settings className="w-5 h-5 text-slate-600" />
                         </div>
                         <div>
@@ -611,7 +677,7 @@ export const StoreIntegration: React.FC = () => {
                                     </div>
                                     <input 
                                         type="text" 
-                                        className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm transition-all bg-white placeholder-slate-400"
+                                        className="w-full pl-10 pr-4 py-2.5 rounded-md border border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm transition-all bg-white placeholder-slate-400"
                                         placeholder="e.g. Fashion Boutique"
                                         defaultValue="My Awesome Store"
                                     />
@@ -624,7 +690,7 @@ export const StoreIntegration: React.FC = () => {
                                     <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                                         <ShoppingBag className="h-4 w-4 text-slate-400 group-focus-within:text-purple-500 transition-colors" />
                                     </div>
-                                    <select className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm transition-all bg-white appearance-none text-slate-700">
+                                    <select className="w-full pl-10 pr-10 py-2.5 rounded-md border border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm transition-all bg-white appearance-none text-slate-700">
                                         <option>Fashion & Apparel</option>
                                         <option>Beauty & Cosmetics</option>
                                         <option>Electronics</option>
@@ -642,7 +708,7 @@ export const StoreIntegration: React.FC = () => {
                             <div className="relative">
                                 <textarea 
                                     rows={4}
-                                    className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm transition-all bg-white resize-none placeholder-slate-400"
+                                    className="w-full px-4 py-3 rounded-md border border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm transition-all bg-white resize-none placeholder-slate-400"
                                     placeholder="Tell your customers about your store..."
                                     defaultValue="We sell the best fashion items for summer. Our products are sourced from sustainable materials and crafted with care."
                                 />
@@ -654,9 +720,9 @@ export const StoreIntegration: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="bg-white p-8 rounded-[1.5rem] border border-slate-100 shadow-sm">
+                <div className="bg-white p-8 rounded-lg border border-slate-100 shadow-sm">
                     <div className="flex items-center gap-3 mb-8 pb-6 border-b border-slate-50">
-                        <div className="p-2 bg-slate-50 rounded-xl">
+                        <div className="p-2 bg-slate-50 rounded-md">
                             <CheckCircle2 className="w-5 h-5 text-slate-600" />
                         </div>
                         <div>
@@ -670,7 +736,7 @@ export const StoreIntegration: React.FC = () => {
                             <label className="text-sm font-medium text-slate-700">Public Email</label>
                             <input 
                                 type="email" 
-                                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm transition-all bg-white"
+                                className="w-full px-4 py-2.5 rounded-md border border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm transition-all bg-white"
                                 placeholder="contact@store.com"
                                 defaultValue="contact@myawesomestore.com"
                             />
@@ -681,7 +747,7 @@ export const StoreIntegration: React.FC = () => {
                             <div className="relative">
                                 <input 
                                     type="url" 
-                                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm transition-all bg-white pr-10"
+                                    className="w-full px-4 py-2.5 rounded-md border border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm transition-all bg-white pr-10"
                                     placeholder="https://store.com"
                                     defaultValue="https://myawesomestore.com"
                                 />
@@ -695,7 +761,8 @@ export const StoreIntegration: React.FC = () => {
             </div>
         </div>
     </div>
-  );
+    );
+  };
 
   return (
     <div className="h-screen flex flex-col lg:flex-row overflow-hidden bg-white w-full">
@@ -721,12 +788,12 @@ export const StoreIntegration: React.FC = () => {
             </button>
             
             {/* Tab Navigation with Sliding Indicator */}
-            <div className="grid grid-cols-4 bg-violet-50/80 rounded-lg p-1 items-center relative">
+            <div className="grid grid-cols-4 bg-violet-50/80 rounded-xs p-1 items-center relative">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => handleTabChange(tab.id as MyStoreTab)}
-                  className={`relative z-10 px-4 py-2 text-center text-xs font-semibold transition-colors duration-300 whitespace-nowrap rounded-[6px] ${
+                  className={`relative z-10 px-4 py-2 text-center text-xs font-semibold transition-colors duration-300 whitespace-nowrap rounded-xs ${
                     activeTab === tab.id
                       ? 'text-slate-50'
                       : 'text-slate-500 hover:text-slate-900'
@@ -735,7 +802,7 @@ export const StoreIntegration: React.FC = () => {
                   {activeTab === tab.id && (
                     <motion.div
                       layoutId="mystore-active-pill"
-                      className="absolute inset-0 bg-slate-900 rounded-[6px] shadow-sm"
+                      className="absolute inset-0 bg-slate-900 rounded-xs shadow-sm"
                       transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                       style={{ zIndex: -1 }}
                     />

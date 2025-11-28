@@ -371,7 +371,7 @@ export const CreateCampaign: React.FC = () => {
 
               <div className="max-w-[760px] mx-auto">
                 <div className="mb-4 relative px-2 py-2">
-                  <div ref={scrollRef} className="overflow-x-auto overflow-y-visible no-scrollbar">
+                  <div ref={scrollRef} className="hide-horizontal-scrollbar overflow-y-visible" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                     <div className="flex gap-3 items-stretch">
                       {promptSuggestions.map((s, i) => (
                         <SuggestionCard key={i} text={s.text} tags={s.tags} onUse={() => handleUseSuggestion(s.text)} />

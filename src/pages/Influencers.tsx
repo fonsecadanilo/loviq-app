@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Sidebar } from '../components/dashboard/Sidebar';
-import { Search, ArrowUp, Instagram, Youtube, Twitter, ExternalLink, UserPlus, ChevronDown, X, Check } from 'lucide-react';
+import { Search, ArrowUp, Instagram, Youtube, Twitter, ExternalLink, UserPlus, ChevronDown, X, Check, Menu } from 'lucide-react';
 import { Card, CardContent } from '../components/ui/Card';
 import { parseInfluencerSearch, searchParamsToTags } from '../lib/influencers/search';
 import type { SearchParams, SearchTag } from '../lib/influencers/types';
+import { useSidebar } from '../contexts/SidebarContext';
 
+// ... (keep interfaces and mock data)
 interface Influencer {
     id: string;
     name: string;
@@ -100,7 +102,8 @@ const mockInfluencers: Influencer[] = [
 ];
 
 export const Influencers: React.FC = () => {
-    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const { isCollapsed, toggleCollapse, mobileOpen, setMobileOpen } = useSidebar();
+    
     const [activeTab, setActiveTab] = useState<'search' | 'my_influencers'>('search');
 
     // Modal state (temporary, not applied until submit)
@@ -314,14 +317,8 @@ export const Influencers: React.FC = () => {
             if (!hasCampaign) return false;
         }
 
-        // 4. Live Filter (Mock logic: assume if they are in the campaign, they might be in the live, 
-        // or we could add liveIds to influencer. For now, let's stick to campaign filtering as primary)
-        // If we wanted strict live filtering, we'd need liveIds on Influencer.
-        // Let's assume for this mock that if a live is selected, we check if the influencer is in the campaign of that live.
+        // 4. Live Filter
         if (selectedLives.length > 0) {
-            // This is a bit loose for mock, but acceptable. 
-            // Ideally: influencer.liveIds.includes(selectedLiveId)
-            // For now: check if influencer is in the campaign of the selected live
             const selectedLiveObjects = mockLives.filter(l => selectedLives.includes(l.name));
             const campaignsOfSelectedLives = selectedLiveObjects.map(l => l.campaignId);
 
@@ -358,468 +355,482 @@ export const Influencers: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#F8FAFC] lg:pl-[280px]">
-            <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        <div className="h-screen flex flex-col lg:flex-row overflow-hidden bg-white w-full">
+            <Sidebar 
+                isCollapsed={isCollapsed} 
+                toggleCollapse={toggleCollapse}
+                mobileOpen={mobileOpen} 
+                setMobileOpen={setMobileOpen} 
+            />
 
-            <main className="px-4 py-8 sm:px-6 lg:px-10">
-                <div className="mb-6">
-                    <h1 className="text-2xl font-bold text-gray-900">Influencers</h1>
-                    <p className="text-gray-600 text-sm sm:text-base">Find and manage creators for your campaigns</p>
-                </div>
+            <main className="flex-1 bg-[#FAFAFA] flex flex-col h-full overflow-hidden relative">
+                <div className="flex-1 overflow-y-auto px-4 py-8 sm:px-6 lg:px-10">
+                    {/* Mobile Toggle */}
+                    <div className="lg:hidden mb-4">
+                        <button onClick={() => setMobileOpen(true)} className="p-2 -ml-2 text-gray-600">
+                            <Menu className="w-6 h-6" />
+                        </button>
+                    </div>
 
-                {/* Tabs */}
-                <div className="flex border-b border-gray-200 mb-8">
-                    <button
-                        className={`pb-2 px-1 text-sm font-medium mr-8 transition-colors relative ${activeTab === 'search'
-                            ? 'text-[#7D2AE8]'
-                            : 'text-gray-500 hover:text-gray-700'
-                            }`}
-                        onClick={() => setActiveTab('search')}
-                    >
-                        Search Influencers
-                        {activeTab === 'search' && (
-                            <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[#7D2AE8]" />
-                        )}
-                    </button>
-                    <button
-                        className={`pb-2 px-1 text-sm font-medium transition-colors relative ${activeTab === 'my_influencers'
-                            ? 'text-[#7D2AE8]'
-                            : 'text-gray-500 hover:text-gray-700'
-                            }`}
-                        onClick={() => setActiveTab('my_influencers')}
-                    >
-                        My Influencers
-                        {activeTab === 'my_influencers' && (
-                            <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[#7D2AE8]" />
-                        )}
-                    </button>
-                </div>
+                    <div className="mb-6">
+                        <h1 className="text-2xl font-bold text-gray-900">Influencers</h1>
+                        <p className="text-gray-600 text-sm sm:text-base">Find and manage creators for your campaigns</p>
+                    </div>
 
-                {activeTab === 'search' && (
-                    <>
-                        {/* Simple Search Input (triggers modal) */}
-                        <div className="mb-6">
-                            <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4 mb-2">
-                                <div className="relative max-w-md w-full" onClick={handleOpenModal}>
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <Search className="h-5 w-5 text-gray-400" />
-                                    </div>
-                                    <input
-                                        type="text"
-                                        value={searchTags.length > 0 ? '' : ''}
-                                        onFocus={handleOpenModal}
-                                        placeholder=""
-                                        className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-[#7D2AE8] focus:border-[#7D2AE8] sm:text-sm transition duration-150 ease-in-out cursor-pointer"
-                                        readOnly
-                                    />
-                                    {/* Animated Placeholder */}
-                                    {searchTags.length === 0 && (
-                                        <div className="absolute inset-y-0 left-10 flex items-center pointer-events-none overflow-hidden">
-                                            <span className="text-gray-500 text-sm">
-                                                Search by <span className={`inline-block font-semibold text-gray-700 transition-all duration-400 ease-out ${fadeClass}`}>{placeholderWords[currentWordIndex]}</span>
-                                            </span>
-                                        </div>
-                                    )}
-                                    {/* Tags inside input */}
-                                    {searchTags.length > 0 && (
-                                        <div className="absolute inset-y-0 left-10 right-3 flex items-center gap-1.5 overflow-x-auto pointer-events-none">
-                                            {searchTags.map((tag, index) => (
-                                                <span
-                                                    key={index}
-                                                    className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#F3E8FF] text-[#7D2AE8] text-xs font-medium rounded-full border border-[#E9D5FF] whitespace-nowrap"
-                                                >
-                                                    {tag.type === 'segment' && <span className="text-[10px]">🎯</span>}
-                                                    {tag.type === 'platform' && <span className="text-[10px]">📱</span>}
-                                                    {tag.type === 'followers' && <span className="text-[10px]">👥</span>}
-                                                    {tag.type === 'age' && <span className="text-[10px]">🎂</span>}
-                                                    {tag.label}
-                                                </span>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Filters */}
-                                <div className="flex flex-wrap gap-3 items-center">
-                                    {/* Profile Filter */}
-                                    <div className="relative" ref={profileDropdownRef}>
-                                        <button
-                                            onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-                                            className="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-white px-4 border border-gray-200 hover:bg-gray-50 transition-colors"
-                                        >
-                                            <p className="text-sm font-normal text-gray-600">
-                                                Profile {selectedProfiles.length > 0 && `(${selectedProfiles.length})`}
-                                            </p>
-                                            {selectedProfiles.length > 0 ? (
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setSelectedProfiles([]);
-                                                    }}
-                                                    className="text-gray-400 hover:text-gray-600"
-                                                >
-                                                    <X className="w-3.5 h-3.5" />
-                                                </button>
-                                            ) : (
-                                                <ChevronDown className="w-4 h-4 text-gray-400" />
-                                            )}
-                                        </button>
-
-                                        {profileDropdownOpen && (
-                                            <div className="absolute left-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-2">
-                                                {['Micro', 'Mid', 'Top'].map((profile) => (
-                                                    <label key={profile} className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 rounded-lg cursor-pointer">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={selectedProfiles.includes(profile)}
-                                                            onChange={() => toggleProfile(profile)}
-                                                            className="w-4 h-4 text-[#7D2AE8] border-gray-300 rounded focus:ring-[#7D2AE8]"
-                                                        />
-                                                        <div className="flex flex-col">
-                                                            <span className="text-sm text-gray-900">{profile}</span>
-                                                            <span className="text-xs text-gray-500">
-                                                                {profile === 'Micro' ? '10k - 100k' : profile === 'Mid' ? '100k - 500k' : '500k+'}
-                                                            </span>
-                                                        </div>
-                                                    </label>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Campaign Filter */}
-                                    <div className="relative" ref={campaignDropdownRef}>
-                                        <button
-                                            onClick={() => setCampaignDropdownOpen(!campaignDropdownOpen)}
-                                            className="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-white px-4 border border-gray-200 hover:bg-gray-50 transition-colors"
-                                        >
-                                            <p className="text-sm font-normal text-gray-600">
-                                                Campaigns {selectedCampaigns.length > 0 && `(${selectedCampaigns.length})`}
-                                            </p>
-                                            {selectedCampaigns.length > 0 ? (
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setSelectedCampaigns([]);
-                                                    }}
-                                                    className="text-gray-400 hover:text-gray-600"
-                                                >
-                                                    <X className="w-3.5 h-3.5" />
-                                                </button>
-                                            ) : (
-                                                <ChevronDown className="w-4 h-4 text-gray-400" />
-                                            )}
-                                        </button>
-
-                                        {campaignDropdownOpen && (
-                                            <div className="absolute left-0 mt-2 w-72 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-                                                <div className="p-3 border-b border-gray-100">
-                                                    <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2">
-                                                        <Search className="w-4 h-4 text-gray-400" />
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Search campaigns..."
-                                                            value={campaignSearchQuery}
-                                                            onChange={(e) => setCampaignSearchQuery(e.target.value)}
-                                                            className="flex-1 bg-transparent border-none outline-none text-sm text-gray-900"
-                                                        />
-                                                    </div>
-                                                </div>
-                                                <div className="max-h-64 overflow-y-auto p-2">
-                                                    {filteredCampaigns.map((campaign) => (
-                                                        <label key={campaign.id} className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 rounded-lg cursor-pointer">
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={selectedCampaigns.includes(campaign.name)}
-                                                                onChange={() => toggleCampaign(campaign.name)}
-                                                                className="w-4 h-4 text-[#7D2AE8] border-gray-300 rounded focus:ring-[#7D2AE8]"
-                                                            />
-                                                            <span className="text-sm text-gray-900">{campaign.name}</span>
-                                                        </label>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Live Filter */}
-                                    <div className="relative" ref={liveDropdownRef}>
-                                        <button
-                                            onClick={() => setLiveDropdownOpen(!liveDropdownOpen)}
-                                            className="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-white px-4 border border-gray-200 hover:bg-gray-50 transition-colors"
-                                        >
-                                            <p className="text-sm font-normal text-gray-600">
-                                                Lives {selectedLives.length > 0 && `(${selectedLives.length})`}
-                                            </p>
-                                            {selectedLives.length > 0 ? (
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setSelectedLives([]);
-                                                    }}
-                                                    className="text-gray-400 hover:text-gray-600"
-                                                >
-                                                    <X className="w-3.5 h-3.5" />
-                                                </button>
-                                            ) : (
-                                                <ChevronDown className="w-4 h-4 text-gray-400" />
-                                            )}
-                                        </button>
-
-                                        {liveDropdownOpen && (
-                                            <div className="absolute left-0 mt-2 w-72 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-                                                <div className="p-3 border-b border-gray-100">
-                                                    <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2">
-                                                        <Search className="w-4 h-4 text-gray-400" />
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Search lives..."
-                                                            value={liveSearchQuery}
-                                                            onChange={(e) => setLiveSearchQuery(e.target.value)}
-                                                            className="flex-1 bg-transparent border-none outline-none text-sm text-gray-900"
-                                                        />
-                                                    </div>
-                                                </div>
-                                                <div className="max-h-64 overflow-y-auto p-2">
-                                                    {filteredLives.map((live) => (
-                                                        <label key={live.id} className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 rounded-lg cursor-pointer">
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={selectedLives.includes(live.name)}
-                                                                onChange={() => toggleLive(live.name)}
-                                                                className="w-4 h-4 text-[#7D2AE8] border-gray-300 rounded focus:ring-[#7D2AE8]"
-                                                            />
-                                                            <span className="text-sm text-gray-900">{live.name}</span>
-                                                        </label>
-                                                    ))}
-                                                    {filteredLives.length === 0 && (
-                                                        <div className="p-4 text-center text-sm text-gray-500">
-                                                            No lives found
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Clear Filters Button - Below input */}
-                            {searchTags.length > 0 && (
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        setSearchQuery('');
-                                        setSearchParams(null);
-                                        setSearchTags([]);
-                                        setModalSearchQuery('');
-                                    }}
-                                    className="text-sm text-gray-600 hover:text-[#7D2AE8] transition-colors flex items-center gap-1.5"
-                                >
-                                    <X className="w-3.5 h-3.5" />
-                                    Clear search
-                                </button>
+                    {/* Tabs */}
+                    <div className="flex border-b border-gray-200 mb-8">
+                        <button
+                            className={`pb-2 px-1 text-sm font-medium mr-8 transition-colors relative ${activeTab === 'search'
+                                ? 'text-[#7D2AE8]'
+                                : 'text-gray-500 hover:text-gray-700'
+                                }`}
+                            onClick={() => setActiveTab('search')}
+                        >
+                            Search Influencers
+                            {activeTab === 'search' && (
+                                <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[#7D2AE8]" />
                             )}
-                        </div>
+                        </button>
+                        <button
+                            className={`pb-2 px-1 text-sm font-medium transition-colors relative ${activeTab === 'my_influencers'
+                                ? 'text-[#7D2AE8]'
+                                : 'text-gray-500 hover:text-gray-700'
+                                }`}
+                            onClick={() => setActiveTab('my_influencers')}
+                        >
+                            My Influencers
+                            {activeTab === 'my_influencers' && (
+                                <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[#7D2AE8]" />
+                            )}
+                        </button>
+                    </div>
 
-                        {/* Search Modal */}
-                        {isSearchModalOpen && (
-                            <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onClick={() => setIsSearchModalOpen(false)}>
-                                <div className="bg-white rounded-[20px] max-w-2xl w-full p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-                                    {/* Modal Header */}
-                                    <div className="flex items-center justify-between mb-6">
-                                        <h2 className="text-xl font-bold text-gray-900">Smart Influencer Search</h2>
-                                        <button
-                                            onClick={() => setIsSearchModalOpen(false)}
-                                            className="text-gray-400 hover:text-gray-600 transition-colors"
-                                        >
-                                            <X className="w-6 h-6" />
-                                        </button>
-                                    </div>
-
-                                    {/* Search Input (Large) */}
-                                    <div className="mb-6">
-                                        <div className="relative bg-white rounded-[16px] border border-[#E2E8F0] shadow-sm transition-shadow focus-within:border-[#7D2AE8]/30 focus-within:shadow-[0_8px_24px_rgba(125,42,232,0.12)]">
-                                            <textarea
-                                                value={modalSearchQuery}
-                                                onChange={(e) => setModalSearchQuery(e.target.value)}
-                                                onKeyPress={handleModalKeyPress}
-                                                placeholder="Describe the influencer profile you're looking for. Ex: 'Instagram fitness influencer, young audience, 10k+ followers'"
-                                                className="w-full min-h-[120px] p-4 pr-14 pb-14 rounded-[16px] border-none outline-none ring-0 focus:outline-none focus:ring-0 bg-white text-gray-900 text-sm leading-5 placeholder:text-[#D1D5DB] resize-none"
-                                                autoFocus
-                                            />
-                                            <button
-                                                disabled={!modalSearchParams?.isValid}
-                                                onClick={handleSearchSubmit}
-                                                className={`absolute bottom-3 right-3 w-10 h-10 rounded-[12px] flex items-center justify-center transition-all ${modalSearchParams?.isValid
-                                                    ? 'bg-[#7D2AE8] text-white hover:bg-[#6d24ca] cursor-pointer shadow-sm'
-                                                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                                    }`}
-                                            >
-                                                <ArrowUp className="w-5 h-5" />
-                                            </button>
+                    {activeTab === 'search' && (
+                        <>
+                            {/* Simple Search Input (triggers modal) */}
+                            <div className="mb-6">
+                                <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4 mb-2">
+                                    <div className="relative max-w-md w-full" onClick={handleOpenModal}>
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <Search className="h-5 w-5 text-gray-400" />
                                         </div>
-                                    </div>
-
-                                    {/* Tags */}
-                                    {modalSearchTags.length > 0 && (
-                                        <div className="mb-4">
-                                            <p className="text-sm font-medium text-gray-700 mb-3">Detected parameters:</p>
-                                            <div className="flex flex-wrap gap-2">
-                                                {modalSearchTags.map((tag, index) => (
+                                        <input
+                                            type="text"
+                                            value={searchTags.length > 0 ? '' : ''}
+                                            onFocus={handleOpenModal}
+                                            placeholder=""
+                                            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-[#7D2AE8] focus:border-[#7D2AE8] sm:text-sm transition duration-150 ease-in-out cursor-pointer"
+                                            readOnly
+                                        />
+                                        {/* Animated Placeholder */}
+                                        {searchTags.length === 0 && (
+                                            <div className="absolute inset-y-0 left-10 flex items-center pointer-events-none overflow-hidden">
+                                                <span className="text-gray-500 text-sm">
+                                                    Search by <span className={`inline-block font-semibold text-gray-700 transition-all duration-400 ease-out ${fadeClass}`}>{placeholderWords[currentWordIndex]}</span>
+                                                </span>
+                                            </div>
+                                        )}
+                                        {/* Tags inside input */}
+                                        {searchTags.length > 0 && (
+                                            <div className="absolute inset-y-0 left-10 right-3 flex items-center gap-1.5 overflow-x-auto pointer-events-none">
+                                                {searchTags.map((tag, index) => (
                                                     <span
                                                         key={index}
-                                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#F3E8FF] text-[#7D2AE8] text-sm font-medium rounded-full border border-[#E9D5FF]"
+                                                        className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#F3E8FF] text-[#7D2AE8] text-xs font-medium rounded-full border border-[#E9D5FF] whitespace-nowrap"
                                                     >
-                                                        {tag.type === 'segment' && <span className="text-xs">🎯</span>}
-                                                        {tag.type === 'platform' && <span className="text-xs">📱</span>}
-                                                        {tag.type === 'followers' && <span className="text-xs">👥</span>}
-                                                        {tag.type === 'age' && <span className="text-xs">🎂</span>}
+                                                        {tag.type === 'segment' && <span className="text-[10px]">🎯</span>}
+                                                        {tag.type === 'platform' && <span className="text-[10px]">📱</span>}
+                                                        {tag.type === 'followers' && <span className="text-[10px]">👥</span>}
+                                                        {tag.type === 'age' && <span className="text-[10px]">🎂</span>}
                                                         {tag.label}
                                                     </span>
                                                 ))}
                                             </div>
-                                        </div>
-                                    )}
-
-                                    {/* Helper Text */}
-                                    <p className="text-xs text-gray-500 text-center">
-                                        Describe characteristics such as niche, followers, platform, and age
-                                    </p>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Search Results Grid */}
-                        <div>
-                            <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                                {searchTags.length > 0 ? 'Search Results' : 'Suggested for you'}
-                            </h2>
-
-                            {/* Loading State */}
-                            {isSearching ? (
-                                <div className="flex flex-col items-center justify-center py-20">
-                                    <div className="w-16 h-16 border-4 border-[#7D2AE8] border-t-transparent rounded-full animate-spin mb-4"></div>
-                                    <p className="text-gray-600 font-medium">Searching influencers...</p>
-                                    <p className="text-gray-500 text-sm">Analyzing your search parameters</p>
-                                </div>
-                            ) : filteredInfluencers.length === 0 ? (
-                                /* Empty State */
-                                <div className="flex flex-col items-center justify-center py-20">
-                                    <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                                        <Search className="w-10 h-10 text-gray-400" />
+                                        )}
                                     </div>
-                                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No influencers found</h3>
-                                    <p className="text-gray-500 text-sm text-center max-w-md mb-6">
-                                        {searchTags.length > 0
-                                            ? "We couldn't find any influencers matching your search criteria. Try adjusting your filters or search terms."
-                                            : "No influencers available at the moment. Try different filters or check back later."
-                                        }
-                                    </p>
-                                    {searchTags.length > 0 && (
-                                        <button
-                                            onClick={() => {
-                                                setSearchQuery('');
-                                                setSearchParams(null);
-                                                setSearchTags([]);
-                                                setModalSearchQuery('');
-                                            }}
-                                            className="inline-flex items-center gap-2 px-4 py-2 bg-[#7D2AE8] text-white text-sm font-medium rounded-lg hover:bg-[#6d24ca] transition-colors"
-                                        >
-                                            <X className="w-4 h-4" />
-                                            Clear search
-                                        </button>
-                                    )}
-                                </div>
-                            ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                                    {filteredInfluencers.map((influencer) => (
-                                        <Card key={influencer.id} className="border-[#E2E8F0] hover:shadow-md transition-shadow">
-                                            <CardContent className="p-6">
-                                                {/* Header */}
-                                                <div className="flex items-start justify-between mb-4">
-                                                    <div className="flex items-center gap-4">
-                                                        <img
-                                                            src={influencer.image}
-                                                            alt={influencer.name}
-                                                            className="w-14 h-14 rounded-full object-cover border border-gray-200"
-                                                        />
-                                                        <div>
-                                                            <h3 className="text-base font-semibold text-gray-900">{influencer.name}</h3>
-                                                            <p className="text-sm text-gray-500">{influencer.username}</p>
+
+                                    {/* Filters */}
+                                    <div className="flex flex-wrap gap-3 items-center">
+                                        {/* Profile Filter */}
+                                        <div className="relative" ref={profileDropdownRef}>
+                                            <button
+                                                onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
+                                                className="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-white px-4 border border-gray-200 hover:bg-gray-50 transition-colors"
+                                            >
+                                                <p className="text-sm font-normal text-gray-600">
+                                                    Profile {selectedProfiles.length > 0 && `(${selectedProfiles.length})`}
+                                                </p>
+                                                {selectedProfiles.length > 0 ? (
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setSelectedProfiles([]);
+                                                        }}
+                                                        className="text-gray-400 hover:text-gray-600"
+                                                    >
+                                                        <X className="w-3.5 h-3.5" />
+                                                    </button>
+                                                ) : (
+                                                    <ChevronDown className="w-4 h-4 text-gray-400" />
+                                                )}
+                                            </button>
+
+                                            {profileDropdownOpen && (
+                                                <div className="absolute left-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-2">
+                                                    {['Micro', 'Mid', 'Top'].map((profile) => (
+                                                        <label key={profile} className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 rounded-lg cursor-pointer">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={selectedProfiles.includes(profile)}
+                                                                onChange={() => toggleProfile(profile)}
+                                                                className="w-4 h-4 text-[#7D2AE8] border-gray-300 rounded focus:ring-[#7D2AE8]"
+                                                            />
+                                                            <div className="flex flex-col">
+                                                                <span className="text-sm text-gray-900">{profile}</span>
+                                                                <span className="text-xs text-gray-500">
+                                                                    {profile === 'Micro' ? '10k - 100k' : profile === 'Mid' ? '100k - 500k' : '500k+'}
+                                                                </span>
+                                                            </div>
+                                                        </label>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Campaign Filter */}
+                                        <div className="relative" ref={campaignDropdownRef}>
+                                            <button
+                                                onClick={() => setCampaignDropdownOpen(!campaignDropdownOpen)}
+                                                className="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-white px-4 border border-gray-200 hover:bg-gray-50 transition-colors"
+                                            >
+                                                <p className="text-sm font-normal text-gray-600">
+                                                    Campaigns {selectedCampaigns.length > 0 && `(${selectedCampaigns.length})`}
+                                                </p>
+                                                {selectedCampaigns.length > 0 ? (
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setSelectedCampaigns([]);
+                                                        }}
+                                                        className="text-gray-400 hover:text-gray-600"
+                                                    >
+                                                        <X className="w-3.5 h-3.5" />
+                                                    </button>
+                                                ) : (
+                                                    <ChevronDown className="w-4 h-4 text-gray-400" />
+                                                )}
+                                            </button>
+
+                                            {campaignDropdownOpen && (
+                                                <div className="absolute left-0 mt-2 w-72 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                                                    <div className="p-3 border-b border-gray-100">
+                                                        <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2">
+                                                            <Search className="w-4 h-4 text-gray-400" />
+                                                            <input
+                                                                type="text"
+                                                                placeholder="Search campaigns..."
+                                                                value={campaignSearchQuery}
+                                                                onChange={(e) => setCampaignSearchQuery(e.target.value)}
+                                                                className="flex-1 bg-transparent border-none outline-none text-sm text-gray-900"
+                                                            />
                                                         </div>
                                                     </div>
-                                                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${getCategoryColor(influencer.category)}`}>
-                                                        {influencer.category}
-                                                    </span>
-                                                </div>
-
-                                                {/* Stats */}
-                                                <div className="grid grid-cols-2 gap-4 py-4 border-y border-gray-100 mb-4">
-                                                    <div>
-                                                        <p className="text-xs text-gray-500 mb-1">Total Sales</p>
-                                                        <p className="text-sm font-bold text-gray-900">{influencer.totalSales}</p>
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-xs text-gray-500 mb-1">Avg. Ticket</p>
-                                                        <p className="text-sm font-bold text-gray-900">{influencer.avgTicket}</p>
-                                                    </div>
-                                                </div>
-
-                                                {/* Info */}
-                                                <div className="space-y-3 mb-6">
-                                                    <div className="flex items-center justify-between text-sm">
-                                                        <span className="text-gray-500">Followers</span>
-                                                        <span className="font-medium text-gray-900">{influencer.followers}</span>
-                                                    </div>
-                                                    <div className="flex items-center justify-between text-sm">
-                                                        <span className="text-gray-500">Platforms</span>
-                                                        <div className="flex gap-2 text-gray-400">
-                                                            {influencer.platforms.map(p => (
-                                                                <span key={p} title={p}>{getPlatformIcon(p)}</span>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex flex-wrap gap-2 mt-2">
-                                                        {influencer.segments.map(segment => (
-                                                            <span key={segment} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-md">
-                                                                {segment}
-                                                            </span>
+                                                    <div className="max-h-64 overflow-y-auto p-2">
+                                                        {filteredCampaigns.map((campaign) => (
+                                                            <label key={campaign.id} className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 rounded-lg cursor-pointer">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={selectedCampaigns.includes(campaign.name)}
+                                                                    onChange={() => toggleCampaign(campaign.name)}
+                                                                    className="w-4 h-4 text-[#7D2AE8] border-gray-300 rounded focus:ring-[#7D2AE8]"
+                                                                />
+                                                                <span className="text-sm text-gray-900">{campaign.name}</span>
+                                                            </label>
                                                         ))}
                                                     </div>
                                                 </div>
+                                            )}
+                                        </div>
 
-                                                {/* Actions */}
-                                                <div className="grid grid-cols-2 gap-3">
-                                                    <button className="flex items-center justify-center gap-2 px-4 py-2 bg-[#7D2AE8] text-white text-sm font-medium rounded-lg hover:bg-[#6d24ca] transition-colors">
-                                                        <UserPlus className="w-4 h-4" />
-                                                        Invite
+                                        {/* Live Filter */}
+                                        <div className="relative" ref={liveDropdownRef}>
+                                            <button
+                                                onClick={() => setLiveDropdownOpen(!liveDropdownOpen)}
+                                                className="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-white px-4 border border-gray-200 hover:bg-gray-50 transition-colors"
+                                            >
+                                                <p className="text-sm font-normal text-gray-600">
+                                                    Lives {selectedLives.length > 0 && `(${selectedLives.length})`}
+                                                </p>
+                                                {selectedLives.length > 0 ? (
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setSelectedLives([]);
+                                                        }}
+                                                        className="text-gray-400 hover:text-gray-600"
+                                                    >
+                                                        <X className="w-3.5 h-3.5" />
                                                     </button>
-                                                    <button className="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors">
-                                                        <ExternalLink className="w-4 h-4" />
-                                                        Profile
-                                                    </button>
+                                                ) : (
+                                                    <ChevronDown className="w-4 h-4 text-gray-400" />
+                                                )}
+                                            </button>
+
+                                            {liveDropdownOpen && (
+                                                <div className="absolute left-0 mt-2 w-72 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                                                    <div className="p-3 border-b border-gray-100">
+                                                        <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2">
+                                                            <Search className="w-4 h-4 text-gray-400" />
+                                                            <input
+                                                                type="text"
+                                                                placeholder="Search lives..."
+                                                                value={liveSearchQuery}
+                                                                onChange={(e) => setLiveSearchQuery(e.target.value)}
+                                                                className="flex-1 bg-transparent border-none outline-none text-sm text-gray-900"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                    <div className="max-h-64 overflow-y-auto p-2">
+                                                        {filteredLives.map((live) => (
+                                                            <label key={live.id} className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 rounded-lg cursor-pointer">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={selectedLives.includes(live.name)}
+                                                                    onChange={() => toggleLive(live.name)}
+                                                                    className="w-4 h-4 text-[#7D2AE8] border-gray-300 rounded focus:ring-[#7D2AE8]"
+                                                                />
+                                                                <span className="text-sm text-gray-900">{live.name}</span>
+                                                            </label>
+                                                        ))}
+                                                        {filteredLives.length === 0 && (
+                                                            <div className="p-4 text-center text-sm text-gray-500">
+                                                                No lives found
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                            </CardContent>
-                                        </Card>
-                                    ))}
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Clear Filters Button - Below input */}
+                                {searchTags.length > 0 && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSearchQuery('');
+                                            setSearchParams(null);
+                                            setSearchTags([]);
+                                            setModalSearchQuery('');
+                                        }}
+                                        className="text-sm text-gray-600 hover:text-[#7D2AE8] transition-colors flex items-center gap-1.5"
+                                    >
+                                        <X className="w-3.5 h-3.5" />
+                                        Clear search
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Search Modal */}
+                            {isSearchModalOpen && (
+                                <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onClick={() => setIsSearchModalOpen(false)}>
+                                    <div className="bg-white rounded-[20px] max-w-2xl w-full p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                                        {/* Modal Header */}
+                                        <div className="flex items-center justify-between mb-6">
+                                            <h2 className="text-xl font-bold text-gray-900">Smart Influencer Search</h2>
+                                            <button
+                                                onClick={() => setIsSearchModalOpen(false)}
+                                                className="text-gray-400 hover:text-gray-600 transition-colors"
+                                            >
+                                                <X className="w-6 h-6" />
+                                            </button>
+                                        </div>
+
+                                        {/* Search Input (Large) */}
+                                        <div className="mb-6">
+                                            <div className="relative bg-white rounded-[16px] border border-[#E2E8F0] shadow-sm transition-shadow focus-within:border-[#7D2AE8]/30 focus-within:shadow-[0_8px_24px_rgba(125,42,232,0.12)]">
+                                                <textarea
+                                                    value={modalSearchQuery}
+                                                    onChange={(e) => setModalSearchQuery(e.target.value)}
+                                                    onKeyPress={handleModalKeyPress}
+                                                    placeholder="Describe the influencer profile you're looking for. Ex: 'Instagram fitness influencer, young audience, 10k+ followers'"
+                                                    className="w-full min-h-[120px] p-4 pr-14 pb-14 rounded-[16px] border-none outline-none ring-0 focus:outline-none focus:ring-0 bg-white text-gray-900 text-sm leading-5 placeholder:text-[#D1D5DB] resize-none"
+                                                    autoFocus
+                                                />
+                                                <button
+                                                    disabled={!modalSearchParams?.isValid}
+                                                    onClick={handleSearchSubmit}
+                                                    className={`absolute bottom-3 right-3 w-10 h-10 rounded-[12px] flex items-center justify-center transition-all ${modalSearchParams?.isValid
+                                                        ? 'bg-[#7D2AE8] text-white hover:bg-[#6d24ca] cursor-pointer shadow-sm'
+                                                        : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                                        }`}
+                                                >
+                                                    <ArrowUp className="w-5 h-5" />
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {/* Tags */}
+                                        {modalSearchTags.length > 0 && (
+                                            <div className="mb-4">
+                                                <p className="text-sm font-medium text-gray-700 mb-3">Detected parameters:</p>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {modalSearchTags.map((tag, index) => (
+                                                        <span
+                                                            key={index}
+                                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#F3E8FF] text-[#7D2AE8] text-sm font-medium rounded-full border border-[#E9D5FF]"
+                                                        >
+                                                            {tag.type === 'segment' && <span className="text-xs">🎯</span>}
+                                                            {tag.type === 'platform' && <span className="text-xs">📱</span>}
+                                                            {tag.type === 'followers' && <span className="text-xs">👥</span>}
+                                                            {tag.type === 'age' && <span className="text-xs">🎂</span>}
+                                                            {tag.label}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Helper Text */}
+                                        <p className="text-xs text-gray-500 text-center">
+                                            Describe characteristics such as niche, followers, platform, and age
+                                        </p>
+                                    </div>
                                 </div>
                             )}
-                        </div>
-                    </>
-                )}
 
-                {activeTab === 'my_influencers' && (
-                    <div className="flex flex-col items-center justify-center py-20 text-center">
-                        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                            <UserPlus className="w-8 h-8 text-gray-400" />
+                            {/* Search Results Grid */}
+                            <div>
+                                <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                                    {searchTags.length > 0 ? 'Search Results' : 'Suggested for you'}
+                                </h2>
+
+                                {/* Loading State */}
+                                {isSearching ? (
+                                    <div className="flex flex-col items-center justify-center py-20">
+                                        <div className="w-16 h-16 border-4 border-[#7D2AE8] border-t-transparent rounded-full animate-spin mb-4"></div>
+                                        <p className="text-gray-600 font-medium">Searching influencers...</p>
+                                        <p className="text-gray-500 text-sm">Analyzing your search parameters</p>
+                                    </div>
+                                ) : filteredInfluencers.length === 0 ? (
+                                    /* Empty State */
+                                    <div className="flex flex-col items-center justify-center py-20">
+                                        <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                                            <Search className="w-10 h-10 text-gray-400" />
+                                        </div>
+                                        <h3 className="text-lg font-semibold text-gray-900 mb-2">No influencers found</h3>
+                                        <p className="text-gray-500 text-sm text-center max-w-md mb-6">
+                                            {searchTags.length > 0
+                                                ? "We couldn't find any influencers matching your search criteria. Try adjusting your filters or search terms."
+                                                : "No influencers available at the moment. Try different filters or check back later."
+                                            }
+                                        </p>
+                                        {searchTags.length > 0 && (
+                                            <button
+                                                onClick={() => {
+                                                    setSearchQuery('');
+                                                    setSearchParams(null);
+                                                    setSearchTags([]);
+                                                    setModalSearchQuery('');
+                                                }}
+                                                className="inline-flex items-center gap-2 px-4 py-2 bg-[#7D2AE8] text-white text-sm font-medium rounded-lg hover:bg-[#6d24ca] transition-colors"
+                                            >
+                                                <X className="w-4 h-4" />
+                                                Clear search
+                                            </button>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                                        {filteredInfluencers.map((influencer) => (
+                                            <Card key={influencer.id} className="border-[#E2E8F0] hover:shadow-md transition-shadow">
+                                                <CardContent className="p-6">
+                                                    {/* Header */}
+                                                    <div className="flex items-start justify-between mb-4">
+                                                        <div className="flex items-center gap-4">
+                                                            <img
+                                                                src={influencer.image}
+                                                                alt={influencer.name}
+                                                                className="w-14 h-14 rounded-full object-cover border border-gray-200"
+                                                            />
+                                                            <div>
+                                                                <h3 className="text-base font-semibold text-gray-900">{influencer.name}</h3>
+                                                                <p className="text-sm text-gray-500">{influencer.username}</p>
+                                                            </div>
+                                                        </div>
+                                                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${getCategoryColor(influencer.category)}`}>
+                                                            {influencer.category}
+                                                        </span>
+                                                    </div>
+
+                                                    {/* Stats */}
+                                                    <div className="grid grid-cols-2 gap-4 py-4 border-y border-gray-100 mb-4">
+                                                        <div>
+                                                            <p className="text-xs text-gray-500 mb-1">Total Sales</p>
+                                                            <p className="text-sm font-bold text-gray-900">{influencer.totalSales}</p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-xs text-gray-500 mb-1">Avg. Ticket</p>
+                                                            <p className="text-sm font-bold text-gray-900">{influencer.avgTicket}</p>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Info */}
+                                                    <div className="space-y-3 mb-6">
+                                                        <div className="flex items-center justify-between text-sm">
+                                                            <span className="text-gray-500">Followers</span>
+                                                            <span className="font-medium text-gray-900">{influencer.followers}</span>
+                                                        </div>
+                                                        <div className="flex items-center justify-between text-sm">
+                                                            <span className="text-gray-500">Platforms</span>
+                                                            <div className="flex gap-2 text-gray-400">
+                                                                {influencer.platforms.map(p => (
+                                                                    <span key={p} title={p}>{getPlatformIcon(p)}</span>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex flex-wrap gap-2 mt-2">
+                                                            {influencer.segments.map(segment => (
+                                                                <span key={segment} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-md">
+                                                                    {segment}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Actions */}
+                                                    <div className="grid grid-cols-2 gap-3">
+                                                        <button className="flex items-center justify-center gap-2 px-4 py-2 bg-[#7D2AE8] text-white text-sm font-medium rounded-lg hover:bg-[#6d24ca] transition-colors">
+                                                            <UserPlus className="w-4 h-4" />
+                                                            Invite
+                                                        </button>
+                                                        <button className="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors">
+                                                            <ExternalLink className="w-4 h-4" />
+                                                            Profile
+                                                        </button>
+                                                    </div>
+                                                </CardContent>
+                                            </Card>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </>
+                    )}
+
+                    {activeTab === 'my_influencers' && (
+                        <div className="flex flex-col items-center justify-center py-20 text-center">
+                            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                                <UserPlus className="w-8 h-8 text-gray-400" />
+                            </div>
+                            <h3 className="text-lg font-medium text-gray-900 mb-2">No influencers yet</h3>
+                            <p className="text-gray-500 max-w-sm">
+                                Start by searching and inviting influencers to join your network.
+                            </p>
                         </div>
-                        <h3 className="text-lg font-medium text-gray-900 mb-2">No influencers yet</h3>
-                        <p className="text-gray-500 max-w-sm">
-                            Start by searching and inviting influencers to join your network.
-                        </p>
-                    </div>
-                )}
+                    )}
+                </div>
             </main>
         </div>
     );

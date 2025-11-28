@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Sidebar } from '../components/dashboard/Sidebar';
-import { Search, Plus, MoreVertical, ShoppingBag, DollarSign, TrendingUp, ChevronDown, X } from 'lucide-react';
+import { Search, Plus, MoreVertical, ShoppingBag, DollarSign, TrendingUp, ChevronDown, X, Menu } from 'lucide-react';
 import { Card, CardContent } from '../components/ui/Card';
+import { useSidebar } from '../contexts/SidebarContext';
 
+// ... (keep interfaces and mock data)
 interface Product {
     id: string;
     name: string;
@@ -146,7 +148,8 @@ const mockOrders: Order[] = [
 ];
 
 export const OrdersProducts: React.FC = () => {
-    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const { isCollapsed, toggleCollapse, mobileOpen, setMobileOpen } = useSidebar();
+    
     const [activeTab, setActiveTab] = useState<'orders' | 'products'>('orders');
     const [activeFilter, setActiveFilter] = useState('All');
 
@@ -318,524 +321,538 @@ export const OrdersProducts: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#F8FAFC] lg:pl-[280px]">
-            <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        <div className="h-screen flex flex-col lg:flex-row overflow-hidden bg-white w-full">
+            <Sidebar 
+                isCollapsed={isCollapsed} 
+                toggleCollapse={toggleCollapse}
+                mobileOpen={mobileOpen} 
+                setMobileOpen={setMobileOpen} 
+            />
 
-            <main className="px-4 py-8 sm:px-6 lg:px-10">
-                <div className="mb-6">
-                    <h1 className="text-2xl font-bold text-gray-900">Orders & Products</h1>
-                    <p className="text-gray-600 text-sm sm:text-base">Manage your orders and product inventory</p>
-                </div>
+            <main className="flex-1 bg-[#FAFAFA] flex flex-col h-full overflow-hidden relative">
+                <div className="flex-1 overflow-y-auto px-4 py-8 sm:px-6 lg:px-10">
+                    {/* Mobile Toggle */}
+                    <div className="lg:hidden mb-4">
+                        <button onClick={() => setMobileOpen(true)} className="p-2 -ml-2 text-gray-600">
+                            <Menu className="w-6 h-6" />
+                        </button>
+                    </div>
 
-                {/* Tabs */}
-                <div className="flex border-b border-gray-200 mb-8">
-                    <button
-                        className={`pb-2 px-1 text-sm font-medium mr-8 transition-colors relative ${activeTab === 'orders'
-                            ? 'text-[#7D2AE8]'
-                            : 'text-gray-500 hover:text-gray-700'
-                            }`}
-                        onClick={() => setActiveTab('orders')}
-                    >
-                        Orders
-                        {activeTab === 'orders' && (
-                            <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[#7D2AE8]" />
-                        )}
-                    </button>
-                    <button
-                        className={`pb-2 px-1 text-sm font-medium transition-colors relative ${activeTab === 'products'
-                            ? 'text-[#7D2AE8]'
-                            : 'text-gray-500 hover:text-gray-700'
-                            }`}
-                        onClick={() => setActiveTab('products')}
-                    >
-                        Products
-                        {activeTab === 'products' && (
-                            <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[#7D2AE8]" />
-                        )}
-                    </button>
-                </div>
+                    <div className="mb-6">
+                        <h1 className="text-2xl font-bold text-gray-900">Orders & Products</h1>
+                        <p className="text-gray-600 text-sm sm:text-base">Manage your orders and product inventory</p>
+                    </div>
 
-                {activeTab === 'products' && (
-                    <>
-                        {/* Controls */}
-                        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
-                            <div className="relative w-full sm:w-96">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <Search className="h-5 w-5 text-gray-400" />
+                    {/* Tabs */}
+                    <div className="flex border-b border-gray-200 mb-8">
+                        <button
+                            className={`pb-2 px-1 text-sm font-medium mr-8 transition-colors relative ${activeTab === 'orders'
+                                ? 'text-[#7D2AE8]'
+                                : 'text-gray-500 hover:text-gray-700'
+                                }`}
+                            onClick={() => setActiveTab('orders')}
+                        >
+                            Orders
+                            {activeTab === 'orders' && (
+                                <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[#7D2AE8]" />
+                            )}
+                        </button>
+                        <button
+                            className={`pb-2 px-1 text-sm font-medium transition-colors relative ${activeTab === 'products'
+                                ? 'text-[#7D2AE8]'
+                                : 'text-gray-500 hover:text-gray-700'
+                                }`}
+                            onClick={() => setActiveTab('products')}
+                        >
+                            Products
+                            {activeTab === 'products' && (
+                                <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[#7D2AE8]" />
+                            )}
+                        </button>
+                    </div>
+
+                    {activeTab === 'products' && (
+                        <>
+                            {/* Controls */}
+                            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
+                                <div className="relative w-full sm:w-96">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <Search className="h-5 w-5 text-gray-400" />
+                                    </div>
+                                    <input
+                                        type="text"
+                                        placeholder="Buscar produtos..."
+                                        className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-[#7D2AE8] focus:border-[#7D2AE8] sm:text-sm"
+                                    />
                                 </div>
-                                <input
-                                    type="text"
-                                    placeholder="Buscar produtos..."
-                                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-[#7D2AE8] focus:border-[#7D2AE8] sm:text-sm"
-                                />
+                                <button className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#7D2AE8] text-white px-4 py-2 rounded-lg hover:bg-[#6d24ca] transition-colors font-medium text-sm">
+                                    <Plus className="h-4 w-4" />
+                                    Cadastrar Produto
+                                </button>
                             </div>
-                            <button className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#7D2AE8] text-white px-4 py-2 rounded-lg hover:bg-[#6d24ca] transition-colors font-medium text-sm">
-                                <Plus className="h-4 w-4" />
-                                Cadastrar Produto
-                            </button>
-                        </div>
 
-                        {/* Table */}
-                        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y divide-gray-200">
-                                    <thead className="bg-gray-50">
-                                        <tr>
-                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                NOME
-                                            </th>
-                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                PREÇO
-                                            </th>
-                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                SKU
-                                            </th>
-                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                STATUS
-                                            </th>
-                                            <th scope="col" className="relative px-6 py-3">
-                                                <span className="sr-only">Actions</span>
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="bg-white divide-y divide-gray-200">
-                                        {paginatedProducts.map((product) => (
-                                            <tr key={product.id} className="hover:bg-gray-50 transition-colors">
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                    <div className="flex items-center gap-3">
-                                                        <img
-                                                            src={product.image}
-                                                            alt={product.name}
-                                                            className="h-10 w-10 rounded-lg object-cover border border-gray-100"
-                                                        />
-                                                        <span>{product.name}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                    {product.price}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                    {product.sku}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(product.status)}`}>
-                                                        {product.status}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                    <button className="text-gray-400 hover:text-gray-600">
-                                                        <MoreVertical className="h-5 w-5" />
-                                                    </button>
-                                                </td>
+                            {/* Table */}
+                            <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                                <div className="overflow-x-auto">
+                                    <table className="min-w-full divide-y divide-gray-200">
+                                        <thead className="bg-gray-50">
+                                            <tr>
+                                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    NOME
+                                                </th>
+                                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    PREÇO
+                                                </th>
+                                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    SKU
+                                                </th>
+                                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    STATUS
+                                                </th>
+                                                <th scope="col" className="relative px-6 py-3">
+                                                    <span className="sr-only">Actions</span>
+                                                </th>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            {/* Products Pagination */}
-                            <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-                                <div className="text-sm text-gray-500">
-                                    Showing <span className="font-medium">{(productsCurrentPage - 1) * productsPerPage + 1}</span> to <span className="font-medium">{Math.min(productsCurrentPage * productsPerPage, mockProducts.length)}</span> of <span className="font-medium">{mockProducts.length}</span> results
+                                        </thead>
+                                        <tbody className="bg-white divide-y divide-gray-200">
+                                            {paginatedProducts.map((product) => (
+                                                <tr key={product.id} className="hover:bg-gray-50 transition-colors">
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                        <div className="flex items-center gap-3">
+                                                            <img
+                                                                src={product.image}
+                                                                alt={product.name}
+                                                                className="h-10 w-10 rounded-lg object-cover border border-gray-100"
+                                                            />
+                                                            <span>{product.name}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                        {product.price}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                        {product.sku}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(product.status)}`}>
+                                                            {product.status}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                        <button className="text-gray-400 hover:text-gray-600">
+                                                            <MoreVertical className="h-5 w-5" />
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        onClick={() => handleProductsPageChange(productsCurrentPage - 1)}
-                                        disabled={productsCurrentPage === 1}
-                                        className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                        Previous
-                                    </button>
-                                    {Array.from({ length: productsTotalPages }, (_, i) => i + 1).map((page) => (
+
+                                {/* Products Pagination */}
+                                <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                                    <div className="text-sm text-gray-500">
+                                        Showing <span className="font-medium">{(productsCurrentPage - 1) * productsPerPage + 1}</span> to <span className="font-medium">{Math.min(productsCurrentPage * productsPerPage, mockProducts.length)}</span> of <span className="font-medium">{mockProducts.length}</span> results
+                                    </div>
+                                    <div className="flex items-center gap-2">
                                         <button
-                                            key={page}
-                                            onClick={() => handleProductsPageChange(page)}
-                                            className={`px-3 py-1 border rounded-md text-sm font-medium ${productsCurrentPage === page
-                                                ? 'bg-[#7D2AE8] text-white border-[#7D2AE8]'
-                                                : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                                            onClick={() => handleProductsPageChange(productsCurrentPage - 1)}
+                                            disabled={productsCurrentPage === 1}
+                                            className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            Previous
+                                        </button>
+                                        {Array.from({ length: productsTotalPages }, (_, i) => i + 1).map((page) => (
+                                            <button
+                                                key={page}
+                                                onClick={() => handleProductsPageChange(page)}
+                                                className={`px-3 py-1 border rounded-md text-sm font-medium ${productsCurrentPage === page
+                                                    ? 'bg-[#7D2AE8] text-white border-[#7D2AE8]'
+                                                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                                                    }`}
+                                            >
+                                                {page}
+                                            </button>
+                                        ))}
+                                        <button
+                                            onClick={() => handleProductsPageChange(productsCurrentPage + 1)}
+                                            disabled={productsCurrentPage === productsTotalPages}
+                                            className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            Next
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </>
+                    )}
+
+                    {activeTab === 'orders' && (
+                        <>
+                            {/* Quick Filters & Advanced Filters */}
+                            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
+                                <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0">
+                                    {['All', "Today's Orders", 'Top Products'].map((filter) => (
+                                        <button
+                                            key={filter}
+                                            onClick={() => setActiveFilter(filter)}
+                                            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${activeFilter === filter
+                                                ? 'bg-[#7D2AE8] text-white'
+                                                : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
                                                 }`}
                                         >
-                                            {page}
+                                            {filter}
                                         </button>
                                     ))}
-                                    <button
-                                        onClick={() => handleProductsPageChange(productsCurrentPage + 1)}
-                                        disabled={productsCurrentPage === productsTotalPages}
-                                        className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                        Next
-                                    </button>
                                 </div>
-                            </div>
-                        </div>
-                    </>
-                )}
 
-                {activeTab === 'orders' && (
-                    <>
-                        {/* Quick Filters & Advanced Filters */}
-                        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
-                            <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0">
-                                {['All', "Today's Orders", 'Top Products'].map((filter) => (
-                                    <button
-                                        key={filter}
-                                        onClick={() => setActiveFilter(filter)}
-                                        className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${activeFilter === filter
-                                            ? 'bg-[#7D2AE8] text-white'
-                                            : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
-                                            }`}
-                                    >
-                                        {filter}
-                                    </button>
-                                ))}
-                            </div>
-
-                            <div className="flex gap-3 items-center w-full lg:w-auto">
-                                {/* Campaign Filter */}
-                                <div className="relative" ref={campaignDropdownRef}>
-                                    <button
-                                        onClick={() => setCampaignDropdownOpen(!campaignDropdownOpen)}
-                                        className="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-white px-4 border border-gray-200 hover:bg-gray-50 transition-colors min-w-[200px]"
-                                    >
-                                        <p className="text-sm font-normal text-gray-600">
-                                            Filter by Campaign {selectedCampaigns.length > 0 && `(${selectedCampaigns.length})`}
-                                        </p>
-                                        {selectedCampaigns.length > 0 ? (
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    clearCampaignFilter();
-                                                }}
-                                                className="text-gray-400 hover:text-gray-600 transition-colors"
-                                            >
-                                                <X className="w-3.5 h-3.5" />
-                                            </button>
-                                        ) : (
-                                            <ChevronDown className="w-4 h-4 text-gray-400" />
-                                        )}
-                                    </button>
-
-                                    {campaignDropdownOpen && (
-                                        <div className="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-                                            <div className="p-3 border-b border-gray-100">
-                                                <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2">
-                                                    <Search className="w-4 h-4 text-gray-400" />
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Search campaigns..."
-                                                        value={campaignSearchQuery}
-                                                        onChange={(e) => setCampaignSearchQuery(e.target.value)}
-                                                        className="flex-1 bg-transparent border-none outline-none text-sm text-gray-900"
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            <div className="max-h-64 overflow-y-auto p-2">
-                                                {filteredCampaigns.map((campaign) => (
-                                                    <label
-                                                        key={campaign.id}
-                                                        className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 rounded-lg cursor-pointer"
-                                                    >
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={selectedCampaigns.includes(campaign.name)}
-                                                            onChange={() => toggleCampaign(campaign.name)}
-                                                            className="w-4 h-4 text-[#7D2AE8] border-gray-300 rounded focus:ring-[#7D2AE8]"
-                                                        />
-                                                        <span className="text-sm text-gray-900">{campaign.name}</span>
-                                                    </label>
-                                                ))}
-                                            </div>
-
-                                            {selectedCampaigns.length > 0 && (
-                                                <div className="p-3 border-t border-gray-100">
-                                                    <button
-                                                        onClick={clearCampaignFilter}
-                                                        className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
-                                                    >
-                                                        <X className="w-4 h-4" />
-                                                        Clear filter
-                                                    </button>
-                                                </div>
+                                <div className="flex gap-3 items-center w-full lg:w-auto">
+                                    {/* Campaign Filter */}
+                                    <div className="relative" ref={campaignDropdownRef}>
+                                        <button
+                                            onClick={() => setCampaignDropdownOpen(!campaignDropdownOpen)}
+                                            className="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-white px-4 border border-gray-200 hover:bg-gray-50 transition-colors min-w-[200px]"
+                                        >
+                                            <p className="text-sm font-normal text-gray-600">
+                                                Filter by Campaign {selectedCampaigns.length > 0 && `(${selectedCampaigns.length})`}
+                                            </p>
+                                            {selectedCampaigns.length > 0 ? (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        clearCampaignFilter();
+                                                    }}
+                                                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                                                >
+                                                    <X className="w-3.5 h-3.5" />
+                                                </button>
+                                            ) : (
+                                                <ChevronDown className="w-4 h-4 text-gray-400" />
                                             )}
-                                        </div>
-                                    )}
-                                </div>
+                                        </button>
 
-                                {/* Live Filter */}
-                                <div className="relative" ref={liveDropdownRef}>
-                                    <button
-                                        onClick={() => setLiveDropdownOpen(!liveDropdownOpen)}
-                                        className="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-white px-4 border border-gray-200 hover:bg-gray-50 transition-colors min-w-[200px]"
-                                    >
-                                        <p className="text-sm font-normal text-gray-600">
-                                            Filter by Live {selectedLives.length > 0 && `(${selectedLives.length})`}
-                                        </p>
-                                        {selectedLives.length > 0 ? (
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    clearLiveFilter();
-                                                }}
-                                                className="text-gray-400 hover:text-gray-600 transition-colors"
-                                            >
-                                                <X className="w-3.5 h-3.5" />
-                                            </button>
-                                        ) : (
-                                            <ChevronDown className="w-4 h-4 text-gray-400" />
-                                        )}
-                                    </button>
-
-                                    {liveDropdownOpen && (
-                                        <div className="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-                                            <div className="p-3 border-b border-gray-100">
-                                                <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2">
-                                                    <Search className="w-4 h-4 text-gray-400" />
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Search lives..."
-                                                        value={liveSearchQuery}
-                                                        onChange={(e) => setLiveSearchQuery(e.target.value)}
-                                                        className="flex-1 bg-transparent border-none outline-none text-sm text-gray-900"
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            <div className="max-h-64 overflow-y-auto p-2">
-                                                {filteredLives.map((live) => (
-                                                    <label
-                                                        key={live.id}
-                                                        className="flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 rounded-lg cursor-pointer transition-all duration-200 group"
-                                                    >
+                                        {campaignDropdownOpen && (
+                                            <div className="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                                                <div className="p-3 border-b border-gray-100">
+                                                    <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2">
+                                                        <Search className="w-4 h-4 text-gray-400" />
                                                         <input
-                                                            type="checkbox"
-                                                            checked={selectedLives.includes(live.name)}
-                                                            onChange={() => toggleLive(live.name)}
-                                                            className="w-4 h-4 text-[#7D2AE8] border-gray-300 rounded focus:ring-[#7D2AE8]"
+                                                            type="text"
+                                                            placeholder="Search campaigns..."
+                                                            value={campaignSearchQuery}
+                                                            onChange={(e) => setCampaignSearchQuery(e.target.value)}
+                                                            className="flex-1 bg-transparent border-none outline-none text-sm text-gray-900"
                                                         />
-                                                        <img
-                                                            src={live.influencerImage}
-                                                            alt={live.name}
-                                                            className="w-8 h-8 rounded-full object-cover border border-gray-200"
-                                                        />
-                                                        <span className="text-sm text-gray-900 group-hover:text-[#7D2AE8] transition-colors">{live.name}</span>
-                                                    </label>
-                                                ))}
-                                                {filteredLives.length === 0 && (
-                                                    <div className="p-4 text-center text-sm text-gray-500">
-                                                        No lives found
+                                                    </div>
+                                                </div>
+
+                                                <div className="max-h-64 overflow-y-auto p-2">
+                                                    {filteredCampaigns.map((campaign) => (
+                                                        <label
+                                                            key={campaign.id}
+                                                            className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 rounded-lg cursor-pointer"
+                                                        >
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={selectedCampaigns.includes(campaign.name)}
+                                                                onChange={() => toggleCampaign(campaign.name)}
+                                                                className="w-4 h-4 text-[#7D2AE8] border-gray-300 rounded focus:ring-[#7D2AE8]"
+                                                            />
+                                                            <span className="text-sm text-gray-900">{campaign.name}</span>
+                                                        </label>
+                                                    ))}
+                                                </div>
+
+                                                {selectedCampaigns.length > 0 && (
+                                                    <div className="p-3 border-t border-gray-100">
+                                                        <button
+                                                            onClick={clearCampaignFilter}
+                                                            className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                                                        >
+                                                            <X className="w-4 h-4" />
+                                                            Clear filter
+                                                        </button>
                                                     </div>
                                                 )}
                                             </div>
-
-                                            {selectedLives.length > 0 && (
-                                                <div className="p-3 border-t border-gray-100">
-                                                    <button
-                                                        onClick={clearLiveFilter}
-                                                        className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
-                                                    >
-                                                        <X className="w-4 h-4" />
-                                                        Clear filter
-                                                    </button>
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Status Filter */}
-                                <div className="relative" ref={statusDropdownRef}>
-                                    <button
-                                        onClick={() => setStatusDropdownOpen(!statusDropdownOpen)}
-                                        className="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-white px-4 border border-gray-200 hover:bg-gray-50 transition-colors min-w-[160px]"
-                                    >
-                                        <p className="text-sm font-normal text-gray-600">
-                                            {statusFilter === 'All' ? 'Filter by Status' : statusFilter}
-                                        </p>
-                                        {statusFilter !== 'All' ? (
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setStatusFilter('All');
-                                                }}
-                                                className="text-gray-400 hover:text-gray-600 transition-colors"
-                                            >
-                                                <X className="w-3.5 h-3.5" />
-                                            </button>
-                                        ) : (
-                                            <ChevronDown className="w-4 h-4 text-gray-400" />
                                         )}
-                                    </button>
+                                    </div>
 
-                                    {statusDropdownOpen && (
-                                        <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-                                            <div className="p-2">
-                                                {['All', 'Completed', 'Processing', 'Pending', 'Cancelled'].map((status) => (
-                                                    <button
-                                                        key={status}
-                                                        onClick={() => {
-                                                            setStatusFilter(status);
-                                                            setStatusDropdownOpen(false);
-                                                        }}
-                                                        className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${statusFilter === status
-                                                            ? 'bg-[#7D2AE8] text-white'
-                                                            : 'text-gray-900 hover:bg-gray-50'
-                                                            }`}
-                                                    >
-                                                        {status === 'All' ? 'All Statuses' : status}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Metrics Cards */}
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-                            <Card className="border-[#E2E8F0]">
-                                <CardContent className="p-4 flex items-center justify-between">
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-500">Total Sales</p>
-                                        <p className="text-2xl font-bold text-gray-900 mt-1">1,234</p>
-                                    </div>
-                                    <div className="p-2 bg-purple-100 rounded-lg">
-                                        <ShoppingBag className="w-5 h-5 text-[#7D2AE8]" />
-                                    </div>
-                                </CardContent>
-                            </Card>
-                            <Card className="border-[#E2E8F0]">
-                                <CardContent className="p-4 flex items-center justify-between">
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-500">Total Revenue</p>
-                                        <p className="text-2xl font-bold text-gray-900 mt-1">R$ 125.430,00</p>
-                                    </div>
-                                    <div className="p-2 bg-green-100 rounded-lg">
-                                        <DollarSign className="w-5 h-5 text-green-600" />
-                                    </div>
-                                </CardContent>
-                            </Card>
-                            <Card className="border-[#E2E8F0]">
-                                <CardContent className="p-4 flex items-center justify-between">
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-500">Avg. Ticket</p>
-                                        <p className="text-2xl font-bold text-gray-900 mt-1">R$ 101,64</p>
-                                    </div>
-                                    <div className="p-2 bg-blue-100 rounded-lg">
-                                        <TrendingUp className="w-5 h-5 text-blue-600" />
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </div>
-
-                        {/* Orders Table */}
-                        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y divide-gray-200">
-                                    <thead className="bg-gray-50">
-                                        <tr>
-                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                ORDER ID
-                                            </th>
-                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                CUSTOMER
-                                            </th>
-                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                PRODUCT
-                                            </th>
-                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                DATE
-                                            </th>
-                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                TOTAL
-                                            </th>
-                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                STATUS
-                                            </th>
-                                            <th scope="col" className="relative px-6 py-3">
-                                                <span className="sr-only">Actions</span>
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="bg-white divide-y divide-gray-200">
-                                        {paginatedOrders.map((order) => (
-                                            <tr key={order.id} className="hover:bg-gray-50 transition-colors">
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-[#7D2AE8]">
-                                                    {order.id}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                    {order.customer}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                    <div className="flex items-center gap-3">
-                                                        <img
-                                                            src={order.productImage}
-                                                            alt={order.productName}
-                                                            className="h-8 w-8 rounded-lg object-cover border border-gray-100"
-                                                        />
-                                                        <span className="font-medium text-gray-900">{order.productName}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                    {order.date}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                    {order.total}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(order.status)}`}>
-                                                        {order.status}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                    <button className="text-gray-400 hover:text-gray-600">
-                                                        <MoreVertical className="h-5 w-5" />
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            {/* Orders Pagination */}
-                            <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-                                <div className="text-sm text-gray-500">
-                                    Showing <span className="font-medium">{(ordersCurrentPage - 1) * ordersPerPage + 1}</span> to <span className="font-medium">{Math.min(ordersCurrentPage * ordersPerPage, filteredOrders.length)}</span> of <span className="font-medium">{filteredOrders.length}</span> results
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        onClick={() => handleOrdersPageChange(ordersCurrentPage - 1)}
-                                        disabled={ordersCurrentPage === 1}
-                                        className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                        Previous
-                                    </button>
-                                    {Array.from({ length: ordersTotalPages }, (_, i) => i + 1).map((page) => (
+                                    {/* Live Filter */}
+                                    <div className="relative" ref={liveDropdownRef}>
                                         <button
-                                            key={page}
-                                            onClick={() => handleOrdersPageChange(page)}
-                                            className={`px-3 py-1 border rounded-md text-sm font-medium ${ordersCurrentPage === page
-                                                    ? 'bg-[#7D2AE8] text-white border-[#7D2AE8]'
-                                                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                                                }`}
+                                            onClick={() => setLiveDropdownOpen(!liveDropdownOpen)}
+                                            className="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-white px-4 border border-gray-200 hover:bg-gray-50 transition-colors min-w-[200px]"
                                         >
-                                            {page}
+                                            <p className="text-sm font-normal text-gray-600">
+                                                Filter by Live {selectedLives.length > 0 && `(${selectedLives.length})`}
+                                            </p>
+                                            {selectedLives.length > 0 ? (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        clearLiveFilter();
+                                                    }}
+                                                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                                                >
+                                                    <X className="w-3.5 h-3.5" />
+                                                </button>
+                                            ) : (
+                                                <ChevronDown className="w-4 h-4 text-gray-400" />
+                                            )}
                                         </button>
-                                    ))}
-                                    <button
-                                        onClick={() => handleOrdersPageChange(ordersCurrentPage + 1)}
-                                        disabled={ordersCurrentPage === ordersTotalPages}
-                                        className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                        Next
-                                    </button>
+
+                                        {liveDropdownOpen && (
+                                            <div className="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                                                <div className="p-3 border-b border-gray-100">
+                                                    <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2">
+                                                        <Search className="w-4 h-4 text-gray-400" />
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Search lives..."
+                                                            value={liveSearchQuery}
+                                                            onChange={(e) => setLiveSearchQuery(e.target.value)}
+                                                            className="flex-1 bg-transparent border-none outline-none text-sm text-gray-900"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div className="max-h-64 overflow-y-auto p-2">
+                                                    {filteredLives.map((live) => (
+                                                        <label
+                                                            key={live.id}
+                                                            className="flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 rounded-lg cursor-pointer transition-all duration-200 group"
+                                                        >
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={selectedLives.includes(live.name)}
+                                                                onChange={() => toggleLive(live.name)}
+                                                                className="w-4 h-4 text-[#7D2AE8] border-gray-300 rounded focus:ring-[#7D2AE8]"
+                                                            />
+                                                            <img
+                                                                src={live.influencerImage}
+                                                                alt={live.name}
+                                                                className="w-8 h-8 rounded-full object-cover border border-gray-200"
+                                                            />
+                                                            <span className="text-sm text-gray-900 group-hover:text-[#7D2AE8] transition-colors">{live.name}</span>
+                                                        </label>
+                                                    ))}
+                                                    {filteredLives.length === 0 && (
+                                                        <div className="p-4 text-center text-sm text-gray-500">
+                                                            No lives found
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {selectedLives.length > 0 && (
+                                                    <div className="p-3 border-t border-gray-100">
+                                                        <button
+                                                            onClick={clearLiveFilter}
+                                                            className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                                                        >
+                                                            <X className="w-4 h-4" />
+                                                            Clear filter
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Status Filter */}
+                                    <div className="relative" ref={statusDropdownRef}>
+                                        <button
+                                            onClick={() => setStatusDropdownOpen(!statusDropdownOpen)}
+                                            className="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-white px-4 border border-gray-200 hover:bg-gray-50 transition-colors min-w-[160px]"
+                                        >
+                                            <p className="text-sm font-normal text-gray-600">
+                                                {statusFilter === 'All' ? 'Filter by Status' : statusFilter}
+                                            </p>
+                                            {statusFilter !== 'All' ? (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setStatusFilter('All');
+                                                    }}
+                                                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                                                >
+                                                    <X className="w-3.5 h-3.5" />
+                                                </button>
+                                            ) : (
+                                                <ChevronDown className="w-4 h-4 text-gray-400" />
+                                            )}
+                                        </button>
+
+                                        {statusDropdownOpen && (
+                                            <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                                                <div className="p-2">
+                                                    {['All', 'Completed', 'Processing', 'Pending', 'Cancelled'].map((status) => (
+                                                        <button
+                                                            key={status}
+                                                            onClick={() => {
+                                                                setStatusFilter(status);
+                                                                setStatusDropdownOpen(false);
+                                                            }}
+                                                            className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${statusFilter === status
+                                                                ? 'bg-[#7D2AE8] text-white'
+                                                                : 'text-gray-900 hover:bg-gray-50'
+                                                                }`}
+                                                        >
+                                                            {status === 'All' ? 'All Statuses' : status}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </>
-                )}
+
+                            {/* Metrics Cards */}
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+                                <Card className="border-[#E2E8F0]">
+                                    <CardContent className="p-4 flex items-center justify-between">
+                                        <div>
+                                            <p className="text-sm font-medium text-gray-500">Total Sales</p>
+                                            <p className="text-2xl font-bold text-gray-900 mt-1">1,234</p>
+                                        </div>
+                                        <div className="p-2 bg-purple-100 rounded-lg">
+                                            <ShoppingBag className="w-5 h-5 text-[#7D2AE8]" />
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                                <Card className="border-[#E2E8F0]">
+                                    <CardContent className="p-4 flex items-center justify-between">
+                                        <div>
+                                            <p className="text-sm font-medium text-gray-500">Total Revenue</p>
+                                            <p className="text-2xl font-bold text-gray-900 mt-1">R$ 125.430,00</p>
+                                        </div>
+                                        <div className="p-2 bg-green-100 rounded-lg">
+                                            <DollarSign className="w-5 h-5 text-green-600" />
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                                <Card className="border-[#E2E8F0]">
+                                    <CardContent className="p-4 flex items-center justify-between">
+                                        <div>
+                                            <p className="text-sm font-medium text-gray-500">Avg. Ticket</p>
+                                            <p className="text-2xl font-bold text-gray-900 mt-1">R$ 101,64</p>
+                                        </div>
+                                        <div className="p-2 bg-blue-100 rounded-lg">
+                                            <TrendingUp className="w-5 h-5 text-blue-600" />
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </div>
+
+                            {/* Orders Table */}
+                            <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                                <div className="overflow-x-auto">
+                                    <table className="min-w-full divide-y divide-gray-200">
+                                        <thead className="bg-gray-50">
+                                            <tr>
+                                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    ORDER ID
+                                                </th>
+                                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    CUSTOMER
+                                                </th>
+                                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    PRODUCT
+                                                </th>
+                                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    DATE
+                                                </th>
+                                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    TOTAL
+                                                </th>
+                                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    STATUS
+                                                </th>
+                                                <th scope="col" className="relative px-6 py-3">
+                                                    <span className="sr-only">Actions</span>
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="bg-white divide-y divide-gray-200">
+                                            {paginatedOrders.map((order) => (
+                                                <tr key={order.id} className="hover:bg-gray-50 transition-colors">
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-[#7D2AE8]">
+                                                        {order.id}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                        {order.customer}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                        <div className="flex items-center gap-3">
+                                                            <img
+                                                                src={order.productImage}
+                                                                alt={order.productName}
+                                                                className="h-8 w-8 rounded-lg object-cover border border-gray-100"
+                                                            />
+                                                            <span className="font-medium text-gray-900">{order.productName}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                        {order.date}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                        {order.total}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(order.status)}`}>
+                                                            {order.status}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                        <button className="text-gray-400 hover:text-gray-600">
+                                                            <MoreVertical className="h-5 w-5" />
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                {/* Orders Pagination */}
+                                <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                                    <div className="text-sm text-gray-500">
+                                        Showing <span className="font-medium">{(ordersCurrentPage - 1) * ordersPerPage + 1}</span> to <span className="font-medium">{Math.min(ordersCurrentPage * ordersPerPage, filteredOrders.length)}</span> of <span className="font-medium">{filteredOrders.length}</span> results
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={() => handleOrdersPageChange(ordersCurrentPage - 1)}
+                                            disabled={ordersCurrentPage === 1}
+                                            className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            Previous
+                                        </button>
+                                        {Array.from({ length: ordersTotalPages }, (_, i) => i + 1).map((page) => (
+                                            <button
+                                                key={page}
+                                                onClick={() => handleOrdersPageChange(page)}
+                                                className={`px-3 py-1 border rounded-md text-sm font-medium ${ordersCurrentPage === page
+                                                        ? 'bg-[#7D2AE8] text-white border-[#7D2AE8]'
+                                                        : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                                                    }`}
+                                            >
+                                                {page}
+                                            </button>
+                                        ))}
+                                        <button
+                                            onClick={() => handleOrdersPageChange(ordersCurrentPage + 1)}
+                                            disabled={ordersCurrentPage === ordersTotalPages}
+                                            className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            Next
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </div>
             </main>
         </div>
     );

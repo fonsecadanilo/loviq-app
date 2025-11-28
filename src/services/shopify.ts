@@ -69,62 +69,79 @@ interface ShopifyApiCredentials {
 // SERVIÇO PRINCIPAL
 // ============================================================================
 
+// Helper: Promise with timeout
+const withTimeout = <T,>(promise: Promise<T>, ms: number, fallback: T): Promise<T> => {
+    return Promise.race([
+        promise,
+        new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms))
+    ]);
+};
+
 export const ShopifyService = {
     /**
      * Verifica o status da integração Shopify para uma marca
      * Busca na tabela `stores` por lojas do tipo 'shopify'
      */
     async getConnectionStatus(brandId: number): Promise<ConnectionStatus> {
+        const defaultStatus: ConnectionStatus = { connected: false, store: null, productsCount: 0, lastSync: null };
+        
         // Verifica se Supabase está configurado
         if (!isSupabaseConfigured()) {
-            return { connected: false, store: null, productsCount: 0, lastSync: null }
+            return defaultStatus;
         }
 
-        try {
-            // Busca loja Shopify da marca
-            const { data: store, error: storeError } = await supabase
-                .from('stores')
-                .select('id, brand_id, name, external_store_id, created_at')
-                .eq('brand_id', brandId)
-                .eq('store_type', 'shopify')
-                .maybeSingle()
+        // Wrap entire operation in a timeout to prevent hanging
+        return withTimeout(
+            (async () => {
+                try {
+                    // Busca loja Shopify da marca
+                    const { data: store, error: storeError } = await supabase
+                        .from('stores')
+                        .select('id, brand_id, name, external_store_id, created_at')
+                        .eq('brand_id', brandId)
+                        .eq('store_type', 'shopify')
+                        .maybeSingle()
 
-            if (storeError && !isSilentError(storeError.code)) {
-                console.error('Erro ao buscar loja Shopify:', storeError)
-                return { connected: false, store: null, productsCount: 0, lastSync: null }
-            }
+                    if (storeError && !isSilentError(storeError.code)) {
+                        console.error('Erro ao buscar loja Shopify:', storeError)
+                        return defaultStatus;
+                    }
 
-            if (!store) {
-                return { connected: false, store: null, productsCount: 0, lastSync: null }
-            }
+                    if (!store) {
+                        return defaultStatus;
+                    }
 
-            // Conta produtos sincronizados
-            const { count: productsCount } = await supabase
-                .from('products')
-                .select('*', { count: 'exact', head: true })
-                .eq('store_id', store.id)
-                .eq('product_source_type', 'shopify')
+                    // Conta produtos sincronizados
+                    const { count: productsCount } = await supabase
+                        .from('products')
+                        .select('*', { count: 'exact', head: true })
+                        .eq('store_id', store.id)
+                        .eq('product_source_type', 'shopify')
 
-            // Busca última sincronização
-            const { data: lastSyncLog } = await supabase
-                .from('shopify_sync_logs')
-                .select('finished_at')
-                .eq('store_id', store.id)
-                .eq('status', 'success')
-                .order('finished_at', { ascending: false })
-                .limit(1)
-                .maybeSingle()
+                    // Busca última sincronização
+                    const { data: lastSyncLog } = await supabase
+                        .from('shopify_sync_logs')
+                        .select('finished_at')
+                        .eq('store_id', store.id)
+                        .eq('status', 'success')
+                        .order('finished_at', { ascending: false })
+                        .limit(1)
+                        .maybeSingle()
 
-            return {
-                connected: true,
-                store: store as ShopifyStore,
-                productsCount: productsCount || 0,
-                lastSync: lastSyncLog?.finished_at || null
-            }
-        } catch (error) {
-            console.error('Erro ao verificar status da conexão:', error)
-            return { connected: false, store: null, productsCount: 0, lastSync: null }
-        }
+                    return {
+                        connected: true,
+                        store: store as ShopifyStore,
+                        productsCount: productsCount || 0,
+                        lastSync: lastSyncLog?.finished_at || null
+                    }
+                } catch (error) {
+                    console.error('Erro ao verificar status da conexão:', error)
+                    return defaultStatus;
+                }
+            })(),
+            2000, // 2 second timeout
+            defaultStatus
+        );
     },
 
     /**

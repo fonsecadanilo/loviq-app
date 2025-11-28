@@ -50,6 +50,47 @@ html, body, #root {
   background: #a8a8a8;
 }
 
+/* Custom animations */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out forwards;
+}
+
+/* Hide scrollbar */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* Hide horizontal scrollbar specifically */
+.no-scrollbar::-webkit-scrollbar:horizontal {
+  display: none;
+}
+
+.hide-horizontal-scrollbar {
+  overflow-x: auto;
+  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none;  /* IE and Edge */
+}
+
+.hide-horizontal-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 /* Focus styles */
 .focus-visible\:ring-2:focus-visible {
   outline: 2px solid transparent;

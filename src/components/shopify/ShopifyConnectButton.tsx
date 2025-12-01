@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { CheckCircle, Loader2, AlertCircle, RefreshCw, Unplug, Store, ExternalLink } from 'lucide-react';
+import { CheckCircle, Loader2, AlertCircle, RefreshCw, Unplug, Store, ExternalLink, CheckCircle2 } from 'lucide-react';
 import ShopifyService, { type ConnectionStatus } from '../../services/shopify';
 
 interface ShopifyConnectButtonProps {
@@ -19,6 +19,7 @@ export const ShopifyConnectButton: React.FC<ShopifyConnectButtonProps> = ({
     });
     const [shopDomain, setShopDomain] = useState('');
     const [error, setError] = useState<string | null>(null);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [hasChecked, setHasChecked] = useState(false);
 
     // Use ref to track if we've already notified parent
@@ -27,6 +28,27 @@ export const ShopifyConnectButton: React.FC<ShopifyConnectButtonProps> = ({
 
     // TODO: Em produção, obter do contexto de autenticação
     const brandId = 1;
+
+    // Check URL params for OAuth callback result
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const shopifyStatus = params.get('shopify');
+        
+        if (shopifyStatus === 'connected') {
+            const storeName = params.get('store');
+            setSuccessMessage(`Successfully connected to ${storeName || 'Shopify'}!`);
+            // Clear URL params
+            window.history.replaceState({}, '', window.location.pathname);
+            // Clear success message after 5 seconds
+            setTimeout(() => setSuccessMessage(null), 5000);
+        } else if (shopifyStatus === 'error') {
+            const errorMsg = params.get('error') || 'Connection failed';
+            const details = params.get('details');
+            setError(details ? `${errorMsg}: ${details}` : errorMsg);
+            // Clear URL params
+            window.history.replaceState({}, '', window.location.pathname);
+        }
+    }, []);
 
     // Check connection status only once on mount with timeout
     useEffect(() => {
@@ -242,6 +264,13 @@ export const ShopifyConnectButton: React.FC<ShopifyConnectButtonProps> = ({
                     )}
                 </button>
             </div>
+            {/* Success message display */}
+            {successMessage && (
+                <div className="flex items-center gap-2 text-xs text-green-600 bg-green-50 px-3 py-2 rounded-lg border border-green-100">
+                    <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" />
+                    <span>{successMessage}</span>
+                </div>
+            )}
             {/* Error message display */}
             {error && (
                 <div className="flex items-center gap-2 text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg border border-red-100">

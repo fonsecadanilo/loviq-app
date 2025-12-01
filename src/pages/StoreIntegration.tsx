@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
@@ -24,14 +24,19 @@ import {
   CheckCircle2,
   AlertCircle,
   ArrowRight,
-  ExternalLink
+  ExternalLink,
+  SlidersHorizontal
 } from 'lucide-react';
 import { Sidebar } from '../components/dashboard/Sidebar';
 import { SlidingTabsTransition, SlideDirection } from '../components/dashboard/SlidingTabsTransition';
 import { ShopifyConnectButton } from '../components/shopify/ShopifyConnectButton';
 import { type ConnectionStatus } from '../services/shopify';
 import { Card, CardContent } from '../components/ui/Card';
+import { Sheet } from '../components/ui/Sheet';
+import { OrderDetails, OrderDetailsData } from '../components/dashboard/OrderDetails';
 import { useSidebar } from '../contexts/SidebarContext';
+import { DateRangePicker } from '../components/ui/DateRangePicker';
+import { CampaignLiveFilter } from '../components/dashboard/CampaignLiveFilter';
 import { 
     MetricsGridSkeleton, 
     RecentOrdersSkeleton, 
@@ -63,6 +68,7 @@ interface Order {
     influencerImage: string;
     productName: string;
     productImage: string;
+    additionalItems?: number;
 }
 
 interface Integration {
@@ -101,11 +107,39 @@ const mockIntegrations: Integration[] = [
     }
 ];
 
-// ... (keep mockOrders, mockProducts, mockCampaigns, mockLives as they were)
+// Added missing mocks for enrichment
+interface Campaign {
+    id: string;
+    name: string;
+}
+
+interface Live {
+    id: string;
+    name: string;
+    campaignId: string;
+    influencerImage: string;
+}
+
+const mockCampaigns: Campaign[] = [
+    { id: 'camp-1', name: 'Lançamento Verão 2025' },
+    { id: 'camp-2', name: 'Live Shopping Night' },
+    { id: 'camp-3', name: 'Organic' },
+    { id: 'camp-4', name: 'Black Friday Antecipada' },
+    { id: 'camp-5', name: 'Liquidação de Inverno' },
+];
+
+const mockLives: Live[] = [
+    { id: 'live-1', name: 'Lançamento Verão 2025', campaignId: 'camp-1', influencerImage: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80' },
+    { id: 'live-2', name: 'Live Shopping Night', campaignId: 'camp-2', influencerImage: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&q=80' },
+    { id: 'live-3', name: 'Organic', campaignId: 'camp-3', influencerImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&q=80' },
+    { id: 'live-4', name: 'Black Friday Antecipada', campaignId: 'camp-4', influencerImage: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&q=80' },
+    { id: 'live-5', name: 'Liquidação de Inverno', campaignId: 'camp-5', influencerImage: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&q=80' },
+];
+
 const mockOrders: Order[] = [
     { id: '#ORD-7829', customer: 'Ana Silva', date: '21 Nov, 2025', total: 'R$ 299,70', status: 'Completed', sourceLive: 'Lançamento Verão 2025', influencerImage: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80', productName: 'Vestido Floral Verão', productImage: 'https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=150&q=80' },
     { id: '#ORD-7830', customer: 'Carlos Souza', date: '21 Nov, 2025', total: 'R$ 89,90', status: 'Processing', sourceLive: 'Live Shopping Night', influencerImage: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&q=80', productName: 'Camiseta Básica Premium', productImage: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=150&q=80' },
-    { id: '#ORD-7831', customer: 'Mariana Oliveira', date: '20 Nov, 2025', total: 'R$ 450,00', status: 'Completed', sourceLive: 'Lançamento Verão 2025', influencerImage: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80', productName: 'Conjunto Alfaiataria', productImage: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=150&q=80' },
+    { id: '#ORD-7831', customer: 'Mariana Oliveira', date: '20 Nov, 2025', total: 'R$ 450,00', status: 'Completed', sourceLive: 'Lançamento Verão 2025', influencerImage: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80', productName: 'Conjunto Alfaiataria', productImage: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=150&q=80', additionalItems: 2 },
     { id: '#ORD-7832', customer: 'Pedro Santos', date: '20 Nov, 2025', total: 'R$ 119,90', status: 'Pending', sourceLive: 'Organic', influencerImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&q=80', productName: 'Boné Streetwear', productImage: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=150&q=80' },
     { id: '#ORD-7833', customer: 'Julia Lima', date: '19 Nov, 2025', total: 'R$ 75,50', status: 'Cancelled', sourceLive: 'Live Shopping Night', influencerImage: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&q=80', productName: 'Acessório Colar Prata', productImage: 'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=150&q=80' },
 ];
@@ -131,66 +165,80 @@ const tabs = [
   { id: 'details', label: 'Store Details' },
 ] as const;
 
-export const StoreIntegration: React.FC = () => {
-  const navigate = useNavigate();
-  const { isCollapsed, toggleCollapse, mobileOpen, setMobileOpen } = useSidebar();
-  const [isLoading, setIsLoading] = useState(true);
-  
-  // Tab state
-  const [activeTab, setActiveTab] = useState<MyStoreTab>('orders');
-  const previousTabRef = useRef<MyStoreTab>(activeTab);
-  const [activeFilter, setActiveFilter] = useState('All');
-  const [activeIntegrationFilter, setActiveIntegrationFilter] = useState('All');
+const parseMockDate = (dateStr: string): Date => {
+    return new Date(dateStr);
+};
 
-  // Simulate loading
+interface OrdersViewProps {
+  isLoading: boolean;
+  filteredOrders: Order[];
+  orderProductSearch: string;
+  setOrderProductSearch: (value: string) => void;
+  dateRange: { from: Date | null; to: Date | null };
+  setDateRange: (range: { from: Date | null; to: Date | null }) => void;
+  handleExportCSV: () => void;
+  activeFilter: string;
+  setActiveFilter: (filter: string) => void;
+  selectedCampaigns: string[];
+  setSelectedCampaigns: (campaigns: string[]) => void;
+  selectedLives: string[];
+  setSelectedLives: (lives: string[]) => void;
+  statusFilter: string;
+  setStatusFilter: (status: string) => void;
+  statusDropdownOpen: boolean;
+  setStatusDropdownOpen: (open: boolean) => void;
+  statusDropdownRef: React.RefObject<HTMLDivElement>;
+  paginatedOrders: Order[];
+  ordersCurrentPage: number;
+  ordersPerPage: number;
+  ordersTotalPages: number;
+  handleOrdersPageChange: (page: number) => void;
+  handleOrderClick: (order: Order) => void;
+  getStatusColor: (status: string) => string;
+}
+
+const OrdersView: React.FC<OrdersViewProps> = ({
+  isLoading,
+  filteredOrders,
+  orderProductSearch,
+  setOrderProductSearch,
+  dateRange,
+  setDateRange,
+  handleExportCSV,
+  activeFilter,
+  setActiveFilter,
+  selectedCampaigns,
+  setSelectedCampaigns,
+  selectedLives,
+  setSelectedLives,
+  statusFilter,
+  setStatusFilter,
+  statusDropdownOpen,
+  setStatusDropdownOpen,
+  statusDropdownRef,
+  paginatedOrders,
+  ordersCurrentPage,
+  ordersPerPage,
+  ordersTotalPages,
+  handleOrdersPageChange,
+  handleOrderClick,
+  getStatusColor
+}) => {
+  const [advancedFiltersOpen, setAdvancedFiltersOpen] = useState(false);
+  const [statusSelectOpen, setStatusSelectOpen] = useState(false);
+  const advancedFiltersRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1500);
-    return () => clearTimeout(timer);
+    const handleClickOutside = (event: MouseEvent) => {
+        if (advancedFiltersRef.current && !advancedFiltersRef.current.contains(event.target as Node)) {
+            setAdvancedFiltersOpen(false);
+        }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Direction logic
-  const getDirection = (): SlideDirection => {
-    const currentIndex = TAB_CONFIG[activeTab].index;
-    const previousIndex = TAB_CONFIG[previousTabRef.current].index;
-    return currentIndex > previousIndex ? 'left' : 'right';
-  };
-
-  const handleTabChange = (newTab: MyStoreTab) => {
-    if (newTab !== activeTab) {
-      previousTabRef.current = activeTab;
-      setActiveTab(newTab);
-    }
-  };
-
-  const direction = getDirection();
-
-  // Helper functions
-  const getStatusColor = (status: string) => {
-    switch (status) {
-        case 'Ativo': return 'bg-green-50 text-green-700 border-green-100';
-        case 'Inativo': return 'bg-red-50 text-red-700 border-red-100';
-        case 'Pausado': 
-        case 'Pending': return 'bg-yellow-50 text-yellow-700 border-yellow-100';
-        case 'Completed': return 'bg-green-50 text-green-700 border-green-100';
-        case 'Processing': return 'bg-blue-50 text-blue-700 border-blue-100';
-        case 'Cancelled': return 'bg-red-50 text-red-700 border-red-100';
-        default: return 'bg-slate-50 text-slate-600 border-slate-200';
-    }
-  };
-
-  const getIntegrationStatusStyles = (status: string) => {
-    switch (status) {
-      case 'Connected': return 'bg-green-50 text-green-700 border-green-100';
-      case 'Available': return 'bg-slate-50 text-slate-600 border-slate-200';
-      case 'Coming Soon': return 'bg-yellow-50 text-yellow-700 border-yellow-100';
-      default: return 'bg-slate-50 text-slate-600 border-slate-200';
-    }
-  };
-
-  // Sub-components for Tabs
-  const OrdersView = () => {
     if (isLoading) {
         return (
             <>
@@ -220,7 +268,7 @@ export const StoreIntegration: React.FC = () => {
                 </div>
                 <div className="">
                     <h3 className="text-xl font-semibold text-slate-900 tracking-tight">
-                        1,234
+                      {filteredOrders.length}
                     </h3>
                     <div className="flex items-center gap-1 mt-1">
                         <TrendingUp className="w-3 h-3 text-green-500" />
@@ -242,7 +290,10 @@ export const StoreIntegration: React.FC = () => {
                 </div>
                 <div className="">
                     <h3 className="text-xl font-semibold text-slate-900 tracking-tight">
-                        R$ 125.4k
+                      R$ {filteredOrders.reduce((acc, order) => {
+                          const val = parseFloat(order.total.replace('R$ ', '').replace(',', '.'));
+                          return acc + val;
+                      }, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </h3>
                     <div className="flex items-center gap-1 mt-1">
                         <TrendingUp className="w-3 h-3 text-green-500" />
@@ -264,7 +315,10 @@ export const StoreIntegration: React.FC = () => {
                 </div>
                 <div className="">
                     <h3 className="text-xl font-semibold text-slate-900 tracking-tight">
-                        R$ 101,64
+                      R$ {filteredOrders.length > 0 ? (filteredOrders.reduce((acc, order) => {
+                          const val = parseFloat(order.total.replace('R$ ', '').replace(',', '.'));
+                          return acc + val;
+                      }, 0) / filteredOrders.length).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '0,00'}
                     </h3>
                     <div className="flex items-center gap-1 mt-1">
                         <span className="text-xs font-medium text-slate-500">0.8%</span>
@@ -297,14 +351,14 @@ export const StoreIntegration: React.FC = () => {
         </div>
 
         {/* Toolbar */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-            {/* Filter Tabs */}
-            <div className="flex items-center bg-slate-100/50 p-1 rounded-xs overflow-x-auto no-scrollbar">
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 mb-6">
+            {/* Quick Filters (Button Group) */}
+            <div className="flex items-center bg-slate-100/50 p-1 rounded-md overflow-hidden self-start xl:self-auto">
                 {['All', "Today's Orders", 'Top Products'].map((filter) => (
                     <button
                         key={filter}
                         onClick={() => setActiveFilter(filter)}
-                        className={`px-4 py-2 rounded-xs text-sm font-medium transition-all whitespace-nowrap ${
+                        className={`px-4 py-2 h-[36px] text-sm font-medium transition-all whitespace-nowrap rounded-sm flex items-center ${
                             activeFilter === filter
                                 ? 'bg-white text-slate-900 shadow-sm'
                                 : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
@@ -315,15 +369,121 @@ export const StoreIntegration: React.FC = () => {
                 ))}
             </div>
 
-            {/* Actions */}
-            <div className="flex items-center gap-3">
-                <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-md text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors shadow-sm">
+            <div className="flex flex-wrap items-center gap-2 self-start xl:self-auto">
+                {/* Product Search */}
+                <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Search className="h-4 w-4 text-slate-400" />
+                    </div>
+                    <input
+                        type="text"
+                        placeholder="Filter by product..."
+                        value={orderProductSearch}
+                        onChange={(e) => setOrderProductSearch(e.target.value)}
+                        className="block w-64 pl-9 pr-3 h-[44px] border border-slate-200 rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all shadow-sm"
+                    />
+                </div>
+
+                {/* Filters Dropdown */}
+                <div className="relative" ref={advancedFiltersRef}>
+                    <button
+                        onClick={() => setAdvancedFiltersOpen(!advancedFiltersOpen)}
+                        className={`flex h-[44px] items-center gap-2 px-4 border rounded-md text-sm font-medium transition-colors ${
+                            advancedFiltersOpen || (dateRange.from || selectedCampaigns.length > 0 || selectedLives.length > 0 || statusFilter !== 'All')
+                                ? 'bg-white border-purple-500 text-purple-700 ring-1 ring-purple-500/20'
+                                : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                        }`}
+                    >
                     <Filter className="w-4 h-4" />
-                    Filter
+                        Filters
+                        {(dateRange.from || selectedCampaigns.length > 0 || selectedLives.length > 0 || statusFilter !== 'All') && (
+                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-purple-100 text-xs text-purple-600">
+                                {(dateRange.from ? 1 : 0) + (selectedCampaigns.length > 0 || selectedLives.length > 0 ? 1 : 0) + (statusFilter !== 'All' ? 1 : 0)}
+                            </span>
+                        )}
+                        <ChevronDown className={`w-4 h-4 transition-transform ${advancedFiltersOpen ? 'rotate-180' : ''}`} />
                 </button>
-                <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-md text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors shadow-sm">
+
+                    {advancedFiltersOpen && (
+                        <div className="absolute top-full right-0 mt-2 w-[320px] bg-white border border-slate-200 rounded-lg shadow-xl z-40 p-4 space-y-4">
+                            <div className="space-y-2">
+                                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                    Date Range
+                                </label>
+                                <div className="flex items-center w-full">
+                                    <DateRangePicker 
+                                        onRangeChange={setDateRange}
+                                        placeholder="Select dates"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                    Campaign & Live
+                                </label>
+                                <div className="flex items-center w-full">
+                                    <CampaignLiveFilter 
+                                        campaigns={mockCampaigns}
+                                        lives={mockLives}
+                                        selectedCampaigns={selectedCampaigns}
+                                        selectedLives={selectedLives}
+                                        onCampaignChange={setSelectedCampaigns}
+                                        onLiveChange={setSelectedLives}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                    Status
+                                </label>
+                                <div className="relative">
+                                    <button
+                                        onClick={() => setStatusSelectOpen(!statusSelectOpen)}
+                                        className="w-full flex items-center justify-between px-3 py-2.5 bg-white border border-slate-200 rounded-md text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                                    >
+                                        <span className={statusFilter === 'All' ? 'text-slate-500' : 'text-slate-900'}>
+                                            {statusFilter === 'All' ? 'Select Status' : statusFilter}
+                                        </span>
+                                        <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${statusSelectOpen ? 'rotate-180' : ''}`} />
+                                    </button>
+                                    {statusSelectOpen && (
+                                        <div className="absolute top-full left-0 mt-1 w-full bg-white border border-slate-200 rounded-md shadow-lg z-50 max-h-40 overflow-y-auto p-1">
+                                            {['All', 'Completed', 'Processing', 'Pending', 'Cancelled'].map((status) => (
+                                                <button
+                                                    key={status}
+                                                    onClick={() => {
+                                                        setStatusFilter(status);
+                                                        setStatusSelectOpen(false);
+                                                    }}
+                                                    className={`w-full text-left px-3 py-2 rounded-sm text-sm transition-colors flex items-center justify-between ${
+                                                        statusFilter === status
+                                                        ? 'bg-purple-50 text-purple-700 font-medium'
+                                                        : 'text-slate-600 hover:bg-slate-50'
+                                                    }`}
+                                                >
+                                                    <span>{status === 'All' ? 'All Statuses' : status}</span>
+                                                    {statusFilter === status && (
+                                                        <CheckCircle2 className="w-4 h-4" />
+                                                    )}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Export CSV (Last on the right) */}
+                <button 
+                    onClick={handleExportCSV}
+                    className="flex h-[44px] items-center gap-2 px-4 bg-white border border-slate-200 rounded-md text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors shadow-sm"
+                >
                     <Download className="w-4 h-4" />
-                    Export
+                    Export CSV
                 </button>
             </div>
         </div>
@@ -344,14 +504,39 @@ export const StoreIntegration: React.FC = () => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50">
-                        {mockOrders.map((order) => (
+                      {paginatedOrders.map((order) => (
                             <tr key={order.id} className="hover:bg-slate-50/50 transition-colors group">
-                                <td className="px-6 py-5 text-sm font-medium text-purple-600">{order.id}</td>
+                                <td className="px-6 py-5 text-sm font-medium relative z-10">
+                                    <button 
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleOrderClick(order);
+                                        }}
+                                        className="text-purple-600 hover:text-purple-700 hover:underline cursor-pointer font-semibold transition-colors"
+                                    >
+                                        {order.id}
+                                    </button>
+                                </td>
                                 <td className="px-6 py-5 text-sm text-slate-900 font-medium">{order.customer}</td>
                                 <td className="px-6 py-5">
                                     <div className="flex items-center gap-3">
-                                        <img src={order.productImage} alt={order.productName} className="w-10 h-10 rounded-xl object-cover border border-slate-100 bg-white" />
-                                        <span className="text-sm text-slate-600 truncate max-w-[150px]">{order.productName}</span>
+                                        <div className="relative">
+                                            <img src={order.productImage} alt={order.productName} className="w-10 h-10 rounded-md object-cover border border-slate-100 bg-white" />
+                                            {order.additionalItems && order.additionalItems > 0 && (
+                                                <span className="absolute -bottom-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-slate-900 text-[10px] font-bold text-white ring-2 ring-white">
+                                                    +{order.additionalItems}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span className="text-sm font-medium text-slate-700 truncate max-w-[150px]">{order.productName}</span>
+                                            {order.additionalItems && order.additionalItems > 0 && (
+                                                <span className="text-[11px] text-slate-400 font-medium">
+                                                    + {order.additionalItems} more items
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
                                 </td>
                                 <td className="px-6 py-5 text-xs text-slate-500">{order.date}</td>
@@ -374,19 +559,34 @@ export const StoreIntegration: React.FC = () => {
                                 </td>
                             </tr>
                         ))}
+                      {paginatedOrders.length === 0 && (
+                          <tr>
+                              <td colSpan={7} className="px-6 py-10 text-center text-slate-500 text-sm">
+                                  No orders found matching the filters.
+                              </td>
+                          </tr>
+                      )}
                     </tbody>
                 </table>
             </div>
             {/* Pagination Footer */}
             <div className="p-4 border-t border-slate-50 bg-slate-50/50 flex items-center justify-between">
                 <div className="text-xs text-slate-500">
-                    Showing <span className="font-medium">1-{mockOrders.length}</span> of <span className="font-medium">{mockOrders.length}</span> orders
+                  Showing <span className="font-medium">{Math.min((ordersCurrentPage - 1) * ordersPerPage + 1, filteredOrders.length)}</span> to <span className="font-medium">{Math.min(ordersCurrentPage * ordersPerPage, filteredOrders.length)}</span> of <span className="font-medium">{filteredOrders.length}</span> orders
                 </div>
                 <div className="flex gap-2">
-                    <button className="w-8 h-8 flex items-center justify-center bg-white border border-slate-200 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                  <button 
+                      onClick={() => handleOrdersPageChange(ordersCurrentPage - 1)}
+                      disabled={ordersCurrentPage === 1}
+                      className="w-8 h-8 flex items-center justify-center bg-white border border-slate-200 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
                         <ChevronLeft className="w-4 h-4" />
                     </button>
-                    <button className="w-8 h-8 flex items-center justify-center bg-white border border-slate-200 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                  <button 
+                      onClick={() => handleOrdersPageChange(ordersCurrentPage + 1)}
+                      disabled={ordersCurrentPage === ordersTotalPages}
+                      className="w-8 h-8 flex items-center justify-center bg-white border border-slate-200 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
                         <ChevronRight className="w-4 h-4" />
                     </button>
                 </div>
@@ -394,6 +594,267 @@ export const StoreIntegration: React.FC = () => {
         </div>
     </>
     );
+};
+
+export const StoreIntegration: React.FC = () => {
+  const navigate = useNavigate();
+  const { isCollapsed, toggleCollapse, mobileOpen, setMobileOpen } = useSidebar();
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Tab state
+  const [activeTab, setActiveTab] = useState<MyStoreTab>('orders');
+  const previousTabRef = useRef<MyStoreTab>(activeTab);
+  
+  // Advanced Filters State (Moved from OrdersProducts)
+  const [activeFilter, setActiveFilter] = useState('All');
+  const [statusFilter, setStatusFilter] = useState<string>('All');
+  const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
+  const statusDropdownRef = useRef<HTMLDivElement>(null);
+
+  const [selectedCampaigns, setSelectedCampaigns] = useState<string[]>([]);
+  const [selectedLives, setSelectedLives] = useState<string[]>([]);
+
+  // Date Range State
+  const [dateRange, setDateRange] = useState<{ from: Date | null; to: Date | null }>({ from: null, to: null });
+
+  // Product Search State (for Orders tab)
+  const [orderProductSearch, setOrderProductSearch] = useState('');
+
+  // Pagination for Orders
+  const [ordersCurrentPage, setOrdersCurrentPage] = useState(1);
+  const ordersPerPage = 10;
+  
+  const [activeIntegrationFilter, setActiveIntegrationFilter] = useState('All');
+
+  // Sheet State
+  const [selectedOrder, setSelectedOrder] = useState<OrderDetailsData | null>(null);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+
+  // Simulate loading
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+        if (statusDropdownRef.current && !statusDropdownRef.current.contains(event.target as Node)) {
+            setStatusDropdownOpen(false);
+        }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Direction logic
+  const getDirection = (): SlideDirection => {
+    const currentIndex = TAB_CONFIG[activeTab].index;
+    const previousIndex = TAB_CONFIG[previousTabRef.current].index;
+    return currentIndex > previousIndex ? 'left' : 'right';
+  };
+
+  const handleTabChange = (newTab: MyStoreTab) => {
+    if (newTab !== activeTab) {
+      previousTabRef.current = activeTab;
+      setActiveTab(newTab);
+    }
+  };
+
+  const direction = getDirection();
+
+  // Top Products simulation
+  const topProductsList = useMemo(() => {
+    return [...mockOrders]
+        .sort((a, b) => parseFloat(b.total.replace('R$ ', '').replace(',', '.')) - parseFloat(a.total.replace('R$ ', '').replace(',', '.')))
+        .slice(0, 3)
+        .map(o => o.productName);
+  }, []);
+
+  // Filter Logic
+  const filteredOrders = useMemo(() => {
+    return mockOrders.filter(order => {
+        const orderDate = parseMockDate(order.date);
+        
+        // 1. Status Filter
+        if (statusFilter !== 'All' && order.status !== statusFilter) {
+            return false;
+        }
+
+        // 2. Quick Filters
+        if (activeFilter === "Today's Orders") {
+            const today = new Date('2025-11-21'); 
+            if (orderDate.toDateString() !== today.toDateString()) return false;
+        } else if (activeFilter === 'Top Products') {
+            if (!topProductsList.includes(order.productName)) return false;
+        }
+
+        // 3. Date Range Filter
+        if (dateRange.from) {
+            if (orderDate < dateRange.from) return false;
+        }
+        if (dateRange.to) {
+            if (orderDate > dateRange.to) return false;
+        }
+
+        // 4. Product Search Filter
+        if (orderProductSearch) {
+            if (!order.productName.toLowerCase().includes(orderProductSearch.toLowerCase())) {
+                return false;
+            }
+        }
+
+        // 5. Campaign & Live Filter
+        if (selectedLives.length > 0) {
+            if (!selectedLives.includes(order.sourceLive)) return false;
+        }
+        
+        if (selectedCampaigns.length > 0 && selectedLives.length === 0) {
+            // Get lives for selected campaigns
+            const campaignLives = mockLives
+                .filter(live => {
+                    const campaign = mockCampaigns.find(c => c.id === live.campaignId);
+                    return campaign && selectedCampaigns.includes(campaign.name);
+                })
+                .map(live => live.name);
+            
+            if (!campaignLives.includes(order.sourceLive)) return false;
+        }
+
+        return true;
+    });
+  }, [activeFilter, statusFilter, dateRange, orderProductSearch, selectedCampaigns, selectedLives, topProductsList]);
+
+  // Pagination Logic
+  const ordersTotalPages = Math.ceil(filteredOrders.length / ordersPerPage);
+  const paginatedOrders = filteredOrders.slice(
+      (ordersCurrentPage - 1) * ordersPerPage,
+      ordersCurrentPage * ordersPerPage
+  );
+
+  const handleOrdersPageChange = (page: number) => {
+      if (page >= 1 && page <= ordersTotalPages) {
+          setOrdersCurrentPage(page);
+      }
+  };
+
+  const handleExportCSV = () => {
+    const headers = ['Order ID', 'Customer', 'Product', 'Date', 'Total', 'Status', 'Source Live'];
+    const csvContent = [
+        headers.join(','),
+        ...filteredOrders.map(order => [
+            order.id,
+            `"${order.customer}"`,
+            `"${order.productName}"`,
+            `"${order.date}"`,
+            `"${order.total}"`,
+            order.status,
+            `"${order.sourceLive}"`
+        ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'orders_export.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Helper functions
+  const getStatusColor = (status: string) => {
+    switch (status) {
+        case 'Ativo': return 'bg-green-50 text-green-700 border-green-100';
+        case 'Inativo': return 'bg-red-50 text-red-700 border-red-100';
+        case 'Pausado': 
+        case 'Pending': return 'bg-yellow-50 text-yellow-700 border-yellow-100';
+        case 'Completed': return 'bg-green-50 text-green-700 border-green-100';
+        case 'Processing': return 'bg-blue-50 text-blue-700 border-blue-100';
+        case 'Cancelled': return 'bg-red-50 text-red-700 border-red-100';
+        default: return 'bg-slate-50 text-slate-600 border-slate-200';
+    }
+  };
+
+  const getIntegrationStatusStyles = (status: string) => {
+    switch (status) {
+      case 'Connected': return 'bg-green-50 text-green-700 border-green-100';
+      case 'Available': return 'bg-slate-50 text-slate-600 border-slate-200';
+      case 'Coming Soon': return 'bg-yellow-50 text-yellow-700 border-yellow-100';
+      default: return 'bg-slate-50 text-slate-600 border-slate-200';
+    }
+  };
+
+  // Mock data enhancement for sheet
+  const handleOrderClick = (order: Order) => {
+      // Find related live info
+      const live = mockLives.find(l => l.name === order.sourceLive);
+      const campaignName = live 
+          ? mockCampaigns.find(c => c.id === live.campaignId)?.name 
+          : 'Direct';
+
+      // Generate items - some orders have multiple items for testing
+      const baseItem = {
+          name: order.productName,
+          image: order.productImage,
+          price: order.total,
+          quantity: 1,
+          sku: `LOV-${Math.floor(Math.random() * 1000)}`,
+      };
+
+      // Add extra items for orders with higher totals (simulating multi-item orders)
+      const extraItems = order.id === '#ORD-7831' ? [
+          {
+              name: 'Blusa Cropped Verão',
+              image: 'https://images.unsplash.com/photo-1562157873-818bc0726f68?w=150&q=80',
+              price: 'R$ 89,90',
+              quantity: 2,
+              sku: 'LOV-221',
+          },
+          {
+              name: 'Calça Wide Leg Premium',
+              image: 'https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=150&q=80',
+              price: 'R$ 159,90',
+              quantity: 1,
+              sku: 'LOV-445',
+          }
+      ] : [];
+
+      const enrichedOrder: OrderDetailsData = {
+          id: order.id,
+          customer: {
+              name: order.customer,
+              email: `${order.customer.toLowerCase().replace(' ', '.')}@example.com`,
+              phone: '(11) 99999-9999',
+          },
+          date: order.date,
+          total: order.total,
+          status: order.status,
+          items: [baseItem, ...extraItems],
+          source: {
+              liveName: order.sourceLive,
+              campaignName: campaignName || 'Unknown Campaign',
+              date: order.date,
+          },
+          influencer: {
+              name: 'Mariana Oliveira',
+              image: order.influencerImage,
+              handle: '@mariana_loviq',
+              commission: 'R$ 29,90',
+              commissionRate: '10%',
+          },
+          payment: {
+              method: 'Credit Card',
+              installments: '3x',
+          },
+      };
+      
+      setSelectedOrder(enrichedOrder);
+      setIsSheetOpen(true);
   };
 
   const ProductsView = () => {
@@ -838,12 +1299,51 @@ export const StoreIntegration: React.FC = () => {
             offset={50}
             className="h-full overflow-y-auto px-8 py-6"
           >
-            {activeTab === 'orders' && <OrdersView />}
+            {activeTab === 'orders' && (
+              <OrdersView 
+                isLoading={isLoading}
+                filteredOrders={filteredOrders}
+                orderProductSearch={orderProductSearch}
+                setOrderProductSearch={setOrderProductSearch}
+                dateRange={dateRange}
+                setDateRange={setDateRange}
+                handleExportCSV={handleExportCSV}
+                activeFilter={activeFilter}
+                setActiveFilter={setActiveFilter}
+                selectedCampaigns={selectedCampaigns}
+                setSelectedCampaigns={setSelectedCampaigns}
+                selectedLives={selectedLives}
+                setSelectedLives={setSelectedLives}
+                statusFilter={statusFilter}
+                setStatusFilter={setStatusFilter}
+                statusDropdownOpen={statusDropdownOpen}
+                setStatusDropdownOpen={setStatusDropdownOpen}
+                statusDropdownRef={statusDropdownRef}
+                paginatedOrders={paginatedOrders}
+                ordersCurrentPage={ordersCurrentPage}
+                ordersPerPage={ordersPerPage}
+                ordersTotalPages={ordersTotalPages}
+                handleOrdersPageChange={handleOrdersPageChange}
+                handleOrderClick={handleOrderClick}
+                getStatusColor={getStatusColor}
+              />
+            )}
             {activeTab === 'products' && <ProductsView />}
             {activeTab === 'integrations' && <IntegrationsView />}
             {activeTab === 'details' && <StoreDetailsView />}
           </SlidingTabsTransition>
         </div>
+
+        {/* Order Details Sheet */}
+        <Sheet
+            isOpen={isSheetOpen}
+            onClose={() => setIsSheetOpen(false)}
+            className="sm:max-w-[600px]"
+            hideHeader={true}
+            noPadding={true}
+        >
+            {selectedOrder && <OrderDetails order={selectedOrder} onClose={() => setIsSheetOpen(false)} />}
+        </Sheet>
       </main>
     </div>
   );

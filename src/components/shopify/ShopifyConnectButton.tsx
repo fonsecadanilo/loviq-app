@@ -78,26 +78,40 @@ export const ShopifyConnectButton: React.FC<ShopifyConnectButtonProps> = ({
     }, [connectionStatus, hasChecked, onStatusChange]);
 
     const handleConnect = async () => {
-        if (!shopDomain.trim()) {
+        const trimmedDomain = shopDomain.trim();
+        
+        if (!trimmedDomain) {
             setError('Please enter your store domain');
             return;
         }
 
+        console.log('[ShopifyConnectButton] Starting connection for:', trimmedDomain);
         setLoading(true);
         setError(null);
 
         try {
-            const result = await ShopifyService.connectStore(brandId, shopDomain);
+            const result = await ShopifyService.connectStore(brandId, trimmedDomain);
+            console.log('[ShopifyConnectButton] Connect result:', result);
             
             if (result.success) {
+                // Se houve redirecionamento OAuth, não precisamos fazer mais nada
+                // O window.location.href já foi alterado
+                if (result.redirecting) {
+                    console.log('[ShopifyConnectButton] Redirecting to Shopify OAuth...');
+                    return; // Mantém loading enquanto redireciona
+                }
+                
+                // Conexão direta (fallback/demo mode)
                 const status = await ShopifyService.getConnectionStatus(brandId);
                 setConnectionStatus(status);
                 setShopDomain('');
             } else {
+                console.error('[ShopifyConnectButton] Connection failed:', result.error);
                 setError(result.error || 'Failed to connect');
             }
         } catch (err) {
-            setError('Connection error');
+            console.error('[ShopifyConnectButton] Unexpected error:', err);
+            setError(err instanceof Error ? err.message : 'Connection error');
         } finally {
             setLoading(false);
         }
@@ -190,39 +204,51 @@ export const ShopifyConnectButton: React.FC<ShopifyConnectButtonProps> = ({
 
     // Disconnected Form State (default)
     return (
-        <div className="flex gap-2 w-full">
-            <div className="relative flex-1 group">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Store className="h-4 w-4 text-slate-400 group-focus-within:text-[#95BF47] transition-colors" />
+        <div className="flex flex-col gap-2 w-full">
+            <div className="flex gap-2 w-full">
+                <div className="relative flex-1 group">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Store className="h-4 w-4 text-slate-400 group-focus-within:text-[#95BF47] transition-colors" />
+                    </div>
+                    <input
+                        type="text"
+                        placeholder="store.myshopify.com"
+                        value={shopDomain}
+                        onChange={(e) => {
+                            setShopDomain(e.target.value);
+                            setError(null);
+                        }}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                                handleConnect();
+                            }
+                        }}
+                        className={`block w-full pl-9 pr-3 py-2 text-sm border rounded-xl focus:ring-2 focus:ring-[#95BF47]/20 focus:border-[#95BF47] outline-none bg-slate-50 focus:bg-white transition-all ${
+                            error ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' : 'border-slate-200'
+                        }`}
+                        disabled={loading}
+                    />
                 </div>
-                <input
-                    type="text"
-                    placeholder="store.myshopify.com"
-                    value={shopDomain}
-                    onChange={(e) => {
-                        setShopDomain(e.target.value);
-                        setError(null);
-                    }}
-                    onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                            handleConnect();
-                        }
-                    }}
-                    className="block w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#95BF47]/20 focus:border-[#95BF47] outline-none bg-slate-50 focus:bg-white transition-all"
-                    disabled={loading}
-                />
+                <button
+                    onClick={handleConnect}
+                    disabled={loading || !shopDomain.trim()}
+                    className="px-4 py-2 text-sm font-medium text-white bg-[#95BF47] rounded-xl hover:bg-[#7da93d] transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm flex items-center gap-2 whitespace-nowrap"
+                    title={!shopDomain.trim() ? 'Enter your store domain first' : 'Connect to Shopify'}
+                >
+                    {loading ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                        'Connect'
+                    )}
+                </button>
             </div>
-            <button
-                onClick={handleConnect}
-                disabled={loading}
-                className="px-4 py-2 text-sm font-medium text-white bg-[#95BF47] rounded-xl hover:bg-[#7da93d] transition-colors disabled:opacity-70 shadow-sm flex items-center gap-2 whitespace-nowrap"
-            >
-                {loading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                    'Connect'
-                )}
-            </button>
+            {/* Error message display */}
+            {error && (
+                <div className="flex items-center gap-2 text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg border border-red-100">
+                    <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                    <span>{error}</span>
+                </div>
+            )}
         </div>
     );
 };

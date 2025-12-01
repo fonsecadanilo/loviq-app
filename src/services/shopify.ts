@@ -150,7 +150,9 @@ export const ShopifyService = {
      * Em produção, isso invocaria uma Edge Function para OAuth.
      * Por enquanto, cria o registro da loja para demonstração.
      */
-    async connectStore(brandId: number, shopDomain: string): Promise<{ success: boolean; store?: ShopifyStore; error?: string }> {
+    async connectStore(brandId: number, shopDomain: string): Promise<{ success: boolean; store?: ShopifyStore; error?: string; redirecting?: boolean }> {
+        console.log('[ShopifyService] connectStore called with:', { brandId, shopDomain })
+        
         // Verifica se Supabase está configurado
         if (!isSupabaseConfigured()) {
             console.warn('[ShopifyService] Supabase não configurado. Simulando conexão.')
@@ -176,36 +178,60 @@ export const ShopifyService = {
                 .replace('https://', '')
                 .replace('http://', '')
                 .replace(/\/$/, '')
+            
+            console.log('[ShopifyService] Clean domain:', cleanDomain)
 
             // Verifica se já existe uma loja conectada
-            const { data: existingStore } = await supabase
+            const { data: existingStore, error: checkError } = await supabase
                 .from('stores')
                 .select('id')
                 .eq('brand_id', brandId)
                 .eq('store_type', 'shopify')
                 .maybeSingle()
 
+            console.log('[ShopifyService] Existing store check:', { existingStore, checkError })
+
             if (existingStore) {
                 return { success: false, error: 'Já existe uma loja Shopify conectada para esta marca' }
             }
 
-            // Tenta invocar Edge Function para OAuth (se existir)
-            try {
-                const { data, error } = await supabase.functions.invoke('shopify-auth', {
-                    body: { 
-                        shop: cleanDomain,
-                        brand_id: brandId 
-                    }
-                })
-
-                if (!error && data?.url) {
-                    // Redireciona para OAuth do Shopify
-                    window.location.href = data.url
-                    return { success: true }
+            // Tenta invocar Edge Function para OAuth
+            console.log('[ShopifyService] Invoking shopify-auth Edge Function...')
+            
+            const { data, error } = await supabase.functions.invoke('shopify-auth', {
+                body: { 
+                    shop: cleanDomain,
+                    brand_id: brandId 
                 }
-            } catch (fnError) {
-                console.warn('[ShopifyService] Edge Function não disponível, criando loja diretamente')
+            })
+
+            console.log('[ShopifyService] Edge Function response:', { data, error })
+
+            if (error) {
+                console.error('[ShopifyService] Edge Function error:', error)
+                return { 
+                    success: false, 
+                    error: `Erro ao conectar: ${error.message || 'Edge Function falhou'}` 
+                }
             }
+
+            if (data?.url) {
+                console.log('[ShopifyService] Redirecting to Shopify OAuth URL:', data.url)
+                // Redireciona para OAuth do Shopify
+                window.location.href = data.url
+                return { success: true, redirecting: true }
+            }
+
+            if (data?.error) {
+                console.error('[ShopifyService] Edge Function returned error:', data.error)
+                return { 
+                    success: false, 
+                    error: data.message || data.error || 'Erro na Edge Function' 
+                }
+            }
+
+            // Se não houve redirecionamento nem erro, algo inesperado aconteceu
+            console.warn('[ShopifyService] No URL returned from Edge Function, falling back to direct creation')
 
             // Fallback: Cria registro da loja diretamente (para desenvolvimento/demo)
             const newStore: TablesInsert<'stores'> = {
@@ -226,14 +252,15 @@ export const ShopifyService = {
                 .single()
 
             if (insertError) {
-                console.error('Erro ao criar loja:', insertError)
-                return { success: false, error: 'Erro ao conectar loja' }
+                console.error('[ShopifyService] Erro ao criar loja:', insertError)
+                return { success: false, error: `Erro ao conectar loja: ${insertError.message}` }
             }
 
+            console.log('[ShopifyService] Store created successfully:', store)
             return { success: true, store: store as ShopifyStore }
         } catch (error) {
-            console.error('Erro ao conectar loja Shopify:', error)
-            return { success: false, error: 'Erro inesperado ao conectar loja' }
+            console.error('[ShopifyService] Erro ao conectar loja Shopify:', error)
+            return { success: false, error: error instanceof Error ? error.message : 'Erro inesperado ao conectar loja' }
         }
     },
 

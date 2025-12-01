@@ -569,6 +569,7 @@ export type Database = {
           name: string
           price: number
           product_source_type: Database["public"]["Enums"]["product_source_type"]
+          stock_quantity: number
           store_id: number
           updated_at: string
         }
@@ -582,6 +583,7 @@ export type Database = {
           name: string
           price: number
           product_source_type: Database["public"]["Enums"]["product_source_type"]
+          stock_quantity?: number
           store_id: number
           updated_at?: string
         }
@@ -595,6 +597,7 @@ export type Database = {
           name?: string
           price?: number
           product_source_type?: Database["public"]["Enums"]["product_source_type"]
+          stock_quantity?: number
           store_id?: number
           updated_at?: string
         }
@@ -612,6 +615,11 @@ export type Database = {
         Row: {
           created_at: string
           id: number
+          inventory_item_id: string | null
+          inventory_policy: string
+          inventory_quantity: number
+          inventory_tracked: boolean
+          last_inventory_sync_at: string | null
           last_sync_at: string | null
           product_id: number
           shopify_variant_id: string | null
@@ -620,6 +628,11 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: number
+          inventory_item_id?: string | null
+          inventory_policy?: string
+          inventory_quantity?: number
+          inventory_tracked?: boolean
+          last_inventory_sync_at?: string | null
           last_sync_at?: string | null
           product_id: number
           shopify_variant_id?: string | null
@@ -628,6 +641,11 @@ export type Database = {
         Update: {
           created_at?: string
           id?: number
+          inventory_item_id?: string | null
+          inventory_policy?: string
+          inventory_quantity?: number
+          inventory_tracked?: boolean
+          last_inventory_sync_at?: string | null
           last_sync_at?: string | null
           product_id?: number
           shopify_variant_id?: string | null

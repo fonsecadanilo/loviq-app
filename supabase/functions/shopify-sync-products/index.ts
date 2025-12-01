@@ -21,6 +21,17 @@ const corsHeaders = {
 // Shopify API version
 const SHOPIFY_API_VERSION = '2024-01'
 
+interface ShopifyVariant {
+    id: number
+    title: string
+    price: string
+    sku: string
+    inventory_quantity: number
+    inventory_item_id: number
+    inventory_management: string | null
+    inventory_policy: string
+}
+
 interface ShopifyProduct {
     id: number
     title: string
@@ -29,13 +40,7 @@ interface ShopifyProduct {
     product_type: string
     status: string
     images: Array<{ id: number; src: string }>
-    variants: Array<{
-        id: number
-        title: string
-        price: string
-        sku: string
-        inventory_quantity: number
-    }>
+    variants: ShopifyVariant[]
 }
 
 interface ShopifyProductsResponse {
@@ -164,6 +169,12 @@ serve(async (req) => {
 
                     let productId: number
 
+                    // Calculate total inventory from all variants
+                    const totalInventory = shopifyProduct.variants.reduce(
+                        (sum, variant) => sum + (variant.inventory_quantity || 0), 
+                        0
+                    )
+
                     if (existingProduct) {
                         // Update existing product
                         const { data: updatedProduct, error: updateError } = await supabase
@@ -173,6 +184,7 @@ serve(async (req) => {
                                 description: shopifyProduct.body_html,
                                 price: parseFloat(mainVariant?.price || '0'),
                                 image_url: mainImage?.src || null,
+                                stock_quantity: totalInventory,
                                 updated_at: new Date().toISOString()
                             })
                             .eq('id', existingProduct.id)
@@ -193,7 +205,8 @@ serve(async (req) => {
                                 currency: 'BRL',
                                 image_url: mainImage?.src || null,
                                 product_source_type: 'shopify',
-                                external_product_id: shopifyProduct.id.toString()
+                                external_product_id: shopifyProduct.id.toString(),
+                                stock_quantity: totalInventory
                             })
                             .select('id')
                             .single()
@@ -202,29 +215,35 @@ serve(async (req) => {
                         productId = newProduct.id
                     }
 
-                    // Upsert shopify_products details
+                    // Upsert shopify_products details with inventory info
                     const { data: existingShopifyProduct } = await supabase
                         .from('shopify_products')
                         .select('id')
                         .eq('product_id', productId)
                         .maybeSingle()
 
+                    const inventoryData = {
+                        shopify_variant_id: mainVariant?.id?.toString() || null,
+                        inventory_quantity: totalInventory,
+                        inventory_item_id: mainVariant?.inventory_item_id?.toString() || null,
+                        inventory_tracked: mainVariant?.inventory_management === 'shopify',
+                        inventory_policy: mainVariant?.inventory_policy || 'deny',
+                        last_sync_at: new Date().toISOString(),
+                        last_inventory_sync_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString()
+                    }
+
                     if (existingShopifyProduct) {
                         await supabase
                             .from('shopify_products')
-                            .update({
-                                shopify_variant_id: mainVariant?.id?.toString() || null,
-                                last_sync_at: new Date().toISOString(),
-                                updated_at: new Date().toISOString()
-                            })
+                            .update(inventoryData)
                             .eq('id', existingShopifyProduct.id)
                     } else {
                         await supabase
                             .from('shopify_products')
                             .insert({
                                 product_id: productId,
-                                shopify_variant_id: mainVariant?.id?.toString() || null,
-                                last_sync_at: new Date().toISOString()
+                                ...inventoryData
                             })
                     }
 

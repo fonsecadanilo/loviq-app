@@ -17,70 +17,27 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 const APP_URL = Deno.env.get('APP_URL') || 'http://localhost:8081'
 
-// CORS headers
-const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+// Redirect to app with success message
+function redirectSuccess(shop: string): Response {
+    const redirectUrl = `${APP_URL}/store-integration?shopify=connected&store=${encodeURIComponent(shop)}`
+    return new Response(null, {
+        status: 302,
+        headers: { 'Location': redirectUrl }
+    })
 }
 
-// HTML response for browser redirect
-function htmlRedirect(url: string, message: string): Response {
-    return new Response(
-        `<!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="utf-8">
-            <meta http-equiv="refresh" content="2;url=${url}">
-            <title>Shopify Connection</title>
-            <style>
-                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #f5f5f5; }
-                .container { text-align: center; padding: 40px; background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-                .spinner { width: 40px; height: 40px; border: 3px solid #e0e0e0; border-top-color: #95BF47; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px; }
-                @keyframes spin { to { transform: rotate(360deg); } }
-                h2 { color: #333; margin: 0 0 10px; }
-                p { color: #666; margin: 0; }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="spinner"></div>
-                <h2>${message}</h2>
-                <p>Redirecting you back to the app...</p>
-            </div>
-        </body>
-        </html>`,
-        { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
-    )
-}
-
-function htmlError(title: string, message: string): Response {
-    return new Response(
-        `<!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="utf-8">
-            <title>Error - Shopify Connection</title>
-            <style>
-                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #f5f5f5; }
-                .container { text-align: center; padding: 40px; background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 500px; }
-                .icon { font-size: 48px; margin-bottom: 20px; }
-                h2 { color: #e53935; margin: 0 0 10px; }
-                p { color: #666; margin: 0 0 20px; }
-                a { color: #95BF47; text-decoration: none; }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="icon">❌</div>
-                <h2>${title}</h2>
-                <p>${message}</p>
-                <a href="${APP_URL}/store-integration">Back to integrations</a>
-            </div>
-        </body>
-        </html>`,
-        { status: 400, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
-    )
+// Redirect to app with error message
+function redirectError(error: string, details?: string): Response {
+    const params = new URLSearchParams({
+        shopify: 'error',
+        error: error,
+        ...(details && { details })
+    })
+    const redirectUrl = `${APP_URL}/store-integration?${params.toString()}`
+    return new Response(null, {
+        status: 302,
+        headers: { 'Location': redirectUrl }
+    })
 }
 
 serve(async (req) => {
@@ -88,7 +45,13 @@ serve(async (req) => {
     
     // Handle CORS preflight
     if (req.method === 'OPTIONS') {
-        return new Response('ok', { headers: corsHeaders })
+        return new Response('ok', { 
+            headers: {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+                'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+            }
+        })
     }
 
     // Validate environment variables
@@ -99,7 +62,7 @@ serve(async (req) => {
             hasSupabaseUrl: !!SUPABASE_URL,
             hasServiceKey: !!SUPABASE_SERVICE_ROLE_KEY
         })
-        return htmlError('Configuration Error', 'Server is not properly configured. Please contact support.')
+        return redirectError('Configuration Error', 'Server is not properly configured')
     }
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
@@ -116,11 +79,11 @@ serve(async (req) => {
 
         // Validate required parameters
         if (!code) {
-            return htmlError('Missing Code', 'Authorization code not received from Shopify.')
+            return redirectError('Missing Code', 'Authorization code not received from Shopify')
         }
 
         if (!shop) {
-            return htmlError('Missing Shop', 'Shop domain not received from Shopify.')
+            return redirectError('Missing Shop', 'Shop domain not received from Shopify')
         }
 
         // Parse state to get brand_id
@@ -164,7 +127,7 @@ serve(async (req) => {
 
         if (!tokenResponse.ok) {
             console.error('[shopify-callback] Shopify token exchange failed:', tokenResponse.status, tokenResponseText)
-            return htmlError('Token Exchange Failed', `Could not get access token from Shopify: ${tokenResponse.status}`)
+            return redirectError('Token Exchange Failed', `Could not get access token: ${tokenResponse.status}`)
         }
 
         // Parse JSON safely
@@ -173,12 +136,12 @@ serve(async (req) => {
             tokenData = JSON.parse(tokenResponseText)
         } catch (jsonError) {
             console.error('[shopify-callback] Failed to parse Shopify response as JSON:', jsonError)
-            return htmlError('Invalid Response', 'Shopify returned an invalid response. Please try again.')
+            return redirectError('Invalid Response', 'Shopify returned an invalid response')
         }
         console.log('[shopify-callback] Token received, scope:', tokenData.scope)
 
         if (!tokenData.access_token) {
-            return htmlError('No Access Token', 'Shopify did not return an access token.')
+            return redirectError('No Access Token', 'Shopify did not return an access token')
         }
 
         // Check if store already exists for this brand
@@ -231,17 +194,16 @@ serve(async (req) => {
 
         if (storeResult.error) {
             console.error('[shopify-callback] Database error:', storeResult.error)
-            return htmlError('Database Error', `Could not save store: ${storeResult.error.message}`)
+            return redirectError('Database Error', storeResult.error.message)
         }
 
         console.log('[shopify-callback] Store saved successfully:', storeResult.data)
 
         // Redirect back to the app with success
-        const redirectUrl = `${APP_URL}/store-integration?shopify=connected&store=${encodeURIComponent(cleanShop)}`
-        return htmlRedirect(redirectUrl, 'Shopify Connected Successfully!')
+        return redirectSuccess(cleanShop)
 
     } catch (error) {
         console.error('[shopify-callback] Unexpected error:', error)
-        return htmlError('Unexpected Error', error instanceof Error ? error.message : 'An unexpected error occurred.')
+        return redirectError('Unexpected Error', error instanceof Error ? error.message : 'An unexpected error occurred')
     }
 })

@@ -30,6 +30,7 @@ import {
 import { Sidebar } from '../components/dashboard/Sidebar';
 import { SlidingTabsTransition, SlideDirection } from '../components/dashboard/SlidingTabsTransition';
 import { ShopifyConnectButton } from '../components/shopify/ShopifyConnectButton';
+import { ShopifyImportModal } from '../components/shopify/ShopifyImportModal';
 import { type ConnectionStatus } from '../services/shopify';
 import { Card, CardContent } from '../components/ui/Card';
 import { Sheet } from '../components/ui/Sheet';
@@ -623,8 +624,11 @@ export const StoreIntegration: React.FC = () => {
   // Pagination for Orders
   const [ordersCurrentPage, setOrdersCurrentPage] = useState(1);
   const ordersPerPage = 10;
-  
+    
   const [activeIntegrationFilter, setActiveIntegrationFilter] = useState('All');
+
+  // Import Modal State
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   // Sheet State
   const [selectedOrder, setSelectedOrder] = useState<OrderDetailsData | null>(null);
@@ -883,10 +887,19 @@ export const StoreIntegration: React.FC = () => {
                     className="block w-full pl-10 pr-3 py-2.5 border border-slate-200 rounded-xl leading-5 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm transition-all shadow-sm"
                 />
             </div>
-            <button className="w-full sm:w-auto flex items-center justify-center gap-2 bg-slate-900 text-white px-4 py-2.5 rounded-md hover:bg-slate-800 transition-colors font-medium text-sm shadow-sm">
-                <Plus className="h-4 w-4" />
-                Cadastrar Produto
-            </button>
+            <div className="flex gap-2 w-full sm:w-auto">
+                <button 
+                    onClick={() => setIsImportModalOpen(true)}
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-700 px-4 py-2.5 rounded-md hover:bg-slate-50 transition-colors font-medium text-sm shadow-sm"
+                >
+                    <img src="https://cdn.worldvectorlogo.com/logos/shopify.svg" alt="Shopify" className="h-4 w-4" />
+                    Importar Shopify
+                </button>
+                <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-slate-900 text-white px-4 py-2.5 rounded-md hover:bg-slate-800 transition-colors font-medium text-sm shadow-sm">
+                    <Plus className="h-4 w-4" />
+                    Cadastrar Produto
+                </button>
+            </div>
         </div>
 
         <div className="bg-white rounded-lg border border-slate-100 shadow-sm overflow-hidden">
@@ -1344,6 +1357,16 @@ export const StoreIntegration: React.FC = () => {
         >
             {selectedOrder && <OrderDetails order={selectedOrder} onClose={() => setIsSheetOpen(false)} />}
         </Sheet>
+
+        {/* Shopify Import Modal */}
+        <ShopifyImportModal 
+            isOpen={isImportModalOpen}
+            onClose={() => setIsImportModalOpen(false)}
+            onImportComplete={() => {
+                // In a real app, we would refresh the product list here
+                console.log('Products imported successfully');
+            }}
+        />
       </main>
     </div>
   );

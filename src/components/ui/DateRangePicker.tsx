@@ -165,7 +165,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
         <div className="relative" ref={dropdownRef}>
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="flex h-10 items-center gap-2 rounded-lg bg-white px-4 border border-gray-200 hover:bg-gray-50 transition-colors min-w-[280px]"
+                className="flex h-[44px] items-center gap-2 rounded-md bg-white px-4 border border-gray-200 hover:bg-gray-50 transition-colors min-w-[280px]"
             >
                 <CalendarIcon className="w-4 h-4 text-gray-400" />
                 <div className="flex-1 text-left text-sm text-gray-600">

@@ -8,7 +8,6 @@ import { BrandDashboard } from "./pages/BrandDashboard";
 import { CreateCampaign } from "./components/campaign/CreateCampaign";
 
 import { Influencers } from "./pages/Influencers";
-import { OrdersProducts } from "./pages/OrdersProducts";
 import { Wallet } from "./pages/Wallet";
 import { StoreIntegration } from "./pages/StoreIntegration";
 import { Chat } from "./pages/Chat";
@@ -24,7 +23,6 @@ export default function App() {
           <Route path="/dashboard" element={<BrandDashboard />} />
           <Route path="/campaigns" element={<Campaigns />} />
           <Route path="/campaigns/create" element={<CreateCampaign />} />
-          <Route path="/orders" element={<OrdersProducts />} />
           <Route path="/influencers" element={<Influencers />} />
           <Route path="/wallet" element={<Wallet />} />
           <Route path="/store-integration" element={<StoreIntegration />} />

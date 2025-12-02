@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   Bell, 
@@ -46,17 +46,23 @@ import {
     StoreDetailsSkeleton 
 } from '../components/ui/PageSkeletons';
 
+import { supabase } from '../lib/supabase';
+
 // Types
 type MyStoreTab = 'orders' | 'products' | 'integrations' | 'details';
 
-// Mock Data (from OrdersProducts)
+// Product interface matching database
 interface Product {
-    id: string;
+    id: number;
     name: string;
-    price: string;
-    sku: string;
-    status: 'Ativo' | 'Inativo' | 'Pausado';
-    image: string;
+    price: number | string;
+    description?: string | null;
+    image_url?: string | null;
+    external_product_id?: string | null;
+    product_source_type?: string | null;
+    store_id?: number | null;
+    stock_quantity?: number;
+    created_at?: string;
 }
 
 interface Order {
@@ -145,12 +151,6 @@ const mockOrders: Order[] = [
     { id: '#ORD-7833', customer: 'Julia Lima', date: '19 Nov, 2025', total: 'R$ 75,50', status: 'Cancelled', sourceLive: 'Live Shopping Night', influencerImage: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&q=80', productName: 'Acessório Colar Prata', productImage: 'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=150&q=80' },
 ];
 
-const mockProducts: Product[] = [
-    { id: '1', name: 'Sérum Facial Vitamina C', price: 'R$ 89,90', sku: 'LOV-SERUM-01', status: 'Ativo', image: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=150&q=80' },
-    { id: '2', name: 'Creme Hidratante Noturno', price: 'R$ 119,90', sku: 'LOV-CREME-03', status: 'Ativo', image: 'https://images.unsplash.com/photo-1608248597279-f99d160bfbc8?w=150&q=80' },
-    { id: '3', name: 'Kit Verão (Ed. Limitada)', price: 'R$ 249,00', sku: 'LOV-KIT-SUMMER24', status: 'Inativo', image: 'https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=150&q=80' },
-    { id: '4', name: 'Protetor Solar FPS 50', price: 'R$ 75,50', sku: 'LOV-SUN-02', status: 'Pausado', image: 'https://images.unsplash.com/photo-1526947425960-945c6e72858f?w=150&q=80' },
-];
 
 const TAB_CONFIG: Record<MyStoreTab, { label: string; index: number }> = {
   orders: { label: 'Orders', index: 0 },
@@ -599,11 +599,15 @@ const OrdersView: React.FC<OrdersViewProps> = ({
 
 export const StoreIntegration: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { isCollapsed, toggleCollapse, mobileOpen, setMobileOpen } = useSidebar();
   const [isLoading, setIsLoading] = useState(true);
   
-  // Tab state
-  const [activeTab, setActiveTab] = useState<MyStoreTab>('orders');
+  // Tab state - initialize from URL param if available
+  const initialTab = (searchParams.get('tab') as MyStoreTab) || 'orders';
+  const [activeTab, setActiveTab] = useState<MyStoreTab>(
+    ['orders', 'products', 'integrations', 'details'].includes(initialTab) ? initialTab : 'orders'
+  );
   const previousTabRef = useRef<MyStoreTab>(activeTab);
   
   // Advanced Filters State (Moved from OrdersProducts)
@@ -862,7 +866,88 @@ export const StoreIntegration: React.FC = () => {
   };
 
   const ProductsView = () => {
-    if (isLoading) {
+    const [products, setProducts] = useState<Product[]>([]);
+    const [productsLoading, setProductsLoading] = useState(true);
+    const [productSearch, setProductSearch] = useState('');
+    
+    // Pagination State
+    const [productsCurrentPage, setProductsCurrentPage] = useState(1);
+    const productsPerPage = 10;
+
+    // Fetch products from database
+    useEffect(() => {
+        const fetchProducts = async () => {
+            setProductsLoading(true);
+            try {
+                const { data, error } = await supabase
+                    .from('products')
+                    .select('id, name, price, description, image_url, external_product_id, product_source_type, store_id, stock_quantity, created_at')
+                    .order('created_at', { ascending: false })
+                    .limit(50);
+
+                if (error) {
+                    console.error('Error fetching products:', error);
+                } else {
+                    setProducts(data || []);
+                }
+            } catch (err) {
+                console.error('Error fetching products:', err);
+            } finally {
+                setProductsLoading(false);
+            }
+        };
+
+        fetchProducts();
+    }, []);
+
+    // Reset pagination when search changes
+    useEffect(() => {
+        setProductsCurrentPage(1);
+    }, [productSearch]);
+
+    // Filter products by search
+    const filteredProducts = products.filter(product => 
+        product.name.toLowerCase().includes(productSearch.toLowerCase()) ||
+        (product.external_product_id && product.external_product_id.toLowerCase().includes(productSearch.toLowerCase()))
+    );
+
+    // Pagination Logic
+    const productsTotalPages = Math.ceil(filteredProducts.length / productsPerPage);
+    const paginatedProducts = filteredProducts.slice(
+        (productsCurrentPage - 1) * productsPerPage,
+        productsCurrentPage * productsPerPage
+    );
+
+    const handleProductsPageChange = (page: number) => {
+        if (page >= 1 && page <= productsTotalPages) {
+            setProductsCurrentPage(page);
+        }
+    };
+
+    // Format price
+    const formatPrice = (price: number | string) => {
+        const numPrice = typeof price === 'string' ? parseFloat(price) : price;
+        return `R$ ${numPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    };
+
+    // Get source badge
+    const getSourceBadge = (source: string | null | undefined) => {
+        if (source === 'shopify') {
+            return (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-100">
+                    <img src="https://cdn.worldvectorlogo.com/logos/shopify.svg" alt="Shopify" className="h-3 w-3" />
+                    Shopify
+                </span>
+            );
+        }
+        return (
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-50 text-slate-600 border border-slate-200">
+                Manual
+            </span>
+        );
+    };
+
+    if (isLoading || productsLoading) {
         return (
             <div className="space-y-6">
                 <div className="flex justify-between gap-4">
@@ -883,7 +968,9 @@ export const StoreIntegration: React.FC = () => {
                 </div>
                 <input
                     type="text"
-                    placeholder="Buscar produtos..."
+                    placeholder="Search products..."
+                    value={productSearch}
+                    onChange={(e) => setProductSearch(e.target.value)}
                     className="block w-full pl-10 pr-3 py-2.5 border border-slate-200 rounded-xl leading-5 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm transition-all shadow-sm"
                 />
             </div>
@@ -893,11 +980,11 @@ export const StoreIntegration: React.FC = () => {
                     className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-700 px-4 py-2.5 rounded-md hover:bg-slate-50 transition-colors font-medium text-sm shadow-sm"
                 >
                     <img src="https://cdn.worldvectorlogo.com/logos/shopify.svg" alt="Shopify" className="h-4 w-4" />
-                    Importar Shopify
+                    Import Shopify
                 </button>
                 <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-slate-900 text-white px-4 py-2.5 rounded-md hover:bg-slate-800 transition-colors font-medium text-sm shadow-sm">
                     <Plus className="h-4 w-4" />
-                    Cadastrar Produto
+                    Add Product
                 </button>
             </div>
         </div>
@@ -907,38 +994,130 @@ export const StoreIntegration: React.FC = () => {
                 <table className="w-full text-left border-collapse">
                     <thead className="bg-slate-50/50 border-b border-slate-100">
                         <tr>
-                            <th className="px-6 py-4 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Nome</th>
-                            <th className="px-6 py-4 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Preço</th>
-                            <th className="px-6 py-4 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">SKU</th>
-                            <th className="px-6 py-4 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Status</th>
-                            <th className="px-6 py-4 text-[11px] font-semibold text-slate-400 uppercase tracking-wider text-right">Ação</th>
+                            <th className="px-6 py-4 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Product</th>
+                            <th className="px-6 py-4 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Price</th>
+                            <th className="px-6 py-4 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Stock</th>
+                            <th className="px-6 py-4 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Source</th>
+                            <th className="px-6 py-4 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">ID</th>
+                            <th className="px-6 py-4 text-[11px] font-semibold text-slate-400 uppercase tracking-wider text-right">Action</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50">
-                        {mockProducts.map((product) => (
-                            <tr key={product.id} className="hover:bg-slate-50/50 transition-colors">
-                                <td className="px-6 py-4">
-                                    <div className="flex items-center gap-3">
-                                        <img src={product.image} alt={product.name} className="w-10 h-10 rounded-md object-cover border border-slate-100 shadow-sm" />
-                                        <span className="text-sm font-medium text-slate-900">{product.name}</span>
+                        {paginatedProducts.length > 0 ? (
+                            paginatedProducts.map((product) => (
+                                <tr key={product.id} className="hover:bg-slate-50/50 transition-colors">
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-3">
+                                            {product.image_url ? (
+                                                <img 
+                                                    src={product.image_url} 
+                                                    alt={product.name} 
+                                                    className="w-10 h-10 rounded-md object-cover border border-slate-100 shadow-sm bg-white" 
+                                                />
+                                            ) : (
+                                                <div className="w-10 h-10 rounded-md bg-slate-100 flex items-center justify-center border border-slate-200">
+                                                    <ShoppingBag className="w-4 h-4 text-slate-400" />
+                                                </div>
+                                            )}
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-medium text-slate-900 truncate max-w-[250px]">{product.name}</span>
+                                                {product.description && (
+                                                    <span className="text-xs text-slate-400 truncate max-w-[250px]">{product.description}</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 text-sm font-semibold text-slate-900">{formatPrice(product.price)}</td>
+                                    <td className="px-6 py-4">
+                                        {(() => {
+                                            const stock = product.stock_quantity ?? 0;
+                                            if (stock === 0) {
+                                                return (
+                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-100">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                                                        Out of stock
+                                                    </span>
+                                                );
+                                            } else if (stock <= 10) {
+                                                return (
+                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-50 text-yellow-700 border border-yellow-100">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-yellow-500"></span>
+                                                        {stock} units
+                                                    </span>
+                                                );
+                                            } else {
+                                                return (
+                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-100">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                                                        {stock} units
+                                                    </span>
+                                                );
+                                            }
+                                        })()}
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        {getSourceBadge(product.product_source_type)}
+                                    </td>
+                                    <td className="px-6 py-4 text-xs text-slate-500 font-mono">
+                                        {product.external_product_id ? `#${product.external_product_id.slice(-8)}` : `#${product.id}`}
+                                    </td>
+                                    <td className="px-6 py-4 text-right">
+                                        <button className="text-slate-400 hover:text-slate-600 p-1 hover:bg-slate-100 rounded transition-colors">
+                                            <MoreVertical className="w-4 h-4" />
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan={6} className="px-6 py-12 text-center">
+                                    <div className="flex flex-col items-center gap-3">
+                                        <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center">
+                                            <ShoppingBag className="w-6 h-6 text-slate-400" />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-medium text-slate-600">No products found</p>
+                                            <p className="text-xs text-slate-400 mt-1">
+                                                {productSearch ? 'Try a different search term' : 'Import products from Shopify or add them manually'}
+                                            </p>
+                                        </div>
+                                        {!productSearch && (
+                                            <button 
+                                                onClick={() => setIsImportModalOpen(true)}
+                                                className="mt-2 flex items-center gap-2 text-sm font-medium text-purple-600 hover:text-purple-700"
+                                            >
+                                                <img src="https://cdn.worldvectorlogo.com/logos/shopify.svg" alt="Shopify" className="h-4 w-4" />
+                                                Import from Shopify
+                                            </button>
+                                        )}
                                     </div>
                                 </td>
-                                <td className="px-6 py-4 text-sm text-slate-600">{product.price}</td>
-                                <td className="px-6 py-4 text-sm text-slate-500">{product.sku}</td>
-                                <td className="px-6 py-4">
-                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(product.status)}`}>
-                                        {product.status}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4 text-right">
-                                    <button className="text-slate-400 hover:text-slate-600 p-1 hover:bg-slate-100 rounded transition-colors">
-                                        <MoreVertical className="w-4 h-4" />
-                                    </button>
-                                </td>
                             </tr>
-                        ))}
+                        )}
                     </tbody>
                 </table>
+            </div>
+            {/* Pagination Footer */}
+            <div className="p-4 border-t border-slate-50 bg-slate-50/50 flex items-center justify-between">
+                <div className="text-xs text-slate-500">
+                  Showing <span className="font-medium">{Math.min((productsCurrentPage - 1) * productsPerPage + 1, filteredProducts.length)}</span> to <span className="font-medium">{Math.min(productsCurrentPage * productsPerPage, filteredProducts.length)}</span> of <span className="font-medium">{filteredProducts.length}</span> products
+                </div>
+                <div className="flex gap-2">
+                  <button 
+                      onClick={() => handleProductsPageChange(productsCurrentPage - 1)}
+                      disabled={productsCurrentPage === 1}
+                      className="w-8 h-8 flex items-center justify-center bg-white border border-slate-200 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                        <ChevronLeft className="w-4 h-4" />
+                    </button>
+                  <button 
+                      onClick={() => handleProductsPageChange(productsCurrentPage + 1)}
+                      disabled={productsCurrentPage === productsTotalPages}
+                      className="w-8 h-8 flex items-center justify-center bg-white border border-slate-200 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                        <ChevronRight className="w-4 h-4" />
+                    </button>
+                </div>
             </div>
         </div>
     </div>

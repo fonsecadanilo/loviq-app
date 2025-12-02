@@ -266,3 +266,4 @@ A loja não foi conectada corretamente ou o `store_id` está incorreto.
 - [ ] Suporte a múltiplas lojas por marca
 - [ ] Dashboard de status de sincronização
 
+

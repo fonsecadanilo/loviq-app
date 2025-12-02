@@ -26,7 +26,7 @@ const corsHeaders = {
 }
 
 /**
- * Register webhooks for inventory and product updates
+ * Register webhooks for inventory, product, and order updates
  */
 async function registerWebhooks(
     shopDomain: string, 
@@ -34,10 +34,17 @@ async function registerWebhooks(
     supabaseUrl: string
 ): Promise<{ success: number; failed: number }> {
     const inventoryWebhookUrl = `${supabaseUrl}/functions/v1/shopify-sync-inventory`
+    const orderWebhookUrl = `${supabaseUrl}/functions/v1/shopify-order-webhook`
     
     const webhooks = [
+        // Inventory webhooks
         { topic: 'inventory_levels/update', address: inventoryWebhookUrl },
         { topic: 'products/update', address: inventoryWebhookUrl },
+        // Order webhooks
+        { topic: 'orders/updated', address: orderWebhookUrl },
+        { topic: 'orders/paid', address: orderWebhookUrl },
+        { topic: 'orders/fulfilled', address: orderWebhookUrl },
+        { topic: 'orders/cancelled', address: orderWebhookUrl },
     ]
     
     let success = 0

@@ -440,6 +440,111 @@ export const ShopifyService = {
             console.error('Erro ao buscar logs:', error)
             return []
         }
+    },
+
+    /**
+     * Cria um pedido no Shopify a partir de um pedido da Loviq
+     * 
+     * Esta função invoca a Edge Function `shopify-create-order` que:
+     * 1. Busca os detalhes do pedido e itens no banco
+     * 2. Mapeia os produtos para os IDs do Shopify
+     * 3. Cria o pedido na API do Shopify
+     * 4. Atualiza o external_order_id no banco
+     */
+    async createOrderInShopify(orderId: number): Promise<{
+        success: boolean
+        shopify_order_id?: string
+        shopify_order_name?: string
+        error?: string
+        details?: string
+    }> {
+        console.log('[ShopifyService] createOrderInShopify called with:', { orderId })
+
+        if (!isSupabaseConfigured()) {
+            console.warn('[ShopifyService] Supabase não configurado. Simulando criação de pedido.')
+            await new Promise(resolve => setTimeout(resolve, 1500))
+            return {
+                success: true,
+                shopify_order_id: 'mock-123456',
+                shopify_order_name: '#MOCK-1001'
+            }
+        }
+
+        try {
+            // Invoca Edge Function para criar pedido no Shopify
+            console.log('[ShopifyService] Invoking shopify-create-order Edge Function...')
+
+            const { data, error } = await supabase.functions.invoke('shopify-create-order', {
+                body: { order_id: orderId }
+            })
+
+            console.log('[ShopifyService] Edge Function response:', { data, error })
+
+            if (error) {
+                console.error('[ShopifyService] Edge Function error:', error)
+                return {
+                    success: false,
+                    error: `Erro ao criar pedido: ${error.message || 'Edge Function falhou'}`,
+                    details: error.context?.message || error.message
+                }
+            }
+
+            if (data?.error) {
+                console.error('[ShopifyService] Edge Function returned error:', data.error)
+                return {
+                    success: false,
+                    error: data.error,
+                    details: data.details || data.message
+                }
+            }
+
+            if (data?.success) {
+                return {
+                    success: true,
+                    shopify_order_id: data.shopify_order_id,
+                    shopify_order_name: data.shopify_order_name
+                }
+            }
+
+            // Resposta inesperada
+            return {
+                success: false,
+                error: 'Resposta inesperada da Edge Function'
+            }
+        } catch (error) {
+            console.error('[ShopifyService] Erro ao criar pedido no Shopify:', error)
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : 'Erro inesperado ao criar pedido'
+            }
+        }
+    },
+
+    /**
+     * Verifica se um pedido já foi sincronizado com o Shopify
+     */
+    async isOrderSyncedToShopify(orderId: number): Promise<boolean> {
+        if (!isSupabaseConfigured()) {
+            return false
+        }
+
+        try {
+            const { data, error } = await supabase
+                .from('orders')
+                .select('external_order_id')
+                .eq('id', orderId)
+                .single()
+
+            if (error) {
+                console.error('[ShopifyService] Erro ao verificar pedido:', error)
+                return false
+            }
+
+            return !!data?.external_order_id
+        } catch (error) {
+            console.error('[ShopifyService] Erro ao verificar pedido:', error)
+            return false
+        }
     }
 }
 

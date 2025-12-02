@@ -282,40 +282,73 @@ async function handleWebhook(
 ): Promise<SyncResult> {
     const startTime = Date.now()
     
-    // Find store by domain
-    const { data: store, error: storeError } = await supabase
+    console.log('[inventory-sync] Processing webhook for shop:', shopDomain)
+    console.log('[inventory-sync] Payload:', JSON.stringify(payload).substring(0, 500))
+    
+    // Find store by domain - try multiple methods
+    let store = null
+    
+    // Method 1: Try by external_store_id (most reliable)
+    const { data: storeByExternal } = await supabase
         .from('stores')
         .select('id, api_credentials')
         .eq('store_type', 'shopify')
-        .filter('api_credentials->shop_domain', 'eq', shopDomain)
+        .eq('external_store_id', shopDomain)
         .single()
     
-    if (storeError || !store) {
+    if (storeByExternal) {
+        store = storeByExternal
+        console.log('[inventory-sync] Found store by external_store_id:', store.id)
+    }
+    
+    // Method 2: Try by name
+    if (!store) {
+        const { data: storeByName } = await supabase
+            .from('stores')
+            .select('id, api_credentials')
+            .eq('store_type', 'shopify')
+            .eq('name', shopDomain)
+            .single()
+        
+        if (storeByName) {
+            store = storeByName
+            console.log('[inventory-sync] Found store by name:', store.id)
+        }
+    }
+    
+    if (!store) {
+        console.error('[inventory-sync] Store not found for domain:', shopDomain)
         return {
-            success: false,
+            success: true, // Return success to acknowledge webhook
             mode: 'webhook',
             updated: 0,
-            skipped: 0,
-            errors: 1,
+            skipped: 1,
+            errors: 0,
             duration_ms: Date.now() - startTime,
-            message: 'Store not found for webhook domain'
+            message: `Store not found for domain: ${shopDomain}`
         }
     }
     
     // Handle inventory_levels/update webhook
-    if (payload.inventory_item_id && payload.available !== undefined) {
-        // Find product by inventory_item_id
+    if (payload.inventory_item_id !== undefined && payload.available !== undefined) {
+        const inventoryItemId = payload.inventory_item_id.toString()
+        const newQuantity = payload.available || 0
+        
+        console.log('[inventory-sync] Looking for inventory_item_id:', inventoryItemId, 'quantity:', newQuantity)
+        
+        // First try to find in shopify_products table
         const { data: shopifyProduct } = await supabase
             .from('shopify_products')
             .select('product_id')
-            .eq('inventory_item_id', payload.inventory_item_id.toString())
+            .eq('inventory_item_id', inventoryItemId)
             .single()
         
         if (shopifyProduct) {
+            console.log('[inventory-sync] Found product in shopify_products:', shopifyProduct.product_id)
             const success = await updateInventory(
                 supabase,
                 shopifyProduct.product_id,
-                payload.available || 0
+                newQuantity
             )
             
             return {
@@ -327,6 +360,77 @@ async function handleWebhook(
                 duration_ms: Date.now() - startTime
             }
         }
+        
+        // If not in shopify_products, log and acknowledge (product not imported yet)
+        console.log('[inventory-sync] inventory_item_id not found in shopify_products, skipping')
+        
+        return {
+            success: true,
+            mode: 'webhook',
+            updated: 0,
+            skipped: 1,
+            errors: 0,
+            duration_ms: Date.now() - startTime,
+            message: `inventory_item_id ${inventoryItemId} not found - product may not be imported`
+        }
+    }
+    
+    // Handle products/update webhook (contains product_id and variants)
+    if (payload.id && payload.variants) {
+        console.log('[inventory-sync] Processing products/update webhook for product:', payload.id)
+        
+        const shopifyProductId = payload.id.toString()
+        
+        // Find product by external_product_id
+        const { data: product } = await supabase
+            .from('products')
+            .select('id, stock_quantity')
+            .eq('external_product_id', shopifyProductId)
+            .eq('store_id', store.id)
+            .single()
+        
+        if (product) {
+            // Calculate total inventory from all variants
+            const totalInventory = payload.variants.reduce(
+                (sum: number, v: any) => sum + (v.inventory_quantity || 0),
+                0
+            )
+            
+            console.log('[inventory-sync] Updating product', product.id, 'inventory to', totalInventory)
+            
+            // Update directly in products table
+            const { error: updateError } = await supabase
+                .from('products')
+                .update({
+                    stock_quantity: totalInventory,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', product.id)
+            
+            if (updateError) {
+                console.error('[inventory-sync] Error updating product:', updateError)
+                return {
+                    success: false,
+                    mode: 'webhook',
+                    updated: 0,
+                    skipped: 0,
+                    errors: 1,
+                    duration_ms: Date.now() - startTime,
+                    message: updateError.message
+                }
+            }
+            
+            return {
+                success: true,
+                mode: 'webhook',
+                updated: 1,
+                skipped: 0,
+                errors: 0,
+                duration_ms: Date.now() - startTime
+            }
+        }
+        
+        console.log('[inventory-sync] Product not found for shopify id:', shopifyProductId)
     }
     
     return {
@@ -336,7 +440,7 @@ async function handleWebhook(
         skipped: 1,
         errors: 0,
         duration_ms: Date.now() - startTime,
-        message: 'Product not found in Loviq'
+        message: 'Product not found in Loviq or unrecognized webhook format'
     }
 }
 
@@ -652,4 +756,5 @@ serve(async (req) => {
         )
     }
 })
+
 

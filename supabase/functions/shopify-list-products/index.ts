@@ -36,6 +36,9 @@ interface ShopifyProduct {
         price: string
         sku: string
         inventory_quantity: number
+        inventory_item_id: number
+        inventory_management: string | null
+        inventory_policy: string
     }>
 }
 
@@ -162,17 +165,28 @@ serve(async (req) => {
             const mainVariant = product.variants[0]
             const mainImage = product.images[0]
             
+            // Calculate total inventory from all variants
+            const totalInventory = product.variants.reduce(
+                (sum, v) => sum + (v.inventory_quantity || 0),
+                0
+            )
+            
             return {
                 id: product.id.toString(),
                 title: product.title,
                 image: mainImage?.src || null,
                 price: mainVariant?.price || '0.00',
                 sku: mainVariant?.sku || '',
-                inventory: mainVariant?.inventory_quantity || 0,
+                inventory: totalInventory,
                 vendor: product.vendor,
                 product_type: product.product_type,
                 handle: product.handle,
-                already_imported: importedIds.has(product.id.toString())
+                already_imported: importedIds.has(product.id.toString()),
+                // Inventory tracking fields for shopify_products table
+                variant_id: mainVariant?.id?.toString() || null,
+                inventory_item_id: mainVariant?.inventory_item_id?.toString() || null,
+                inventory_tracked: mainVariant?.inventory_management === 'shopify',
+                inventory_policy: mainVariant?.inventory_policy || 'deny'
             }
         })
 
@@ -196,4 +210,5 @@ serve(async (req) => {
         )
     }
 })
+
 

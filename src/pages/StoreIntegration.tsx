@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   Bell, 
@@ -599,11 +599,15 @@ const OrdersView: React.FC<OrdersViewProps> = ({
 
 export const StoreIntegration: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { isCollapsed, toggleCollapse, mobileOpen, setMobileOpen } = useSidebar();
   const [isLoading, setIsLoading] = useState(true);
   
-  // Tab state
-  const [activeTab, setActiveTab] = useState<MyStoreTab>('orders');
+  // Tab state - initialize from URL param if available
+  const initialTab = (searchParams.get('tab') as MyStoreTab) || 'orders';
+  const [activeTab, setActiveTab] = useState<MyStoreTab>(
+    ['orders', 'products', 'integrations', 'details'].includes(initialTab) ? initialTab : 'orders'
+  );
   const previousTabRef = useRef<MyStoreTab>(activeTab);
   
   // Advanced Filters State (Moved from OrdersProducts)

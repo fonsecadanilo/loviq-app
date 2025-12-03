@@ -2,8 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { SidebarProvider } from "./contexts/SidebarContext";
 import { LandingPage } from "./pages/LandingPage";
 import Campaigns from "./pages/Campaigns";
-import { BrandLogin } from "./pages/BrandLogin";
-import { BrandSignup } from "./pages/BrandSignup";
+import { AuthPage } from "./pages/AuthPage";
 import { BrandDashboard } from "./pages/BrandDashboard";
 import { CreateCampaign } from "./components/campaign/CreateCampaign";
 
@@ -19,8 +18,8 @@ export default function App() {
       <SidebarProvider>
         <Routes>
           <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<BrandLogin />} />
-          <Route path="/signup" element={<BrandSignup />} />
+          <Route path="/login" element={<AuthPage initialView="login" />} />
+          <Route path="/signup" element={<AuthPage initialView="register" />} />
           <Route path="/dashboard" element={<BrandDashboard />} />
           <Route path="/campaigns" element={<Campaigns />} />
           <Route path="/campaigns/create" element={<CreateCampaign />} />

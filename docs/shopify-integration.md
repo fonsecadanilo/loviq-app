@@ -267,3 +267,4 @@ A loja não foi conectada corretamente ou o `store_id` está incorreto.
 - [ ] Dashboard de status de sincronização
 
 
+

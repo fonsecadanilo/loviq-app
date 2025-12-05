@@ -1,4 +1,4 @@
-import React, { useRef, useCallback } from 'react';
+import React, { useRef, useCallback, useState, useEffect } from 'react';
 import { Bell, ChevronDown, Menu } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Sidebar } from './Sidebar';
@@ -43,6 +43,23 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   // Sidebar state from context
   const { isCollapsed, toggleCollapse, mobileOpen, setMobileOpen } = useSidebar();
 
+  // Track scroll state for header styling
+  const [isScrolled, setIsScrolled] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Monitor scroll position
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      setIsScrolled(container.scrollTop > 10);
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, []);
+
   // Track previous tab for direction calculation
   const previousTabRef = useRef<DashboardTab>(activeTab);
   
@@ -79,9 +96,11 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 bg-[#FAFAFA] flex flex-col h-full relative overflow-y-auto">
-        {/* Shared Header with Tab Navigation */}
-        <header className="flex-shrink-0 flex z-30 pt-4 pr-8 pb-2 pl-8 relative backdrop-blur-xl items-center justify-between">
+      <main className="flex-1 bg-[#FAFAFA] flex flex-col h-full relative overflow-hidden">
+        {/* Shared Header with Tab Navigation - Fixed */}
+        <header className={`flex-shrink-0 flex z-30 pt-4 pr-8 pb-2 pl-8 sticky top-0 items-center justify-between transition-all duration-200 ${
+          isScrolled ? 'bg-white shadow-sm' : 'bg-[#FAFAFA]'
+        }`}>
           <div className="flex items-center gap-4">
             {/* Mobile Menu Toggle */}
             <button
@@ -138,7 +157,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         </header>
 
         {/* Animated Content Area */}
-        <div className="flex-1">
+        <div 
+          ref={scrollContainerRef}
+          className="flex-1 overflow-y-auto"
+        >
           <SlidingTabsTransition
             tabKey={activeTab}
             direction={direction}

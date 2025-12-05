@@ -61,6 +61,7 @@ export type Database = {
           phone_number: string | null
           stripe_account_id: string | null
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -70,6 +71,7 @@ export type Database = {
           phone_number?: string | null
           stripe_account_id?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -79,6 +81,7 @@ export type Database = {
           phone_number?: string | null
           stripe_account_id?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -249,6 +252,7 @@ export type Database = {
           social_media_handle: string | null
           stripe_account_id: string | null
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -259,6 +263,7 @@ export type Database = {
           social_media_handle?: string | null
           stripe_account_id?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -269,6 +274,7 @@ export type Database = {
           social_media_handle?: string | null
           stripe_account_id?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -557,6 +563,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      profiles: {
+        Row: {
+          id: string
+          user_id: string
+          user_type: Database["public"]["Enums"]["user_type"]
+          first_name: string | null
+          last_name: string | null
+          avatar_url: string | null
+          onboarding_completed: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          user_type: Database["public"]["Enums"]["user_type"]
+          first_name?: string | null
+          last_name?: string | null
+          avatar_url?: string | null
+          onboarding_completed?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          user_type?: Database["public"]["Enums"]["user_type"]
+          first_name?: string | null
+          last_name?: string | null
+          avatar_url?: string | null
+          onboarding_completed?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       products: {
         Row: {
@@ -886,6 +928,7 @@ export type Database = {
       store_type: "shopify" | "woocommerce" | "internal"
       sync_status: "success" | "failed" | "in_progress"
       sync_type: "products" | "orders" | "inventory"
+      user_type: "brand" | "creator"
       video_status: "uploaded" | "approved" | "rejected" | "archived"
     }
     CompositeTypes: {
@@ -910,6 +953,7 @@ export type Campaign = Tables<'campaigns'>
 export type Influencer = Tables<'influencers'>
 export type Order = Tables<'orders'>
 export type OrderItem = Tables<'order_items'>
+export type Profile = Tables<'profiles'>
 
 // Enums exportados
 export type StoreType = Enums<'store_type'>
@@ -919,3 +963,11 @@ export type SyncType = Enums<'sync_type'>
 export type CampaignStatus = Enums<'campaign_status'>
 export type OrderStatus = Enums<'order_status'>
 export type OrderSource = Enums<'order_source'>
+export type UserType = Enums<'user_type'>
+
+// Tipo composto para perfil completo do usuário
+export interface UserProfile {
+  profile: Profile
+  brand?: Brand
+  influencer?: Influencer
+}

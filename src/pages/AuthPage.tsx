@@ -8,11 +8,14 @@ import {
   Store, 
   Building2, 
   AtSign, 
-  Check 
+  Check,
+  AlertCircle,
+  Loader2
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
-type AuthView = 'login' | 'register';
+type AuthView = 'login' | 'register' | 'forgot-password' | 'email-sent' | 'reset-password';
 type UserType = 'creator' | 'brand';
 
 interface AuthPageProps {
@@ -21,8 +24,15 @@ interface AuthPageProps {
 
 export const AuthPage: React.FC<AuthPageProps> = ({ initialView = 'login' }) => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const { signInWithEmail, signUpWithEmail, signInWithGoogle, resetPassword, updatePassword, isAuthenticated, isLoading: authLoading } = useAuth();
+  
   const [view, setView] = useState<AuthView>(initialView);
   const [userType, setUserType] = useState<UserType>('creator');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   
   // Form states
   const [email, setEmail] = useState('');
@@ -35,46 +45,168 @@ export const AuthPage: React.FC<AuthPageProps> = ({ initialView = 'login' }) => 
   const [handle, setHandle] = useState('');
   const [workEmail, setWorkEmail] = useState('');
   const [registerPassword, setRegisterPassword] = useState('');
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
-  // Update view if prop changes or navigation happens
+  // Forgot Password states
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+
+  // Update view if prop changes or check URL params
   useEffect(() => {
-    if (initialView) {
+    const viewParam = searchParams.get('view');
+    if (viewParam === 'reset-password') {
+      setView('reset-password');
+    } else if (initialView) {
       setView(initialView);
     }
-  }, [initialView]);
+  }, [initialView, searchParams]);
 
-  const handleLogin = (e: React.FormEvent) => {
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated && !authLoading && view !== 'reset-password') {
+      const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/dashboard';
+      navigate(from, { replace: true });
+    }
+  }, [isAuthenticated, authLoading, navigate, location.state, view]);
+
+  // Clear error when switching views
+  useEffect(() => {
+    setError(null);
+    setSuccessMessage(null);
+  }, [view]);
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate login
-    console.log('Logging in with:', { email, password });
-    setTimeout(() => {
-      navigate('/dashboard');
-    }, 1000);
+    setError(null);
+    setIsLoading(true);
+
+    const { error: authError } = await signInWithEmail(email, password);
+
+    if (authError) {
+      setError(authError.message);
+      setIsLoading(false);
+    } else {
+      // Navigation will happen automatically via useEffect
+    }
   };
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate register
-    console.log('Registering as:', userType, {
+    setError(null);
+
+    if (!termsAccepted) {
+      setError('Please accept the Terms of Service and Privacy Policy');
+      return;
+    }
+
+    if (registerPassword.length < 8) {
+      setError('Password must be at least 8 characters');
+      return;
+    }
+
+    setIsLoading(true);
+
+    const { error: authError } = await signUpWithEmail(workEmail, registerPassword, {
       firstName,
       lastName,
-      companyName: userType === 'brand' ? companyName : undefined,
+      userType,
       handle: userType === 'creator' ? handle : undefined,
-      workEmail,
-      registerPassword
+      companyName: userType === 'brand' ? companyName : undefined,
     });
-    setTimeout(() => {
-      navigate('/dashboard');
-    }, 1000);
+
+    setIsLoading(false);
+
+    if (authError) {
+      setError(authError.message);
+    } else {
+      setSuccessMessage('Check your email to confirm your account!');
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setError(null);
+    setIsLoading(true);
+
+    const { error: authError } = await signInWithGoogle();
+
+    if (authError) {
+      setError(authError.message);
+      setIsLoading(false);
+    }
+    // If successful, user will be redirected by OAuth flow
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setIsLoading(true);
+
+    const { error: authError } = await resetPassword(forgotEmail);
+
+    setIsLoading(false);
+
+    if (authError) {
+      setError(authError.message);
+    } else {
+      setView('email-sent');
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    if (newPassword !== confirmNewPassword) {
+      setError("Passwords don't match!");
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      setError('Password must be at least 8 characters');
+      return;
+    }
+
+    setIsLoading(true);
+
+    const { error: authError } = await updatePassword(newPassword);
+
+    setIsLoading(false);
+
+    if (authError) {
+      setError(authError.message);
+    } else {
+      setSuccessMessage('Password updated successfully!');
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 1500);
+    }
   };
 
   const toggleView = (newView: AuthView) => {
     setView(newView);
-    // Update URL without full reload if desired, or just keep internal state
-    // navigate(newView === 'login' ? '/login' : '/signup'); 
-    // Commented out to avoid re-mounting if route changes, but keeping URL in sync is good practice.
-    window.history.pushState(null, '', newView === 'login' ? '/login' : '/signup');
+    setError(null);
+    setSuccessMessage(null);
+    
+    // Update URL for login/signup views
+    if (newView === 'login') {
+      window.history.pushState(null, '', '/login');
+    } else if (newView === 'register') {
+      window.history.pushState(null, '', '/signup');
+    }
   };
+
+  // Show loading while checking auth state
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 text-slate-400 animate-spin" />
+          <p className="text-sm text-slate-500">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex w-full relative bg-white text-slate-600 antialiased selection:bg-purple-100 selection:text-purple-700 overflow-hidden font-sans">
@@ -174,6 +306,22 @@ export const AuthPage: React.FC<AuthPageProps> = ({ initialView = 'login' }) => 
         </div>
 
         <div className="w-full max-w-[360px] mx-auto fade-in relative z-20">
+          {/* Error Message */}
+          {error && (
+            <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-md flex items-start gap-2 animate-fade-in">
+              <AlertCircle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
+
+          {/* Success Message */}
+          {successMessage && (
+            <div className="mb-6 p-3 bg-green-50 border border-green-200 rounded-md flex items-start gap-2 animate-fade-in">
+              <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-green-600">{successMessage}</p>
+            </div>
+          )}
+
           {/* LOGIN VIEW */}
           {view === 'login' && (
             <div className="block animate-fade-in">
@@ -200,7 +348,9 @@ export const AuthPage: React.FC<AuthPageProps> = ({ initialView = 'login' }) => 
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="name@example.com" 
-                      className="w-full h-11 pl-10 pr-3 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-md text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-purple-50 focus:border-purple-200 transition-all shadow-sm"
+                      required
+                      disabled={isLoading}
+                      className="w-full h-11 pl-10 pr-3 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-md text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-purple-50 focus:border-purple-200 transition-all shadow-sm disabled:opacity-50"
                     />
                   </div>
                 </div>
@@ -210,9 +360,9 @@ export const AuthPage: React.FC<AuthPageProps> = ({ initialView = 'login' }) => 
                     <label className="text-xs font-medium text-slate-700">
                       Password
                     </label>
-                    <a href="#" className="text-xs text-slate-400 hover:text-slate-900 transition-colors">
+                    <button type="button" onClick={() => toggleView('forgot-password')} className="text-xs text-slate-400 hover:text-slate-900 transition-colors">
                       Forgot?
-                    </a>
+                    </button>
                   </div>
                   <div className="relative group">
                     <span className="absolute left-3.5 top-3.5 text-slate-400 group-focus-within:text-slate-900 transition-colors">
@@ -223,14 +373,26 @@ export const AuthPage: React.FC<AuthPageProps> = ({ initialView = 'login' }) => 
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••" 
-                      className="w-full h-11 pl-10 pr-3 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-md text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-purple-50 focus:border-purple-200 transition-all shadow-sm"
+                      required
+                      disabled={isLoading}
+                      className="w-full h-11 pl-10 pr-3 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-md text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-purple-50 focus:border-purple-200 transition-all shadow-sm disabled:opacity-50"
                     />
                   </div>
                 </div>
 
-                <button type="submit" className="w-full h-11 bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium rounded-md shadow-lg shadow-slate-200 hover:shadow-xl transition-all flex items-center justify-center gap-2 group mt-2">
-                  <span className="">Sign In</span>
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                <button 
+                  type="submit" 
+                  disabled={isLoading}
+                  className="w-full h-11 bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium rounded-md shadow-lg shadow-slate-200 hover:shadow-xl transition-all flex items-center justify-center gap-2 group mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>
+                      <span>Sign In</span>
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                    </>
+                  )}
                 </button>
               </form>
 
@@ -242,18 +404,16 @@ export const AuthPage: React.FC<AuthPageProps> = ({ initialView = 'login' }) => 
                 <div className="h-px bg-slate-200/60 flex-1"></div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <button className="flex items-center justify-center gap-2 h-11 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-md text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors">
+              <div className="grid grid-cols-1 gap-3">
+                <button 
+                  onClick={handleGoogleLogin}
+                  disabled={isLoading}
+                  className="flex items-center justify-center gap-2 h-11 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-md text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
                   <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                     <path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"></path>
                   </svg>
-                  Google
-                </button>
-                <button className="flex items-center justify-center gap-2 h-11 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-md text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors">
-                  <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.74 1.18 0 2.21-.93 3.23-.93.63 0 2.45.16 3.63 1.39-3.16 1.66-2.66 4.97.68 6.36-.61 1.72-1.46 3.4-2.62 5.41zm-2.31-15.5c.67-.79 1.14-1.92.98-3.05-1.03.05-2.3.69-3.04 1.58-.62.72-1.14 1.86-1.01 3.01 1.16.09 2.36-.67 3.07-1.54z"></path>
-                  </svg>
-                  Apple
+                  Continue with Google
                 </button>
               </div>
 
@@ -288,6 +448,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ initialView = 'login' }) => 
                   className={`absolute top-1 left-1 w-[calc(50%-4px)] h-[calc(100%-8px)] bg-white rounded-sm shadow-sm border border-slate-200/50 transition-transform duration-400 cubic-bezier(0.25, 1, 0.5, 1) z-0 ${userType === 'brand' ? 'translate-x-full' : 'translate-x-0'}`}
                 ></div>
                 <button 
+                  type="button"
                   onClick={() => setUserType('creator')} 
                   className={`relative z-10 w-1/2 py-2.5 text-sm font-medium text-center transition-colors duration-300 ${userType === 'creator' ? 'text-slate-900' : 'text-slate-500'}`}
                 >
@@ -297,6 +458,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ initialView = 'login' }) => 
                   </span>
                 </button>
                 <button 
+                  type="button"
                   onClick={() => setUserType('brand')} 
                   className={`relative z-10 w-1/2 py-2.5 text-sm font-medium text-center transition-colors duration-300 ${userType === 'brand' ? 'text-slate-900' : 'text-slate-500'}`}
                 >
@@ -318,7 +480,9 @@ export const AuthPage: React.FC<AuthPageProps> = ({ initialView = 'login' }) => 
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
                       placeholder="John" 
-                      className="w-full h-11 px-3 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-md text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-purple-50 focus:border-purple-200 transition-all shadow-sm"
+                      required
+                      disabled={isLoading}
+                      className="w-full h-11 px-3 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-md text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-purple-50 focus:border-purple-200 transition-all shadow-sm disabled:opacity-50"
                     />
                   </div>
                   <div className="space-y-1.5 w-1/2">
@@ -330,7 +494,9 @@ export const AuthPage: React.FC<AuthPageProps> = ({ initialView = 'login' }) => 
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
                       placeholder="Doe" 
-                      className="w-full h-11 px-3 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-md text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-purple-50 focus:border-purple-200 transition-all shadow-sm"
+                      required
+                      disabled={isLoading}
+                      className="w-full h-11 px-3 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-md text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-purple-50 focus:border-purple-200 transition-all shadow-sm disabled:opacity-50"
                     />
                   </div>
                 </div>
@@ -349,7 +515,9 @@ export const AuthPage: React.FC<AuthPageProps> = ({ initialView = 'login' }) => 
                         value={companyName}
                         onChange={(e) => setCompanyName(e.target.value)}
                         placeholder="Loviq Inc." 
-                        className="w-full h-11 pl-10 pr-3 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-md text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-purple-50 focus:border-purple-200 transition-all shadow-sm"
+                        required
+                        disabled={isLoading}
+                        className="w-full h-11 pl-10 pr-3 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-md text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-purple-50 focus:border-purple-200 transition-all shadow-sm disabled:opacity-50"
                       />
                     </div>
                   </div>
@@ -369,7 +537,9 @@ export const AuthPage: React.FC<AuthPageProps> = ({ initialView = 'login' }) => 
                         value={handle}
                         onChange={(e) => setHandle(e.target.value)}
                         placeholder="instagram_user" 
-                        className="w-full h-11 pl-10 pr-3 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-md text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-purple-50 focus:border-purple-200 transition-all shadow-sm"
+                        required
+                        disabled={isLoading}
+                        className="w-full h-11 pl-10 pr-3 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-md text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-purple-50 focus:border-purple-200 transition-all shadow-sm disabled:opacity-50"
                       />
                     </div>
                   </div>
@@ -384,7 +554,9 @@ export const AuthPage: React.FC<AuthPageProps> = ({ initialView = 'login' }) => 
                     value={workEmail}
                     onChange={(e) => setWorkEmail(e.target.value)}
                     placeholder="name@example.com" 
-                    className="w-full h-11 px-3 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-md text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-purple-50 focus:border-purple-200 transition-all shadow-sm"
+                    required
+                    disabled={isLoading}
+                    className="w-full h-11 px-3 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-md text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-purple-50 focus:border-purple-200 transition-all shadow-sm disabled:opacity-50"
                   />
                 </div>
 
@@ -397,13 +569,23 @@ export const AuthPage: React.FC<AuthPageProps> = ({ initialView = 'login' }) => 
                     value={registerPassword}
                     onChange={(e) => setRegisterPassword(e.target.value)}
                     placeholder="Min 8 chars" 
-                    className="w-full h-11 px-3 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-md text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-purple-50 focus:border-purple-200 transition-all shadow-sm"
+                    required
+                    minLength={8}
+                    disabled={isLoading}
+                    className="w-full h-11 px-3 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-md text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-purple-50 focus:border-purple-200 transition-all shadow-sm disabled:opacity-50"
                   />
                 </div>
 
                 <div className="flex items-start gap-2.5 pt-2">
                   <div className="relative flex items-center h-5">
-                    <input type="checkbox" id="terms" className="peer h-4 w-4 cursor-pointer appearance-none rounded-sm border border-slate-300 bg-white checked:border-slate-900 checked:bg-slate-900 transition-all focus:ring-2 focus:ring-slate-900/10" />
+                    <input 
+                      type="checkbox" 
+                      id="terms" 
+                      checked={termsAccepted}
+                      onChange={(e) => setTermsAccepted(e.target.checked)}
+                      disabled={isLoading}
+                      className="peer h-4 w-4 cursor-pointer appearance-none rounded-sm border border-slate-300 bg-white checked:border-slate-900 checked:bg-slate-900 transition-all focus:ring-2 focus:ring-slate-900/10 disabled:opacity-50" 
+                    />
                     <Check className="pointer-events-none absolute left-1/2 top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 peer-checked:opacity-100" />
                   </div>
                   <label htmlFor="terms" className="text-xs text-slate-500 cursor-pointer select-none leading-5">
@@ -421,13 +603,171 @@ export const AuthPage: React.FC<AuthPageProps> = ({ initialView = 'login' }) => 
 
                 <button 
                   type="submit"
+                  disabled={isLoading}
                   className={
                     userType === 'brand' 
-                    ? "w-full h-11 bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium rounded-md shadow-lg shadow-slate-200 hover:shadow-xl transition-all mt-4"
-                    : "w-full h-11 bg-gradient-to-r from-[#FFF0F0] via-[#F3F0FF] to-[#FDF4FF] border border-purple-200 text-slate-900 hover:shadow-md text-sm font-medium rounded-md shadow-sm transition-all mt-4"
+                    ? "w-full h-11 bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium rounded-md shadow-lg shadow-slate-200 hover:shadow-xl transition-all mt-4 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                    : "w-full h-11 bg-gradient-to-r from-[#FFF0F0] via-[#F3F0FF] to-[#FDF4FF] border border-purple-200 text-slate-900 hover:shadow-md text-sm font-medium rounded-md shadow-sm transition-all mt-4 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                   }
                 >
-                  Register as {userType === 'creator' ? 'Creator' : 'Brand'}
+                  {isLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    `Register as ${userType === 'creator' ? 'Creator' : 'Brand'}`
+                  )}
+                </button>
+              </form>
+            </div>
+          )}
+
+          {/* FORGOT PASSWORD VIEW */}
+          {view === 'forgot-password' && (
+            <div className="block animate-fade-in">
+              <div className="mb-8 text-center">
+                <button onClick={() => toggleView('login')} className="mb-4 inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-900 transition-colors">
+                  <ChevronLeft className="w-3 h-3" />
+                  Back to login
+                </button>
+                <h1 className="text-3xl font-medium text-slate-900 font-serif mb-2">
+                  Forgot password?
+                </h1>
+                <p className="text-sm text-slate-500">
+                  No worries, we'll send you reset instructions.
+                </p>
+              </div>
+
+              <form onSubmit={handleForgotPassword} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-slate-700 ml-1">
+                    Email
+                  </label>
+                  <div className="relative group">
+                    <span className="absolute left-3.5 top-3.5 text-slate-400 group-focus-within:text-slate-900 transition-colors">
+                      <Mail className="w-4 h-4" />
+                    </span>
+                    <input 
+                      type="email" 
+                      value={forgotEmail}
+                      onChange={(e) => setForgotEmail(e.target.value)}
+                      placeholder="name@example.com" 
+                      required
+                      disabled={isLoading}
+                      className="w-full h-11 pl-10 pr-3 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-md text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-purple-50 focus:border-purple-200 transition-all shadow-sm disabled:opacity-50"
+                    />
+                  </div>
+                </div>
+
+                <button 
+                  type="submit" 
+                  disabled={isLoading}
+                  className="w-full h-11 bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium rounded-md shadow-lg shadow-slate-200 hover:shadow-xl transition-all flex items-center justify-center gap-2 group mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <span>Reset password</span>
+                  )}
+                </button>
+              </form>
+            </div>
+          )}
+
+          {/* EMAIL SENT VIEW */}
+          {view === 'email-sent' && (
+            <div className="block animate-fade-in">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Mail className="w-8 h-8 text-green-600" />
+                </div>
+                <h1 className="text-3xl font-medium text-slate-900 font-serif mb-2">
+                  Check your email
+                </h1>
+                <p className="text-sm text-slate-500 mb-6">
+                  We sent a password reset link to <span className="font-medium text-slate-900">{forgotEmail}</span>
+                </p>
+                <p className="text-xs text-slate-400 mb-8">
+                  Click the link in the email to reset your password. If you don't see it, check your spam folder.
+                </p>
+
+                <button 
+                  onClick={() => toggleView('login')}
+                  className="w-full h-11 bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium rounded-md shadow-lg shadow-slate-200 hover:shadow-xl transition-all flex items-center justify-center gap-2 group"
+                >
+                  <span>Back to login</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* RESET PASSWORD VIEW */}
+          {view === 'reset-password' && (
+            <div className="block animate-fade-in">
+              <div className="mb-8 text-center">
+                <h1 className="text-3xl font-medium text-slate-900 font-serif mb-2">
+                  Set new password
+                </h1>
+                <p className="text-sm text-slate-500">
+                  Your new password must be different to previously used passwords.
+                </p>
+              </div>
+
+              <form onSubmit={handleResetPassword} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-slate-700 ml-1">
+                    New Password
+                  </label>
+                  <div className="relative group">
+                    <span className="absolute left-3.5 top-3.5 text-slate-400 group-focus-within:text-slate-900 transition-colors">
+                      <Lock className="w-4 h-4" />
+                    </span>
+                    <input 
+                      type="password" 
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="••••••••" 
+                      required
+                      minLength={8}
+                      disabled={isLoading}
+                      className="w-full h-11 pl-10 pr-3 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-md text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-purple-50 focus:border-purple-200 transition-all shadow-sm disabled:opacity-50"
+                    />
+                  </div>
+                  <p className="text-[10px] text-slate-400 ml-1">Must be at least 8 characters.</p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-slate-700 ml-1">
+                    Confirm password
+                  </label>
+                  <div className="relative group">
+                    <span className="absolute left-3.5 top-3.5 text-slate-400 group-focus-within:text-slate-900 transition-colors">
+                      <Lock className="w-4 h-4" />
+                    </span>
+                    <input 
+                      type="password" 
+                      value={confirmNewPassword}
+                      onChange={(e) => setConfirmNewPassword(e.target.value)}
+                      placeholder="••••••••" 
+                      required
+                      minLength={8}
+                      disabled={isLoading}
+                      className="w-full h-11 pl-10 pr-3 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-md text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-purple-50 focus:border-purple-200 transition-all shadow-sm disabled:opacity-50"
+                    />
+                  </div>
+                </div>
+
+                <button 
+                  type="submit" 
+                  disabled={isLoading}
+                  className="w-full h-11 bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium rounded-md shadow-lg shadow-slate-200 hover:shadow-xl transition-all flex items-center justify-center gap-2 group mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>
+                      <span>Reset password</span>
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                    </>
+                  )}
                 </button>
               </form>
             </div>
@@ -437,4 +777,3 @@ export const AuthPage: React.FC<AuthPageProps> = ({ initialView = 'login' }) => 
     </div>
   );
 };
-

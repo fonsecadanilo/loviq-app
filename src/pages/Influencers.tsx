@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Sidebar } from '../components/dashboard/Sidebar';
-import { Search, ArrowUp, Instagram, Youtube, Twitter, ExternalLink, UserPlus, ChevronDown, X, Check, Menu } from 'lucide-react';
+import { Search, ArrowUp, Instagram, Youtube, Twitter, ExternalLink, UserPlus, ChevronDown, X, Check, Menu, Bell } from 'lucide-react';
 import { Card, CardContent } from '../components/ui/Card';
 import { parseInfluencerSearch, searchParamsToTags } from '../lib/influencers/search';
 import type { SearchParams, SearchTag } from '../lib/influencers/types';
 import { useSidebar } from '../contexts/SidebarContext';
+import { UserMenu } from '../components/dashboard/UserMenu';
+import { useUserProfile } from '../hooks/useUserProfile';
 
 // ... (keep interfaces and mock data)
 interface Influencer {
@@ -103,6 +105,13 @@ const mockInfluencers: Influencer[] = [
 
 export const Influencers: React.FC = () => {
     const { isCollapsed, toggleCollapse, mobileOpen, setMobileOpen } = useSidebar();
+    const { profile, brand, influencer } = useUserProfile();
+    
+    const userProfileData = profile ? {
+        profile,
+        brand: brand || undefined,
+        influencer: influencer || undefined
+    } : null;
     
     const [activeTab, setActiveTab] = useState<'search' | 'my_influencers'>('search');
 
@@ -364,18 +373,35 @@ export const Influencers: React.FC = () => {
             />
 
             <main className="flex-1 bg-[#FAFAFA] flex flex-col h-full overflow-hidden relative">
-                <div className="flex-1 overflow-y-auto px-4 py-8 sm:px-6 lg:px-10">
-                    {/* Mobile Toggle */}
-                    <div className="lg:hidden mb-4">
-                        <button onClick={() => setMobileOpen(true)} className="p-2 -ml-2 text-gray-600">
-                            <Menu className="w-6 h-6" />
+                {/* Header with Notifications & Profile */}
+                <header className="flex-shrink-0 flex z-30 pt-4 pr-8 pb-2 pl-8 sticky top-0 items-center justify-between bg-[#FAFAFA]">
+                    <div className="flex items-center gap-4">
+                        {/* Mobile Menu Toggle */}
+                        <button
+                            onClick={() => setMobileOpen(true)}
+                            className="lg:hidden p-2 -ml-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50"
+                        >
+                            <Menu size={24} />
                         </button>
+
+                        <div>
+                            <h1 className="text-xl font-bold text-slate-900">Influencers</h1>
+                            <p className="text-slate-500 text-sm">Find and manage creators for your campaigns</p>
+                        </div>
                     </div>
 
-                    <div className="mb-6">
-                        <h1 className="text-2xl font-bold text-gray-900">Influencers</h1>
-                        <p className="text-gray-600 text-sm sm:text-base">Find and manage creators for your campaigns</p>
+                    {/* Right Side: Notifications & Profile */}
+                    <div className="flex items-center gap-2 sm:gap-4">
+                        <button className="relative p-2 rounded-lg hover:bg-gray-100 flex-shrink-0">
+                            <Bell className="w-5 h-5 text-gray-600" />
+                            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                        </button>
+
+                        <UserMenu userProfile={userProfileData} />
                     </div>
+                </header>
+
+                <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-10">
 
                     {/* Tabs */}
                     <div className="flex border-b border-gray-200 mb-8">

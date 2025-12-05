@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { SidebarProvider } from "./contexts/SidebarContext";
 import { AuthProvider } from "./contexts/AuthContext";
+import { UserProfileProvider } from "./contexts/UserProfileContext";
 import { LandingPage } from "./pages/LandingPage";
 import Campaigns from "./pages/Campaigns";
 import { AuthPage } from "./pages/AuthPage";
@@ -20,8 +21,9 @@ export default function App() {
   return (
     <Router>
       <AuthProvider>
-        <SidebarProvider>
-          <Routes>
+        <UserProfileProvider>
+          <SidebarProvider>
+            <Routes>
             {/* Public routes */}
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<AuthPage initialView="login" />} />
@@ -79,8 +81,9 @@ export default function App() {
                 <div className="text-center text-xl p-8">Settings Page - Coming Soon</div>
               </ProtectedRoute>
             } />
-          </Routes>
-        </SidebarProvider>
+            </Routes>
+          </SidebarProvider>
+        </UserProfileProvider>
       </AuthProvider>
     </Router>
   );

@@ -48,6 +48,11 @@ import { ShopifyImportModal } from '../components/shopify/ShopifyImportModal';
 import { type ConnectionStatus } from '../services/shopify';
 import { Card, CardContent } from '../components/ui/Card';
 import { Sheet } from '../components/ui/Sheet';
+import { 
+  searchRegions as searchGoogleRegions, 
+  resetSessionToken,
+  type RegionSuggestion 
+} from '../services/googlePlaces';
 import { OrderDetails, OrderDetailsData } from '../components/dashboard/OrderDetails';
 import { useSidebar } from '../contexts/SidebarContext';
 import { DateRangePicker } from '../components/ui/DateRangePicker';
@@ -896,39 +901,143 @@ const SettingsStoreView: React.FC<SettingsStoreViewProps> = ({
   setActiveSettingsTab 
 }) => {
   const [regionSearch, setRegionSearch] = useState('');
-  const [deliveryRegions, setDeliveryRegions] = useState<string[]>(['United States']);
+  const [deliveryRegions, setDeliveryRegions] = useState<Array<{ id: string; name: string; fullName: string }>>([
+    { id: 'united-states', name: 'United States', fullName: 'United States (All)' }
+  ]);
   const [shippingMethods, setShippingMethods] = useState([
     { id: 1, name: 'Standard Shipping', price: '5.90', duration: '5-7 business days' },
     { id: 2, name: 'Express Shipping', price: '12.90', duration: '2-3 business days' }
   ]);
   const [freeShippingEnabled, setFreeShippingEnabled] = useState(false);
   const [freeShippingRegions, setFreeShippingRegions] = useState<string[]>([]);
-  const [regionSuggestions, setRegionSuggestions] = useState<string[]>([]);
+  const [regionSuggestions, setRegionSuggestions] = useState<RegionSuggestion[]>([]);
+  const [isSearchingRegions, setIsSearchingRegions] = useState(false);
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Mock Google API search for regions
+  // Google Places API search for regions with debounce
   useEffect(() => {
-    if (regionSearch.length > 1) {
-      // Mock suggestions
-      const mocks = ['California, USA', 'New York, USA', 'Texas, USA', 'Florida, USA'].filter(r => 
-        r.toLowerCase().includes(regionSearch.toLowerCase()) && !deliveryRegions.includes(r)
-      );
-      setRegionSuggestions(mocks);
-    } else {
-      setRegionSuggestions([]);
+    // Clear previous timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
     }
+
+    // Reset suggestions if query is too short
+    if (regionSearch.length < 2) {
+      setRegionSuggestions([]);
+      setIsSearchingRegions(false);
+      return;
+    }
+
+    setIsSearchingRegions(true);
+
+    // Debounce the API call (300ms)
+    searchTimeoutRef.current = setTimeout(async () => {
+      try {
+        const suggestions = await searchGoogleRegions(regionSearch);
+        // Filter out already added regions
+        const filteredSuggestions = suggestions.filter(
+          s => !deliveryRegions.some(r => r.id === s.id || r.fullName === s.fullName)
+        );
+        setRegionSuggestions(filteredSuggestions);
+      } catch (error) {
+        console.error('Error searching regions:', error);
+        setRegionSuggestions([]);
+      } finally {
+        setIsSearchingRegions(false);
+      }
+    }, 300);
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
   }, [regionSearch, deliveryRegions]);
 
-  const addRegion = (region: string) => {
-    if (!deliveryRegions.includes(region)) {
-      setDeliveryRegions([...deliveryRegions, region]);
-    }
-    setRegionSearch('');
-    setRegionSuggestions([]);
+  // Helper function to check if a region represents the entire USA
+  const isEntireUSA = (name: string, fullName: string): boolean => {
+    const normalizedName = name.toLowerCase().trim();
+    const normalizedFullName = fullName.toLowerCase().trim();
+    
+    // All possible ways to refer to the entire United States
+    const usaVariations = [
+      'united states',
+      'united states of america',
+      'usa',
+      'u.s.a',
+      'u.s.a.',
+      'u.s.',
+      'us',
+      'america',
+      'estados unidos',
+    ];
+    
+    return usaVariations.some(variation => 
+      normalizedName === variation || 
+      normalizedFullName === variation ||
+      normalizedFullName.startsWith(variation + ',') ||
+      normalizedName.startsWith(variation + ',')
+    );
   };
 
-  const removeRegion = (region: string) => {
-    if (region === 'United States' && deliveryRegions.length === 1) return;
-    setDeliveryRegions(deliveryRegions.filter(r => r !== region));
+  const addRegion = (suggestion: RegionSuggestion) => {
+    // Rule 1: Don't add if already exists
+    if (deliveryRegions.some(r => r.id === suggestion.id || r.fullName === suggestion.fullName)) {
+      setRegionSearch('');
+      setRegionSuggestions([]);
+      return;
+    }
+
+    // Check if selecting "United States" (entire country)
+    const isSelectingEntireCountry = isEntireUSA(suggestion.name, suggestion.fullName) || 
+                                      suggestion.id === 'united-states';
+
+    if (isSelectingEntireCountry) {
+      // Rule 2b: When selecting USA, remove all other specific regions
+      setDeliveryRegions([{
+        id: 'united-states',
+        name: 'United States',
+        fullName: 'United States (All)'
+      }]);
+    } else {
+      // Rule 2a: When selecting a specific region, remove "United States (All)" if present
+      const filteredRegions = deliveryRegions.filter(r => r.id !== 'united-states');
+      setDeliveryRegions([...filteredRegions, {
+        id: suggestion.id,
+        name: suggestion.name,
+        fullName: suggestion.fullName
+      }]);
+    }
+
+    setRegionSearch('');
+    setRegionSuggestions([]);
+    // Reset session token after selection (billing optimization)
+    resetSessionToken();
+  };
+
+  // Function to select entire USA (removes all specific regions)
+  const selectEntireUSA = () => {
+    setDeliveryRegions([{
+      id: 'united-states',
+      name: 'United States',
+      fullName: 'United States (All)'
+    }]);
+  };
+
+  const removeRegion = (regionId: string) => {
+    // Prevent removing the last region - must have at least one delivery region
+    if (deliveryRegions.length === 1) return;
+    setDeliveryRegions(deliveryRegions.filter(r => r.id !== regionId));
+  };
+
+  // Get region type badge color
+  const getRegionTypeBadgeColor = (type: string) => {
+    switch (type) {
+      case 'state': return 'bg-blue-100 text-blue-700';
+      case 'city': return 'bg-green-100 text-green-700';
+      case 'county': return 'bg-orange-100 text-orange-700';
+      default: return 'bg-slate-100 text-slate-700';
+    }
   };
 
   if (isLoading) {
@@ -1156,40 +1265,79 @@ const SettingsStoreView: React.FC<SettingsStoreViewProps> = ({
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input 
                     type="text" 
-                    placeholder="Search regions (e.g. California, USA)" 
-                    className="w-full pl-10 pr-4 py-2.5 rounded-md border border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm"
+                    placeholder="Search US states, cities, or regions..." 
+                    className="w-full pl-10 pr-10 py-2.5 rounded-md border border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm"
                     value={regionSearch}
                     onChange={(e) => setRegionSearch(e.target.value)}
                   />
+                  {/* Loading indicator */}
+                  {isSearchingRegions && (
+                    <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 animate-spin" />
+                  )}
                   {/* Suggestions Dropdown */}
                   {regionSuggestions.length > 0 && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-md shadow-lg z-10 max-h-48 overflow-y-auto">
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-10 max-h-64 overflow-y-auto">
                       {regionSuggestions.map((suggestion) => (
                         <button
-                          key={suggestion}
+                          key={suggestion.id}
                           onClick={() => addRegion(suggestion)}
-                          className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center justify-between group"
+                          className="w-full text-left px-4 py-3 text-sm hover:bg-slate-50 flex items-center justify-between group border-b border-slate-100 last:border-b-0"
                         >
-                          {suggestion}
-                          <Plus className="w-4 h-4 text-slate-400 group-hover:text-purple-600" />
+                          <div className="flex items-center gap-3">
+                            <MapPin className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                            <div>
+                              <p className="font-medium text-slate-900">{suggestion.name}</p>
+                              <p className="text-xs text-slate-500">{suggestion.fullName}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-xs px-2 py-0.5 rounded-full capitalize ${getRegionTypeBadgeColor(suggestion.type)}`}>
+                              {suggestion.type}
+                            </span>
+                            <Plus className="w-4 h-4 text-slate-400 group-hover:text-purple-600 transition-colors" />
+                          </div>
                         </button>
                       ))}
                     </div>
                   )}
+                  {/* No results message */}
+                  {regionSearch.length >= 2 && !isSearchingRegions && regionSuggestions.length === 0 && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-10 p-4 text-center">
+                      <p className="text-sm text-slate-500">No regions found for "{regionSearch}"</p>
+                      <p className="text-xs text-slate-400 mt-1">Try searching for a US state or city</p>
+                    </div>
+                  )}
                 </div>
 
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 items-center">
                   {deliveryRegions.map((region) => (
-                    <span key={region} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm bg-slate-100 text-slate-700 border border-slate-200">
-                      <Globe className="w-3 h-3 text-slate-400" />
-                      {region}
-                      {region !== 'United States' && (
-                        <button onClick={() => removeRegion(region)} className="hover:text-red-500 transition-colors">
+                    <span key={region.id} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm bg-slate-100 text-slate-700 border border-slate-200">
+                      <Globe className="w-3.5 h-3.5 text-slate-400" />
+                      {/* Show fullName for specific regions (includes state), name for USA */}
+                      <span className="font-medium">
+                        {region.id === 'united-states' ? region.name : region.fullName}
+                      </span>
+                      {/* Allow removing if not the last region */}
+                      {deliveryRegions.length > 1 && (
+                        <button 
+                          onClick={() => removeRegion(region.id)} 
+                          className="ml-1 hover:text-red-500 transition-colors p-0.5 rounded-full hover:bg-red-50"
+                        >
                           <X className="w-3 h-3" />
                         </button>
                       )}
                     </span>
                   ))}
+                  {/* Show "Select Entire USA" button when specific regions are selected */}
+                  {!deliveryRegions.some(r => r.id === 'united-states') && (
+                    <button
+                      onClick={selectEntireUSA}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm text-purple-600 border border-purple-200 hover:bg-purple-50 transition-colors"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span className="font-medium">Entire USA</span>
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -1275,9 +1423,20 @@ const SettingsStoreView: React.FC<SettingsStoreViewProps> = ({
                   <label className="text-sm font-medium text-slate-700 mb-2 block">Select Regions for Free Shipping</label>
                   <div className="flex flex-wrap gap-2">
                     {deliveryRegions.map(region => (
-                      <label key={region} className="inline-flex items-center gap-2 px-3 py-2 rounded-md border border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors">
-                        <input type="checkbox" className="rounded border-slate-300 text-purple-600 focus:ring-purple-500" />
-                        <span className="text-sm text-slate-700">{region}</span>
+                      <label key={region.id} className="inline-flex items-center gap-2 px-3 py-2 rounded-md border border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors">
+                        <input 
+                          type="checkbox" 
+                          className="rounded border-slate-300 text-purple-600 focus:ring-purple-500"
+                          checked={freeShippingRegions.includes(region.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setFreeShippingRegions([...freeShippingRegions, region.id]);
+                            } else {
+                              setFreeShippingRegions(freeShippingRegions.filter(id => id !== region.id));
+                            }
+                          }}
+                        />
+                        <span className="text-sm text-slate-700">{region.name}</span>
                       </label>
                     ))}
                   </div>

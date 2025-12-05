@@ -1,11 +1,21 @@
 import React from 'react';
-import { Bell, Search, User, ChevronDown } from 'lucide-react';
+import { Bell, Search } from 'lucide-react';
+import { UserMenu } from './UserMenu';
+import { useUserProfile } from '../../hooks/useUserProfile';
 
 interface TopBarProps {
   onMenuClick: () => void;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({ onMenuClick }) => {
+  const { profile, brand, influencer } = useUserProfile();
+
+  const userProfileData = profile ? {
+    profile,
+    brand: brand || undefined,
+    influencer: influencer || undefined
+  } : null;
+
   return (
     <header className="bg-white border-b border-[#E2E8F0] sticky top-0 z-30">
       <div className="h-16 px-4 sm:px-6 flex items-center justify-between">
@@ -39,16 +49,7 @@ export const TopBar: React.FC<TopBarProps> = ({ onMenuClick }) => {
             <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
           </button>
 
-          <div className="flex items-center gap-2 sm:gap-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-[#7D2AE8] to-[#8D3AEC] rounded-full flex items-center justify-center flex-shrink-0">
-              <User className="w-4 h-4 text-white" />
-            </div>
-            <div className="hidden 2xl:block">
-              <div className="text-sm font-medium text-gray-900">Brand Account</div>
-              <div className="text-xs text-gray-600">Premium Plan</div>
-            </div>
-            <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />
-          </div>
+          <UserMenu userProfile={userProfileData} />
         </div>
       </div>
     </header>

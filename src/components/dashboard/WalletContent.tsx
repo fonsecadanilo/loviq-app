@@ -173,7 +173,7 @@ export const WalletContent: React.FC<WalletContentProps> = ({ isLoading }) => {
             <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">
               Pending Balance
             </p>
-            <div className="p-2 bg-yellow-50 rounded-lg">
+            <div className="p-2 bg-yellow-50 rounded-md">
               <DollarSign className="w-4 h-4 text-yellow-600" />
             </div>
           </div>
@@ -193,7 +193,7 @@ export const WalletContent: React.FC<WalletContentProps> = ({ isLoading }) => {
             <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">
               Available for Withdrawal
             </p>
-            <div className="p-2 bg-green-50 rounded-lg">
+            <div className="p-2 bg-green-50 rounded-md">
               <TrendingUp className="w-4 h-4 text-green-600" />
             </div>
           </div>
@@ -227,13 +227,13 @@ export const WalletContent: React.FC<WalletContentProps> = ({ isLoading }) => {
               <input 
                 type="text" 
                 placeholder="Search..." 
-                className="border border-slate-200 text-sm bg-white rounded-lg pt-2 pr-4 pb-2 pl-9 focus:ring-2 focus:ring-purple-100 outline-none w-full md:w-48"
+                className="border border-slate-200 text-sm bg-white rounded-md pt-2 pr-4 pb-2 pl-9 focus:ring-2 focus:ring-purple-100 outline-none w-full md:w-48"
               />
             </div>
 
             {/* Date Range - Placeholder visual */}
-            <button className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors">
-              <Calendar className="w-3.5 h-3.5" />
+            <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-md text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors shadow-sm">
+              <Calendar className="w-4 h-4" />
               <span>Select dates</span>
             </button>
 
@@ -241,17 +241,17 @@ export const WalletContent: React.FC<WalletContentProps> = ({ isLoading }) => {
             <div className="relative" ref={typeDropdownRef}>
               <button 
                 onClick={() => setTypeDropdownOpen(!typeDropdownOpen)}
-                className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors min-w-[100px] justify-between"
+                className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-md text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors shadow-sm min-w-[100px] justify-between"
               >
                 <div className="flex items-center gap-2">
-                  <Filter className="w-3.5 h-3.5" /> 
+                  <Filter className="w-4 h-4" /> 
                   <span>{transactionTypeFilter === 'All' ? 'Type' : transactionTypeFilter}</span>
                 </div>
-                <ChevronDown className="w-3 h-3" />
+                <ChevronDown className="w-4 h-4" />
               </button>
               
               {typeDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-40 bg-white border border-slate-100 rounded-xl shadow-lg z-50 py-1">
+                <div className="absolute right-0 mt-2 w-40 bg-white border border-slate-100 rounded-md shadow-lg z-50 py-1">
                   {['All', 'Sale', 'Withdrawal', 'Refund'].map((type) => (
                     <button
                       key={type}
@@ -259,7 +259,7 @@ export const WalletContent: React.FC<WalletContentProps> = ({ isLoading }) => {
                         setTransactionTypeFilter(type);
                         setTypeDropdownOpen(false);
                       }}
-                      className={`w-full text-left px-4 py-2 text-xs font-medium hover:bg-purple-50 transition-colors flex items-center justify-between ${transactionTypeFilter === type ? 'text-purple-600 bg-purple-50' : 'text-slate-600'}`}
+                      className={`w-full text-left px-4 py-2 text-sm font-medium hover:bg-purple-50 transition-colors flex items-center justify-between ${transactionTypeFilter === type ? 'text-purple-600 bg-purple-50' : 'text-slate-600'}`}
                     >
                       {type}
                       {transactionTypeFilter === type && <div className="w-1.5 h-1.5 bg-purple-600 rounded-full"></div>}
@@ -269,8 +269,8 @@ export const WalletContent: React.FC<WalletContentProps> = ({ isLoading }) => {
               )}
             </div>
 
-            <button className="flex items-center gap-2 px-3 py-2 bg-slate-900 text-white rounded-lg text-xs font-medium hover:bg-slate-800 transition-colors shadow-sm ml-auto md:ml-0">
-              <Download className="w-3.5 h-3.5" /> Export
+            <button className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-md text-sm font-medium hover:bg-slate-800 transition-colors shadow-sm ml-auto md:ml-0">
+              <Download className="w-4 h-4" /> Export
             </button>
           </div>
         </div>
@@ -341,14 +341,14 @@ export const WalletContent: React.FC<WalletContentProps> = ({ isLoading }) => {
             <button 
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1}
-              className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-4 py-2 bg-white border border-slate-200 rounded-md text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Previous
             </button>
             <button 
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
-              className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-4 py-2 bg-white border border-slate-200 rounded-md text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Next
             </button>

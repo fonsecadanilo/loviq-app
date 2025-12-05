@@ -70,7 +70,7 @@ export const DashboardContent: React.FC<DashboardContentProps> = ({ isLoading })
             <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">
               Total Sales
             </p>
-            <div className="p-2 bg-purple-50 rounded-lg">
+            <div className="p-2 bg-purple-50 rounded-md">
               <DollarSign className="w-4 h-4 text-purple-600" />
             </div>
           </div>
@@ -92,7 +92,7 @@ export const DashboardContent: React.FC<DashboardContentProps> = ({ isLoading })
             <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">
               Avg. Order
             </p>
-            <div className="p-2 bg-blue-50 rounded-lg">
+            <div className="p-2 bg-blue-50 rounded-md">
               <CreditCard className="w-4 h-4 text-blue-600" />
             </div>
           </div>
@@ -114,7 +114,7 @@ export const DashboardContent: React.FC<DashboardContentProps> = ({ isLoading })
             <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">
               Total Views
             </p>
-            <div className="p-2 bg-orange-50 rounded-lg">
+            <div className="p-2 bg-orange-50 rounded-md">
               <Eye className="w-4 h-4 text-orange-600" />
             </div>
           </div>
@@ -136,7 +136,7 @@ export const DashboardContent: React.FC<DashboardContentProps> = ({ isLoading })
             <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">
               Conversion
             </p>
-            <div className="p-2 bg-emerald-50 rounded-lg">
+            <div className="p-2 bg-emerald-50 rounded-md">
               <Percent className="w-4 h-4 text-emerald-600" />
             </div>
           </div>
@@ -216,7 +216,7 @@ export const DashboardContent: React.FC<DashboardContentProps> = ({ isLoading })
                 </p>
                 <p className="text-[11px] text-white/70 font-medium">$129.00</p>
               </div>
-              <button className="w-8 h-8 flex items-center justify-center bg-white text-slate-900 rounded-lg hover:bg-slate-200 transition-colors shadow-md">
+              <button className="w-8 h-8 flex items-center justify-center bg-white text-slate-900 rounded-md hover:bg-slate-200 transition-colors shadow-md">
                 <ShoppingBag className="w-4 h-4" />
               </button>
             </div>
@@ -457,7 +457,7 @@ export const DashboardContent: React.FC<DashboardContentProps> = ({ isLoading })
 
           {/* CTA Footer */}
           <div className="p-4 border-t border-slate-50 bg-slate-50/50 flex justify-center">
-            <button className="text-xs font-semibold text-purple-600 hover:text-purple-700 flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-purple-50 transition-colors">
+            <button className="text-xs font-semibold text-purple-600 hover:text-purple-700 flex items-center gap-2 px-4 py-2 rounded-md hover:bg-purple-50 transition-colors">
               View all orders
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
@@ -480,16 +480,16 @@ export const DashboardContent: React.FC<DashboardContentProps> = ({ isLoading })
 
             {/* Filters */}
             <div className="flex items-center gap-2">
-              <button className="flex hover:bg-slate-50 transition-colors text-xs font-medium text-slate-600 bg-white border-slate-200 border rounded-lg pt-2 pr-3 pb-2 pl-3 gap-x-2 gap-y-2 items-center">
-                <Filter className="w-3.5 h-3.5" />
+              <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-md text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors shadow-sm">
+                <Filter className="w-4 h-4" />
                 Filter
               </button>
-              <button className="flex gap-2 hover:bg-slate-50 transition-colors text-xs font-medium text-slate-600 bg-white border-slate-200 border rounded-lg pt-2 pr-3 pb-2 pl-3 gap-x-2 gap-y-2 items-center">
-                <ArrowUpDown className="w-3.5 h-3.5" />
+              <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-md text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors shadow-sm">
+                <ArrowUpDown className="w-4 h-4" />
                 Sort
               </button>
-              <button onClick={() => navigate('/campaigns/create')} className="flex hover:bg-slate-800 transition-colors text-xs font-medium text-white bg-slate-900 rounded-lg pt-2 pr-3.5 pb-2 pl-3.5 shadow-sm gap-x-2 gap-y-2 items-center">
-                <Plus className="w-3.5 h-3.5" />
+              <button onClick={() => navigate('/campaigns/create')} className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-md text-sm font-medium hover:bg-slate-800 transition-colors shadow-sm">
+                <Plus className="w-4 h-4" />
                 Create Campaign
               </button>
             </div>

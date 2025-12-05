@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutGrid,
@@ -9,8 +9,12 @@ import {
   CircleHelp,
   PanelLeftClose,
   PanelLeftOpen,
-  Sparkles
+  Sparkles,
+  ChevronRight,
+  ShoppingBag,
+  Home
 } from 'lucide-react';
+import { useUserProfile } from '../../hooks/useUserProfile';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -21,9 +25,23 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleCollapse, mobileOpen, setMobileOpen }) => {
   const location = useLocation();
+  const { brand } = useUserProfile();
+  const [storeDropdownOpen, setStoreDropdownOpen] = useState(false);
+  const storeDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (storeDropdownRef.current && !storeDropdownRef.current.contains(event.target as Node)) {
+        setStoreDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const navItems = [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutGrid, extraMatch: ['/wallet'] },
+    { name: 'Dashboard', href: '/dashboard', icon: Home, extraMatch: ['/wallet'] },
     { name: 'Campaigns', href: '/campaigns', icon: Megaphone },
     { name: 'My Store', href: '/store-integration', icon: Store },
     { name: 'Chat', href: '/chat', icon: MessageCircle, badge: '2', badgeColor: 'bg-red-50 text-red-500' },
@@ -88,6 +106,62 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleCollapse, m
         {/* Navigation Wrapper */}
         <nav className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden transition-all duration-300 scrollbar-hide pt-4 pr-4 pb-4 pl-4 space-y-1">
           
+          {/* Store Switcher */}
+          <div className={`relative mb-6 px-2 transition-all duration-300 ${isCollapsed ? 'px-0 mb-4' : ''}`} ref={storeDropdownRef}>
+            <button
+              onClick={() => !isCollapsed && setStoreDropdownOpen(!storeDropdownOpen)}
+              className={`
+                relative w-full flex items-center gap-2 px-2 py-3 rounded-md transition-all duration-200 group
+                ${isCollapsed 
+                  ? 'justify-center hover:bg-slate-50' 
+                  : 'justify-between bg-slate-50/50 border border-slate-200/60 cursor-default'
+                }
+                ${storeDropdownOpen && !isCollapsed ? 'ring-2 ring-purple-100 border-purple-400' : ''}
+              `}
+              title={isCollapsed ? "Store: Feature coming soon" : "Switch Store"}
+            >
+              <div className="flex items-center gap-3 overflow-hidden w-full">
+                {/* Icon */}
+                <div className={`
+                    flex items-center justify-center flex-shrink-0 transition-all duration-300
+                    text-slate-400
+                `}>
+                    <LayoutGrid size={20} className="transition-colors" />
+                </div>
+                
+                <div className={`text-left overflow-hidden flex items-center transition-all duration-300 ${
+                  isCollapsed ? 'w-0 opacity-0 hidden' : 'w-full opacity-100 block'
+                }`}>
+                  <p className="text-sm font-medium text-slate-500 truncate leading-tight">
+                    {brand?.name || 'My Store'}
+                  </p>
+                </div>
+              </div>
+
+              {!isCollapsed && (
+                <ChevronRight 
+                  size={14} 
+                  className={`text-slate-300 transition-transform duration-300 flex-shrink-0 ${storeDropdownOpen ? 'rotate-90' : ''}`} 
+                />
+              )}
+            </button>
+
+            {/* Dropdown Content - Absolute Positioned */}
+            <div className={`
+              absolute top-full left-0 w-[calc(100%-16px)] mx-2 z-50 mt-1 transition-all duration-200 ease-out origin-top
+              ${storeDropdownOpen && !isCollapsed ? 'opacity-100 scale-100 visible' : 'opacity-0 scale-95 invisible pointer-events-none'}
+            `}>
+              <div className="bg-white border border-slate-200 rounded-md shadow-lg p-3 text-center">
+                  <p className="text-xs font-medium text-slate-600 mb-1">
+                      Feature Coming Soon 🚀
+                  </p>
+                  <p className="text-[10px] text-slate-500 leading-relaxed">
+                      Store switching will be available in future updates.
+                  </p>
+              </div>
+            </div>
+          </div>
+
           {/* Top Section Title - Only visible when fully expanded */}
           <div className={`min-h-0 pt-0 pb-4 pl-2 ${expandedOnlyClass}`}>
             <p className="nav-section-title uppercase text-xs font-medium text-slate-400 tracking-wider whitespace-nowrap">

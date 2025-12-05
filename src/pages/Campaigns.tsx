@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   Bell, 
-  ChevronDown, 
   Menu, 
   Plus, 
   Filter, 
@@ -26,6 +25,8 @@ import { Sidebar } from '../components/dashboard/Sidebar';
 import { SlidingTabsTransition, SlideDirection } from '../components/dashboard/SlidingTabsTransition';
 import { useSidebar } from '../contexts/SidebarContext';
 import { MetricsGridSkeleton, CampaignTableSkeleton } from '../components/ui/PageSkeletons';
+import { UserMenu } from '../components/dashboard/UserMenu';
+import { useUserProfile } from '../hooks/useUserProfile';
 
 // Mock Data Types
 interface Campaign {
@@ -124,6 +125,13 @@ export const Campaigns: React.FC = () => {
   const { isCollapsed, toggleCollapse, mobileOpen, setMobileOpen } = useSidebar();
   const [activeFilter, setActiveFilter] = useState('All');
   const [isLoading, setIsLoading] = useState(true);
+  const { profile, brand, influencer } = useUserProfile();
+
+  const userProfileData = profile ? {
+    profile,
+    brand: brand || undefined,
+    influencer: influencer || undefined
+  } : null;
   
   // Tab state
   const [activeTab, setActiveTab] = useState<CampaignsTab>('campaigns');
@@ -555,18 +563,13 @@ export const Campaigns: React.FC = () => {
           </div>
 
           {/* Right Side: Notifications & Profile */}
-          <div className="flex items-center gap-3">
-            <button className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all">
-              <Bell className="w-4 h-4" />
+          <div className="flex items-center gap-2 sm:gap-4">
+            <button className="relative p-2 rounded-lg hover:bg-gray-100 flex-shrink-0">
+              <Bell className="w-5 h-5 text-gray-600" />
+              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
             </button>
-            <div className="w-px bg-slate-200 h-6 my-1"></div>
-            <button className="flex hover:bg-slate-50 transition-all group rounded-xl pt-1 pr-1 pb-1 pl-1 gap-y-3 items-center gap-x-2">
-              <div className="relative flex-shrink-0">
-                <img src="https://i.pravatar.cc/150?u=a042581f4e29026024d" alt="Marcus" className="w-8 h-8 rounded-full bg-slate-100 object-cover ring-2 ring-white shadow-sm" />
-                <span className="absolute bottom-0 right-0 w-2 h-2 bg-green-500 border-2 border-white rounded-full"></span>
-              </div>
-              <ChevronDown className="w-3 h-3 text-slate-400 group-hover:text-slate-600 transition-colors" />
-            </button>
+            
+            <UserMenu userProfile={userProfileData} />
           </div>
         </header>
 

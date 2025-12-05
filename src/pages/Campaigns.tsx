@@ -129,6 +129,10 @@ export const Campaigns: React.FC = () => {
   const [activeTab, setActiveTab] = useState<CampaignsTab>('campaigns');
   const previousTabRef = useRef<CampaignsTab>(activeTab);
 
+  // Track scroll state for header styling
+  const [isScrolled, setIsScrolled] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
   const filters = ['All', 'Active', 'Scheduled', 'Drafts', 'Completed'];
 
   const tabs = [
@@ -136,6 +140,19 @@ export const Campaigns: React.FC = () => {
     { id: 'lives-shops', label: 'Live Shops' },
     { id: 'search-influencers', label: 'Search Influencers' },
   ] as const;
+
+  // Monitor scroll position
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      setIsScrolled(container.scrollTop > 10);
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Simulate loading
   useEffect(() => {
@@ -497,10 +514,12 @@ export const Campaigns: React.FC = () => {
       />
 
       {/* Main Content */}
-      <main className="flex-1 bg-[#FAFAFA] flex flex-col h-full relative overflow-y-auto">
+      <main className="flex-1 bg-[#FAFAFA] flex flex-col h-full relative overflow-hidden">
         
-        {/* Header with Tabs */}
-        <header className="flex-shrink-0 flex z-30 pt-4 pr-8 pb-2 pl-8 relative backdrop-blur-xl items-center justify-between">
+        {/* Header with Tabs - Fixed */}
+        <header className={`flex-shrink-0 flex z-30 pt-4 pr-8 pb-2 pl-8 sticky top-0 items-center justify-between transition-all duration-200 ${
+          isScrolled ? 'bg-white shadow-sm' : 'bg-[#FAFAFA]'
+        }`}>
           <div className="flex items-center gap-4">
             <button 
               onClick={() => setMobileOpen(true)}
@@ -552,13 +571,16 @@ export const Campaigns: React.FC = () => {
         </header>
 
         {/* Main Content with Transition */}
-        <div className="flex-1">
+        <div 
+          ref={scrollContainerRef}
+          className="flex-1 overflow-y-auto px-8 py-6"
+        >
           <SlidingTabsTransition
             tabKey={activeTab}
             direction={direction}
             duration={0.25}
             offset={50}
-            className="h-full overflow-y-auto px-8 py-6"
+            className="h-full"
           >
             {activeTab === 'campaigns' && <CampaignsList />}
             {activeTab === 'lives-shops' && (

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Bell, 
   ChevronDown, 
@@ -25,7 +25,18 @@ import {
   AlertCircle,
   ArrowRight,
   ExternalLink,
-  SlidersHorizontal
+  SlidersHorizontal,
+  Truck,
+  MapPin,
+  Phone,
+  Mail,
+  Globe,
+  Trash2,
+  Edit2,
+  Info,
+  Check,
+  Clock,
+  Lock
 } from 'lucide-react';
 import { Sidebar } from '../components/dashboard/Sidebar';
 import { SlidingTabsTransition, SlideDirection } from '../components/dashboard/SlidingTabsTransition';
@@ -49,7 +60,7 @@ import {
 import { supabase } from '../lib/supabase';
 
 // Types
-type MyStoreTab = 'orders' | 'products' | 'integrations' | 'details';
+type MyStoreTab = 'orders' | 'products' | 'integrations' | 'settings';
 
 // Product interface matching database
 interface Product {
@@ -156,14 +167,14 @@ const TAB_CONFIG: Record<MyStoreTab, { label: string; index: number }> = {
   orders: { label: 'Orders', index: 0 },
   products: { label: 'Products', index: 1 },
   integrations: { label: 'Integrations', index: 2 },
-  details: { label: 'Store Details', index: 3 },
+  settings: { label: 'Store Settings', index: 3 },
 };
 
 const tabs = [
   { id: 'orders', label: 'Orders' },
   { id: 'products', label: 'Products' },
   { id: 'integrations', label: 'Integrations' },
-  { id: 'details', label: 'Store Details' },
+  { id: 'settings', label: 'Store Settings' },
 ] as const;
 
 const parseMockDate = (dateStr: string): Date => {
@@ -597,16 +608,693 @@ const OrdersView: React.FC<OrdersViewProps> = ({
     );
 };
 
+// ProductsView extracted as separate component to prevent re-mounting on parent re-renders
+interface ProductsViewProps {
+  isLoading: boolean;
+  onOpenImportModal: () => void;
+}
+
+const ProductsView: React.FC<ProductsViewProps> = ({ isLoading, onOpenImportModal }) => {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [productsLoading, setProductsLoading] = useState(true);
+  const [productSearch, setProductSearch] = useState('');
+  
+  // Pagination State
+  const [productsCurrentPage, setProductsCurrentPage] = useState(1);
+  const productsPerPage = 10;
+
+  // Fetch products from database
+  useEffect(() => {
+      const fetchProducts = async () => {
+          setProductsLoading(true);
+          try {
+              const { data, error } = await supabase
+                  .from('products')
+                  .select('id, name, price, description, image_url, external_product_id, product_source_type, store_id, stock_quantity, created_at')
+                  .order('created_at', { ascending: false })
+                  .limit(50);
+
+              if (error) {
+                  console.error('Error fetching products:', error);
+              } else {
+                  setProducts(data || []);
+              }
+          } catch (err) {
+              console.error('Error fetching products:', err);
+          } finally {
+              setProductsLoading(false);
+          }
+      };
+
+      fetchProducts();
+  }, []);
+
+  // Reset pagination when search changes
+  useEffect(() => {
+      setProductsCurrentPage(1);
+  }, [productSearch]);
+
+  // Filter products by search
+  const filteredProducts = products.filter(product => 
+      product.name.toLowerCase().includes(productSearch.toLowerCase()) ||
+      (product.external_product_id && product.external_product_id.toLowerCase().includes(productSearch.toLowerCase()))
+  );
+
+  // Pagination Logic
+  const productsTotalPages = Math.ceil(filteredProducts.length / productsPerPage);
+  const paginatedProducts = filteredProducts.slice(
+      (productsCurrentPage - 1) * productsPerPage,
+      productsCurrentPage * productsPerPage
+  );
+
+  const handleProductsPageChange = (page: number) => {
+      if (page >= 1 && page <= productsTotalPages) {
+          setProductsCurrentPage(page);
+      }
+  };
+
+  // Format price
+  const formatPrice = (price: number | string) => {
+      const numPrice = typeof price === 'string' ? parseFloat(price) : price;
+      return `R$ ${numPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
+
+  // Get source badge
+  const getSourceBadge = (source: string | null | undefined) => {
+      if (source === 'shopify') {
+          return (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-100">
+                  <img src="https://cdn.worldvectorlogo.com/logos/shopify.svg" alt="Shopify" className="h-3 w-3" />
+                  Shopify
+              </span>
+          );
+      }
+      return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-50 text-slate-600 border border-slate-200">
+              Manual
+          </span>
+      );
+  };
+
+  if (isLoading || productsLoading) {
+      return (
+          <div className="space-y-6">
+              <div className="flex justify-between gap-4">
+                  <div className="h-10 w-96 bg-slate-100 rounded-xl animate-pulse"></div>
+                  <div className="h-10 w-32 bg-slate-900/10 rounded-xl animate-pulse"></div>
+              </div>
+              <ProductTableSkeleton />
+          </div>
+      )
+  }
+
+  return (
+  <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div className="relative w-full sm:w-96">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Search className="h-4 w-4 text-slate-400" />
+              </div>
+              <input
+                  type="text"
+                  placeholder="Search products..."
+                  value={productSearch}
+                  onChange={(e) => setProductSearch(e.target.value)}
+                  className="block w-full pl-10 pr-3 py-2.5 border border-slate-200 rounded-xl leading-5 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm transition-all shadow-sm"
+              />
+          </div>
+          <div className="flex gap-2 w-full sm:w-auto">
+              <button 
+                  onClick={onOpenImportModal}
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-700 px-4 py-2.5 rounded-md hover:bg-slate-50 transition-colors font-medium text-sm shadow-sm"
+              >
+                  <img src="https://cdn.worldvectorlogo.com/logos/shopify.svg" alt="Shopify" className="h-4 w-4" />
+                  Import Shopify
+              </button>
+              <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-slate-900 text-white px-4 py-2.5 rounded-md hover:bg-slate-800 transition-colors font-medium text-sm shadow-sm">
+                  <Plus className="h-4 w-4" />
+                  Add Product
+              </button>
+          </div>
+      </div>
+
+      <div className="bg-white rounded-lg border border-slate-100 shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                  <thead className="bg-slate-50/50 border-b border-slate-100">
+                      <tr>
+                          <th className="px-6 py-4 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Product</th>
+                          <th className="px-6 py-4 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Price</th>
+                          <th className="px-6 py-4 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Stock</th>
+                          <th className="px-6 py-4 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Source</th>
+                          <th className="px-6 py-4 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">ID</th>
+                          <th className="px-6 py-4 text-[11px] font-semibold text-slate-400 uppercase tracking-wider text-right">Action</th>
+                      </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                      {paginatedProducts.length > 0 ? (
+                          paginatedProducts.map((product) => (
+                              <tr key={product.id} className="hover:bg-slate-50/50 transition-colors">
+                                  <td className="px-6 py-4">
+                                      <div className="flex items-center gap-3">
+                                          {product.image_url ? (
+                                              <img 
+                                                  src={product.image_url} 
+                                                  alt={product.name} 
+                                                  className="w-10 h-10 rounded-md object-cover border border-slate-100 shadow-sm bg-white" 
+                                              />
+                                          ) : (
+                                              <div className="w-10 h-10 rounded-md bg-slate-100 flex items-center justify-center border border-slate-200">
+                                                  <ShoppingBag className="w-4 h-4 text-slate-400" />
+                                              </div>
+                                          )}
+                                          <div className="flex flex-col">
+                                              <span className="text-sm font-medium text-slate-900 truncate max-w-[250px]">{product.name}</span>
+                                              {product.description && (
+                                                  <span className="text-xs text-slate-400 truncate max-w-[250px]">{product.description}</span>
+                                              )}
+                                          </div>
+                                      </div>
+                                  </td>
+                                  <td className="px-6 py-4 text-sm font-semibold text-slate-900">{formatPrice(product.price)}</td>
+                                  <td className="px-6 py-4">
+                                      {(() => {
+                                          const stock = product.stock_quantity ?? 0;
+                                          if (stock === 0) {
+                                              return (
+                                                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-100">
+                                                      <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                                                      Out of stock
+                                                  </span>
+                                              );
+                                          } else if (stock <= 10) {
+                                              return (
+                                                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-50 text-yellow-700 border border-yellow-100">
+                                                      <span className="w-1.5 h-1.5 rounded-full bg-yellow-500"></span>
+                                                      {stock} units
+                                                  </span>
+                                              );
+                                          } else {
+                                              return (
+                                                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-100">
+                                                      <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                                                      {stock} units
+                                                  </span>
+                                              );
+                                          }
+                                      })()}
+                                  </td>
+                                  <td className="px-6 py-4">
+                                      {getSourceBadge(product.product_source_type)}
+                                  </td>
+                                  <td className="px-6 py-4 text-xs text-slate-500 font-mono">
+                                      {product.external_product_id ? `#${product.external_product_id.slice(-8)}` : `#${product.id}`}
+                                  </td>
+                                  <td className="px-6 py-4 text-right">
+                                      <button className="text-slate-400 hover:text-slate-600 p-1 hover:bg-slate-100 rounded transition-colors">
+                                          <MoreVertical className="w-4 h-4" />
+                                      </button>
+                                  </td>
+                              </tr>
+                          ))
+                      ) : (
+                          <tr>
+                              <td colSpan={6} className="px-6 py-12 text-center">
+                                  <div className="flex flex-col items-center gap-3">
+                                      <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center">
+                                          <ShoppingBag className="w-6 h-6 text-slate-400" />
+                                      </div>
+                                      <div>
+                                          <p className="text-sm font-medium text-slate-600">No products found</p>
+                                          <p className="text-xs text-slate-400 mt-1">
+                                              {productSearch ? 'Try a different search term' : 'Import products from Shopify or add them manually'}
+                                          </p>
+                                      </div>
+                                      {!productSearch && (
+                                          <button 
+                                              onClick={onOpenImportModal}
+                                              className="mt-2 flex items-center gap-2 text-sm font-medium text-purple-600 hover:text-purple-700"
+                                          >
+                                              <img src="https://cdn.worldvectorlogo.com/logos/shopify.svg" alt="Shopify" className="h-4 w-4" />
+                                              Import from Shopify
+                                          </button>
+                                      )}
+                                  </div>
+                              </td>
+                          </tr>
+                      )}
+                  </tbody>
+              </table>
+          </div>
+          {/* Pagination Footer */}
+          <div className="p-4 border-t border-slate-50 bg-slate-50/50 flex items-center justify-between">
+              <div className="text-xs text-slate-500">
+                Showing <span className="font-medium">{Math.min((productsCurrentPage - 1) * productsPerPage + 1, filteredProducts.length)}</span> to <span className="font-medium">{Math.min(productsCurrentPage * productsPerPage, filteredProducts.length)}</span> of <span className="font-medium">{filteredProducts.length}</span> products
+              </div>
+              <div className="flex gap-2">
+                <button 
+                    onClick={() => handleProductsPageChange(productsCurrentPage - 1)}
+                    disabled={productsCurrentPage === 1}
+                    className="w-8 h-8 flex items-center justify-center bg-white border border-slate-200 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                      <ChevronLeft className="w-4 h-4" />
+                  </button>
+                <button 
+                    onClick={() => handleProductsPageChange(productsCurrentPage + 1)}
+                    disabled={productsCurrentPage === productsTotalPages}
+                    className="w-8 h-8 flex items-center justify-center bg-white border border-slate-200 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                      <ChevronRight className="w-4 h-4" />
+                  </button>
+              </div>
+          </div>
+      </div>
+  </div>
+  );
+};
+
+// SettingsStoreView extracted as separate component to prevent re-mounting on parent re-renders
+interface SettingsStoreViewProps {
+  isLoading: boolean;
+  activeSettingsTab: 'general' | 'shipping';
+  setActiveSettingsTab: (tab: 'general' | 'shipping') => void;
+}
+
+const SettingsStoreView: React.FC<SettingsStoreViewProps> = ({ 
+  isLoading, 
+  activeSettingsTab, 
+  setActiveSettingsTab 
+}) => {
+  const [regionSearch, setRegionSearch] = useState('');
+  const [deliveryRegions, setDeliveryRegions] = useState<string[]>(['United States']);
+  const [shippingMethods, setShippingMethods] = useState([
+    { id: 1, name: 'Standard Shipping', price: '5.90', duration: '5-7 business days' },
+    { id: 2, name: 'Express Shipping', price: '12.90', duration: '2-3 business days' }
+  ]);
+  const [freeShippingEnabled, setFreeShippingEnabled] = useState(false);
+  const [freeShippingRegions, setFreeShippingRegions] = useState<string[]>([]);
+  const [regionSuggestions, setRegionSuggestions] = useState<string[]>([]);
+
+  // Mock Google API search for regions
+  useEffect(() => {
+    if (regionSearch.length > 1) {
+      // Mock suggestions
+      const mocks = ['California, USA', 'New York, USA', 'Texas, USA', 'Florida, USA'].filter(r => 
+        r.toLowerCase().includes(regionSearch.toLowerCase()) && !deliveryRegions.includes(r)
+      );
+      setRegionSuggestions(mocks);
+    } else {
+      setRegionSuggestions([]);
+    }
+  }, [regionSearch, deliveryRegions]);
+
+  const addRegion = (region: string) => {
+    if (!deliveryRegions.includes(region)) {
+      setDeliveryRegions([...deliveryRegions, region]);
+    }
+    setRegionSearch('');
+    setRegionSuggestions([]);
+  };
+
+  const removeRegion = (region: string) => {
+    if (region === 'United States' && deliveryRegions.length === 1) return;
+    setDeliveryRegions(deliveryRegions.filter(r => r !== region));
+  };
+
+  if (isLoading) {
+    return <StoreDetailsSkeleton />
+  }
+
+  return (
+    <div className="max-w-6xl mx-auto pb-24 lg:ml-72">
+      {/* Mobile/Tablet Submenu (visible on screens smaller than lg) */}
+      <div className="lg:hidden mb-6">
+        <div className="space-y-1">
+          <h3 className="px-4 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+            Settings
+          </h3>
+          <button
+            onClick={() => setActiveSettingsTab('general')}
+            className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-md transition-all ${
+              activeSettingsTab === 'general'
+                ? 'bg-slate-100 text-slate-900'
+                : 'text-slate-600 hover:bg-white/50 hover:text-slate-900'
+            }`}
+          >
+            <Store className="w-4 h-4" />
+            General Information
+          </button>
+          <button
+            onClick={() => setActiveSettingsTab('shipping')}
+            className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-md transition-all ${
+              activeSettingsTab === 'shipping'
+                ? 'bg-slate-100 text-slate-900'
+                : 'text-slate-600 hover:bg-white/50 hover:text-slate-900'
+            }`}
+          >
+            <Truck className="w-4 h-4" />
+            Shipping
+          </button>
+        </div>
+      </div>
+
+      {/* Main Content Area */}
+      <div className="space-y-6">
+        {activeSettingsTab === 'general' && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="space-y-6"
+          >
+            {/* Logo Section */}
+            <div className="bg-white p-8 rounded-lg border border-slate-100 shadow-sm">
+              <h3 className="text-base font-semibold text-slate-900 mb-6">Store Logo</h3>
+              <div className="flex items-center gap-8">
+                <div className="relative group cursor-pointer">
+                  <div className="w-24 h-24 bg-slate-50 rounded-full border-2 border-slate-100 flex items-center justify-center overflow-hidden">
+                    <img 
+                      src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&q=80" 
+                      alt="Store Logo" 
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                      <Upload className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <button className="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-md hover:bg-slate-50 transition-colors mb-2">
+                    Change Logo
+                  </button>
+                  <p className="text-xs text-slate-500">Recommended 400x400px. JPG or PNG.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Basic Info */}
+            <div className="bg-white p-8 rounded-lg border border-slate-100 shadow-sm space-y-6">
+              <h3 className="text-base font-semibold text-slate-900 mb-4">Basic Details</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700">Store Name</label>
+                  <input 
+                    type="text" 
+                    className="w-full px-4 py-2.5 rounded-md border border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm"
+                    defaultValue="My Awesome Store"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700">Segment</label>
+                  <select className="w-full px-4 py-2.5 rounded-md border border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm bg-white">
+                    <option>Fashion & Apparel</option>
+                    <option>Beauty & Cosmetics</option>
+                    <option>Electronics</option>
+                  </select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700">Website</label>
+                <div className="relative">
+                  <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input 
+                    type="url" 
+                    className="w-full pl-10 pr-4 py-2.5 rounded-md border border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm"
+                    defaultValue="https://myawesomestore.com"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Contact Info */}
+            <div className="bg-white p-8 rounded-lg border border-slate-100 shadow-sm space-y-6">
+              <h3 className="text-base font-semibold text-slate-900 mb-4">Contact Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700">Email</label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input 
+                      type="email" 
+                      className="w-full pl-10 pr-4 py-2.5 rounded-md border border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm"
+                      defaultValue="contact@store.com"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700">Phone</label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input 
+                      type="tel" 
+                      className="w-full pl-10 pr-4 py-2.5 rounded-md border border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm"
+                      defaultValue="+1 (555) 000-0000"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Business Address (Private) */}
+            <div className="bg-white p-8 rounded-lg border border-slate-100 shadow-sm space-y-6 relative overflow-hidden">
+              <div className="absolute top-0 right-0 bg-slate-100 text-slate-500 text-[10px] font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider flex items-center gap-1">
+                <Lock className="w-3 h-3" /> Private
+              </div>
+              <h3 className="text-base font-semibold text-slate-900 mb-4">Business Address</h3>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700">Street Address</label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input 
+                      type="text" 
+                      className="w-full pl-10 pr-4 py-2.5 rounded-md border border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm"
+                      defaultValue="123 Business Ave, Suite 100"
+                      placeholder="Street and number"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-700">City</label>
+                    <input 
+                      type="text" 
+                      className="w-full px-4 py-2.5 rounded-md border border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm"
+                      defaultValue="San Francisco"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-700">State / Province</label>
+                    <input 
+                      type="text" 
+                      className="w-full px-4 py-2.5 rounded-md border border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm"
+                      defaultValue="CA"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-700">Zip / Postal Code</label>
+                    <input 
+                      type="text" 
+                      className="w-full px-4 py-2.5 rounded-md border border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm"
+                      defaultValue="94107"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-700">Country</label>
+                    <input 
+                      type="text" 
+                      className="w-full px-4 py-2.5 rounded-md border border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm"
+                      defaultValue="United States"
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-slate-500 flex items-center gap-1 mt-1">
+                  <Info className="w-3 h-3" />
+                  This address will not be publicly displayed on your store profile.
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {activeSettingsTab === 'shipping' && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="space-y-6"
+          >
+            {/* Delivery Regions */}
+            <div className="bg-white p-8 rounded-lg border border-slate-100 shadow-sm space-y-6">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h3 className="text-base font-semibold text-slate-900">Delivery Regions</h3>
+                  <p className="text-sm text-slate-500 mt-1">Where do you ship your products?</p>
+                </div>
+                <div className="bg-yellow-50 border border-yellow-100 rounded-md p-3 flex items-start gap-2 max-w-xs">
+                  <AlertCircle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+                  <p className="text-xs text-yellow-700">
+                    Customers outside these regions will be unable to complete their purchase.
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input 
+                    type="text" 
+                    placeholder="Search regions (e.g. California, USA)" 
+                    className="w-full pl-10 pr-4 py-2.5 rounded-md border border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm"
+                    value={regionSearch}
+                    onChange={(e) => setRegionSearch(e.target.value)}
+                  />
+                  {/* Suggestions Dropdown */}
+                  {regionSuggestions.length > 0 && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-md shadow-lg z-10 max-h-48 overflow-y-auto">
+                      {regionSuggestions.map((suggestion) => (
+                        <button
+                          key={suggestion}
+                          onClick={() => addRegion(suggestion)}
+                          className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center justify-between group"
+                        >
+                          {suggestion}
+                          <Plus className="w-4 h-4 text-slate-400 group-hover:text-purple-600" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {deliveryRegions.map((region) => (
+                    <span key={region} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm bg-slate-100 text-slate-700 border border-slate-200">
+                      <Globe className="w-3 h-3 text-slate-400" />
+                      {region}
+                      {region !== 'United States' && (
+                        <button onClick={() => removeRegion(region)} className="hover:text-red-500 transition-colors">
+                          <X className="w-3 h-3" />
+                        </button>
+                      )}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Shipping Methods */}
+            <div className="bg-white p-8 rounded-lg border border-slate-100 shadow-sm space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-base font-semibold text-slate-900">Shipping Methods</h3>
+                  <p className="text-sm text-slate-500 mt-1">Define your shipping rates and times</p>
+                </div>
+                <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-purple-600 bg-purple-50 rounded-md hover:bg-purple-100 transition-colors">
+                  <Plus className="w-4 h-4" />
+                  Add Method
+                </button>
+              </div>
+
+              <div className="overflow-hidden rounded-lg border border-slate-200">
+                <table className="w-full text-left text-sm">
+                  <thead className="bg-slate-50 text-slate-500 font-medium">
+                    <tr>
+                      <th className="px-4 py-3">Method Name</th>
+                      <th className="px-4 py-3">Cost</th>
+                      <th className="px-4 py-3">Estimated Time</th>
+                      <th className="px-4 py-3 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200">
+                    {shippingMethods.map((method) => (
+                      <tr key={method.id} className="group hover:bg-slate-50/50">
+                        <td className="px-4 py-3 font-medium text-slate-900">{method.name}</td>
+                        <td className="px-4 py-3">R$ {method.price}</td>
+                        <td className="px-4 py-3 text-slate-500 flex items-center gap-1.5">
+                          <Clock className="w-3 h-3" />
+                          {method.duration}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button className="p-1 text-slate-400 hover:text-slate-600">
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button className="p-1 text-slate-400 hover:text-red-600">
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Free Shipping */}
+            <div className="bg-white p-8 rounded-lg border border-slate-100 shadow-sm space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-green-50 rounded-md">
+                    <DollarSign className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-semibold text-slate-900">Free Shipping</h3>
+                    <p className="text-sm text-slate-500 mt-1">Offer free shipping to specific regions</p>
+                  </div>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    className="sr-only peer"
+                    checked={freeShippingEnabled}
+                    onChange={(e) => setFreeShippingEnabled(e.target.checked)}
+                  />
+                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                </label>
+              </div>
+
+              {freeShippingEnabled && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  className="pt-4 border-t border-slate-100"
+                >
+                  <label className="text-sm font-medium text-slate-700 mb-2 block">Select Regions for Free Shipping</label>
+                  <div className="flex flex-wrap gap-2">
+                    {deliveryRegions.map(region => (
+                      <label key={region} className="inline-flex items-center gap-2 px-3 py-2 rounded-md border border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors">
+                        <input type="checkbox" className="rounded border-slate-300 text-purple-600 focus:ring-purple-500" />
+                        <span className="text-sm text-slate-700">{region}</span>
+                      </label>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export const StoreIntegration: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { isCollapsed, toggleCollapse, mobileOpen, setMobileOpen } = useSidebar();
   const [isLoading, setIsLoading] = useState(true);
   
+  // Track scroll state for header styling
+  const [isScrolled, setIsScrolled] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  
   // Tab state - initialize from URL param if available
   const initialTab = (searchParams.get('tab') as MyStoreTab) || 'orders';
   const [activeTab, setActiveTab] = useState<MyStoreTab>(
-    ['orders', 'products', 'integrations', 'details'].includes(initialTab) ? initialTab : 'orders'
+    ['orders', 'products', 'integrations', 'settings'].includes(initialTab) ? initialTab : 'orders'
   );
   const previousTabRef = useRef<MyStoreTab>(activeTab);
   
@@ -637,6 +1325,22 @@ export const StoreIntegration: React.FC = () => {
   // Sheet State
   const [selectedOrder, setSelectedOrder] = useState<OrderDetailsData | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+
+  // Store Settings Tab State (lifted up for fixed submenu)
+  const [activeSettingsTab, setActiveSettingsTab] = useState<'general' | 'shipping'>('general');
+
+  // Monitor scroll position for header styling
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      setIsScrolled(container.scrollTop > 10);
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Simulate loading
   useEffect(() => {
@@ -865,265 +1569,6 @@ export const StoreIntegration: React.FC = () => {
       setIsSheetOpen(true);
   };
 
-  const ProductsView = () => {
-    const [products, setProducts] = useState<Product[]>([]);
-    const [productsLoading, setProductsLoading] = useState(true);
-    const [productSearch, setProductSearch] = useState('');
-    
-    // Pagination State
-    const [productsCurrentPage, setProductsCurrentPage] = useState(1);
-    const productsPerPage = 10;
-
-    // Fetch products from database
-    useEffect(() => {
-        const fetchProducts = async () => {
-            setProductsLoading(true);
-            try {
-                const { data, error } = await supabase
-                    .from('products')
-                    .select('id, name, price, description, image_url, external_product_id, product_source_type, store_id, stock_quantity, created_at')
-                    .order('created_at', { ascending: false })
-                    .limit(50);
-
-                if (error) {
-                    console.error('Error fetching products:', error);
-                } else {
-                    setProducts(data || []);
-                }
-            } catch (err) {
-                console.error('Error fetching products:', err);
-            } finally {
-                setProductsLoading(false);
-            }
-        };
-
-        fetchProducts();
-    }, []);
-
-    // Reset pagination when search changes
-    useEffect(() => {
-        setProductsCurrentPage(1);
-    }, [productSearch]);
-
-    // Filter products by search
-    const filteredProducts = products.filter(product => 
-        product.name.toLowerCase().includes(productSearch.toLowerCase()) ||
-        (product.external_product_id && product.external_product_id.toLowerCase().includes(productSearch.toLowerCase()))
-    );
-
-    // Pagination Logic
-    const productsTotalPages = Math.ceil(filteredProducts.length / productsPerPage);
-    const paginatedProducts = filteredProducts.slice(
-        (productsCurrentPage - 1) * productsPerPage,
-        productsCurrentPage * productsPerPage
-    );
-
-    const handleProductsPageChange = (page: number) => {
-        if (page >= 1 && page <= productsTotalPages) {
-            setProductsCurrentPage(page);
-        }
-    };
-
-    // Format price
-    const formatPrice = (price: number | string) => {
-        const numPrice = typeof price === 'string' ? parseFloat(price) : price;
-        return `R$ ${numPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    };
-
-    // Get source badge
-    const getSourceBadge = (source: string | null | undefined) => {
-        if (source === 'shopify') {
-            return (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-100">
-                    <img src="https://cdn.worldvectorlogo.com/logos/shopify.svg" alt="Shopify" className="h-3 w-3" />
-                    Shopify
-                </span>
-            );
-        }
-        return (
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-50 text-slate-600 border border-slate-200">
-                Manual
-            </span>
-        );
-    };
-
-    if (isLoading || productsLoading) {
-        return (
-            <div className="space-y-6">
-                <div className="flex justify-between gap-4">
-                    <div className="h-10 w-96 bg-slate-100 rounded-xl animate-pulse"></div>
-                    <div className="h-10 w-32 bg-slate-900/10 rounded-xl animate-pulse"></div>
-                </div>
-                <ProductTableSkeleton />
-            </div>
-        )
-    }
-
-    return (
-    <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div className="relative w-full sm:w-96">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Search className="h-4 w-4 text-slate-400" />
-                </div>
-                <input
-                    type="text"
-                    placeholder="Search products..."
-                    value={productSearch}
-                    onChange={(e) => setProductSearch(e.target.value)}
-                    className="block w-full pl-10 pr-3 py-2.5 border border-slate-200 rounded-xl leading-5 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm transition-all shadow-sm"
-                />
-            </div>
-            <div className="flex gap-2 w-full sm:w-auto">
-                <button 
-                    onClick={() => setIsImportModalOpen(true)}
-                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-700 px-4 py-2.5 rounded-md hover:bg-slate-50 transition-colors font-medium text-sm shadow-sm"
-                >
-                    <img src="https://cdn.worldvectorlogo.com/logos/shopify.svg" alt="Shopify" className="h-4 w-4" />
-                    Import Shopify
-                </button>
-                <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-slate-900 text-white px-4 py-2.5 rounded-md hover:bg-slate-800 transition-colors font-medium text-sm shadow-sm">
-                    <Plus className="h-4 w-4" />
-                    Add Product
-                </button>
-            </div>
-        </div>
-
-        <div className="bg-white rounded-lg border border-slate-100 shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                    <thead className="bg-slate-50/50 border-b border-slate-100">
-                        <tr>
-                            <th className="px-6 py-4 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Product</th>
-                            <th className="px-6 py-4 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Price</th>
-                            <th className="px-6 py-4 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Stock</th>
-                            <th className="px-6 py-4 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Source</th>
-                            <th className="px-6 py-4 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">ID</th>
-                            <th className="px-6 py-4 text-[11px] font-semibold text-slate-400 uppercase tracking-wider text-right">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-50">
-                        {paginatedProducts.length > 0 ? (
-                            paginatedProducts.map((product) => (
-                                <tr key={product.id} className="hover:bg-slate-50/50 transition-colors">
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-3">
-                                            {product.image_url ? (
-                                                <img 
-                                                    src={product.image_url} 
-                                                    alt={product.name} 
-                                                    className="w-10 h-10 rounded-md object-cover border border-slate-100 shadow-sm bg-white" 
-                                                />
-                                            ) : (
-                                                <div className="w-10 h-10 rounded-md bg-slate-100 flex items-center justify-center border border-slate-200">
-                                                    <ShoppingBag className="w-4 h-4 text-slate-400" />
-                                                </div>
-                                            )}
-                                            <div className="flex flex-col">
-                                                <span className="text-sm font-medium text-slate-900 truncate max-w-[250px]">{product.name}</span>
-                                                {product.description && (
-                                                    <span className="text-xs text-slate-400 truncate max-w-[250px]">{product.description}</span>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 text-sm font-semibold text-slate-900">{formatPrice(product.price)}</td>
-                                    <td className="px-6 py-4">
-                                        {(() => {
-                                            const stock = product.stock_quantity ?? 0;
-                                            if (stock === 0) {
-                                                return (
-                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-100">
-                                                        <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
-                                                        Out of stock
-                                                    </span>
-                                                );
-                                            } else if (stock <= 10) {
-                                                return (
-                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-50 text-yellow-700 border border-yellow-100">
-                                                        <span className="w-1.5 h-1.5 rounded-full bg-yellow-500"></span>
-                                                        {stock} units
-                                                    </span>
-                                                );
-                                            } else {
-                                                return (
-                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-100">
-                                                        <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
-                                                        {stock} units
-                                                    </span>
-                                                );
-                                            }
-                                        })()}
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        {getSourceBadge(product.product_source_type)}
-                                    </td>
-                                    <td className="px-6 py-4 text-xs text-slate-500 font-mono">
-                                        {product.external_product_id ? `#${product.external_product_id.slice(-8)}` : `#${product.id}`}
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <button className="text-slate-400 hover:text-slate-600 p-1 hover:bg-slate-100 rounded transition-colors">
-                                            <MoreVertical className="w-4 h-4" />
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))
-                        ) : (
-                            <tr>
-                                <td colSpan={6} className="px-6 py-12 text-center">
-                                    <div className="flex flex-col items-center gap-3">
-                                        <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center">
-                                            <ShoppingBag className="w-6 h-6 text-slate-400" />
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-medium text-slate-600">No products found</p>
-                                            <p className="text-xs text-slate-400 mt-1">
-                                                {productSearch ? 'Try a different search term' : 'Import products from Shopify or add them manually'}
-                                            </p>
-                                        </div>
-                                        {!productSearch && (
-                                            <button 
-                                                onClick={() => setIsImportModalOpen(true)}
-                                                className="mt-2 flex items-center gap-2 text-sm font-medium text-purple-600 hover:text-purple-700"
-                                            >
-                                                <img src="https://cdn.worldvectorlogo.com/logos/shopify.svg" alt="Shopify" className="h-4 w-4" />
-                                                Import from Shopify
-                                            </button>
-                                        )}
-                                    </div>
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
-            </div>
-            {/* Pagination Footer */}
-            <div className="p-4 border-t border-slate-50 bg-slate-50/50 flex items-center justify-between">
-                <div className="text-xs text-slate-500">
-                  Showing <span className="font-medium">{Math.min((productsCurrentPage - 1) * productsPerPage + 1, filteredProducts.length)}</span> to <span className="font-medium">{Math.min(productsCurrentPage * productsPerPage, filteredProducts.length)}</span> of <span className="font-medium">{filteredProducts.length}</span> products
-                </div>
-                <div className="flex gap-2">
-                  <button 
-                      onClick={() => handleProductsPageChange(productsCurrentPage - 1)}
-                      disabled={productsCurrentPage === 1}
-                      className="w-8 h-8 flex items-center justify-center bg-white border border-slate-200 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                        <ChevronLeft className="w-4 h-4" />
-                    </button>
-                  <button 
-                      onClick={() => handleProductsPageChange(productsCurrentPage + 1)}
-                      disabled={productsCurrentPage === productsTotalPages}
-                      className="w-8 h-8 flex items-center justify-center bg-white border border-slate-200 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                        <ChevronRight className="w-4 h-4" />
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-    );
-  };
-
   const IntegrationsView = () => {
     const filteredIntegrations = activeIntegrationFilter === 'All' 
       ? mockIntegrations 
@@ -1256,167 +1701,6 @@ export const StoreIntegration: React.FC = () => {
     );
   };
 
-  const StoreDetailsView = () => {
-    if (isLoading) {
-        return <StoreDetailsSkeleton />
-    }
-
-    return (
-    <div className="max-w-5xl mx-auto pb-10">
-        {/* Header Section */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-            <div>
-                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Store Settings</h2>
-                <p className="text-sm text-slate-500 mt-1">Manage your store profile and public information</p>
-            </div>
-            <div className="flex gap-3">
-                <button className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-md hover:bg-slate-50 transition-colors shadow-sm">
-                    Cancel
-                </button>
-                <button className="px-5 py-2.5 text-sm font-medium text-white bg-slate-900 rounded-md hover:bg-slate-800 transition-colors shadow-sm shadow-slate-200">
-                    Save Changes
-                </button>
-            </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            {/* Left Column: Logo & Branding */}
-            <div className="lg:col-span-4 space-y-6">
-                <div className="bg-white p-6 rounded-lg border border-slate-100 shadow-sm">
-                    <h3 className="text-base font-semibold text-slate-900 mb-6">Brand Assets</h3>
-                    
-                    <div className="flex flex-col items-center text-center">
-                        <div className="relative group cursor-pointer mb-4">
-                            <div className="w-40 h-40 bg-slate-50 rounded-full border-4 border-white shadow-md flex items-center justify-center text-slate-400 overflow-hidden relative">
-                                <img 
-                                    src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&q=80" 
-                                    alt="Store Logo" 
-                                    className="w-full h-full object-cover"
-                                />
-                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                                    <Upload className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-2 group-hover:translate-y-0" />
-                                </div>
-                            </div>
-                            <button className="absolute bottom-2 right-2 w-10 h-10 bg-white text-slate-900 rounded-full flex items-center justify-center shadow-md border border-slate-100 hover:bg-slate-50 transition-colors">
-                                <Plus className="w-5 h-5" />
-                            </button>
-                        </div>
-                        <h4 className="text-sm font-bold text-slate-900">Store Logo</h4>
-                        <p className="text-xs text-slate-500 mt-1 px-4">Recommended 400x400px. Supports JPG, PNG up to 2MB.</p>
-                    </div>
-                </div>
-            </div>
-
-            {/* Right Column: Form Fields */}
-            <div className="lg:col-span-8 space-y-6">
-                <div className="bg-white p-8 rounded-lg border border-slate-100 shadow-sm">
-                    <div className="flex items-center gap-3 mb-8 pb-6 border-b border-slate-50">
-                        <div className="p-2 bg-slate-50 rounded-md">
-                            <Settings className="w-5 h-5 text-slate-600" />
-                        </div>
-                        <div>
-                            <h3 className="text-lg font-bold text-slate-900">General Information</h3>
-                            <p className="text-sm text-slate-500">Basic details about your business</p>
-                        </div>
-                    </div>
-                    
-                    <div className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-700">Store Name</label>
-                                <div className="relative group">
-                                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                                        <Store className="h-4 w-4 text-slate-400 group-focus-within:text-purple-500 transition-colors" />
-                                    </div>
-                                    <input 
-                                        type="text" 
-                                        className="w-full pl-10 pr-4 py-2.5 rounded-md border border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm transition-all bg-white placeholder-slate-400"
-                                        placeholder="e.g. Fashion Boutique"
-                                        defaultValue="My Awesome Store"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-700">Segment</label>
-                                <div className="relative group">
-                                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                                        <ShoppingBag className="h-4 w-4 text-slate-400 group-focus-within:text-purple-500 transition-colors" />
-                                    </div>
-                                    <select className="w-full pl-10 pr-10 py-2.5 rounded-md border border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm transition-all bg-white appearance-none text-slate-700">
-                                        <option>Fashion & Apparel</option>
-                                        <option>Beauty & Cosmetics</option>
-                                        <option>Electronics</option>
-                                        <option>Home & Living</option>
-                                    </select>
-                                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                        <ChevronDown className="h-4 w-4 text-slate-400" />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-700">Description</label>
-                            <div className="relative">
-                                <textarea 
-                                    rows={4}
-                                    className="w-full px-4 py-3 rounded-md border border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm transition-all bg-white resize-none placeholder-slate-400"
-                                    placeholder="Tell your customers about your store..."
-                                    defaultValue="We sell the best fashion items for summer. Our products are sourced from sustainable materials and crafted with care."
-                                />
-                                <div className="absolute bottom-3 right-3 text-xs text-slate-400 font-medium bg-white pl-2">
-                                    124/500
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="bg-white p-8 rounded-lg border border-slate-100 shadow-sm">
-                    <div className="flex items-center gap-3 mb-8 pb-6 border-b border-slate-50">
-                        <div className="p-2 bg-slate-50 rounded-md">
-                            <CheckCircle2 className="w-5 h-5 text-slate-600" />
-                        </div>
-                        <div>
-                            <h3 className="text-lg font-bold text-slate-900">Contact Information</h3>
-                            <p className="text-sm text-slate-500">How customers can reach you</p>
-                        </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-700">Public Email</label>
-                            <input 
-                                type="email" 
-                                className="w-full px-4 py-2.5 rounded-md border border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm transition-all bg-white"
-                                placeholder="contact@store.com"
-                                defaultValue="contact@myawesomestore.com"
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-700">Website</label>
-                            <div className="relative">
-                                <input 
-                                    type="url" 
-                                    className="w-full px-4 py-2.5 rounded-md border border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm transition-all bg-white pr-10"
-                                    placeholder="https://store.com"
-                                    defaultValue="https://myawesomestore.com"
-                                />
-                                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                    <ExternalLink className="h-4 w-4 text-slate-400" />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    );
-  };
-
   return (
     <div className="h-screen flex flex-col lg:flex-row overflow-hidden bg-white w-full">
       {/* Sidebar */}
@@ -1428,10 +1712,12 @@ export const StoreIntegration: React.FC = () => {
       />
 
       {/* Main Content */}
-      <main className="flex-1 bg-[#FAFAFA] flex flex-col h-full relative overflow-y-auto">
+      <main className="flex-1 bg-[#FAFAFA] flex flex-col h-full relative overflow-hidden">
         
-        {/* Header with Tabs */}
-        <header className="flex-shrink-0 flex z-30 pt-4 pr-8 pb-2 pl-8 relative backdrop-blur-xl items-center justify-between">
+        {/* Header with Tabs - Fixed */}
+        <header className={`flex-shrink-0 flex z-30 pt-4 pr-8 pb-2 pl-8 sticky top-0 items-center justify-between transition-all duration-200 ${
+          isScrolled ? 'bg-white shadow-sm' : 'bg-[#FAFAFA]'
+        }`}>
           <div className="flex items-center gap-4">
             <button 
               onClick={() => setMobileOpen(true)}
@@ -1483,13 +1769,16 @@ export const StoreIntegration: React.FC = () => {
         </header>
 
         {/* Main Content with Transition */}
-        <div className="flex-1">
+        <div 
+          ref={scrollContainerRef}
+          className="flex-1 overflow-y-auto px-8 py-6"
+        >
           <SlidingTabsTransition
             tabKey={activeTab}
             direction={direction}
             duration={0.25}
             offset={50}
-            className="h-full overflow-y-auto px-8 py-6"
+            className="h-full"
           >
             {activeTab === 'orders' && (
               <OrdersView 
@@ -1520,9 +1809,15 @@ export const StoreIntegration: React.FC = () => {
                 getStatusColor={getStatusColor}
               />
             )}
-            {activeTab === 'products' && <ProductsView />}
+            {activeTab === 'products' && <ProductsView isLoading={isLoading} onOpenImportModal={() => setIsImportModalOpen(true)} />}
             {activeTab === 'integrations' && <IntegrationsView />}
-            {activeTab === 'details' && <StoreDetailsView />}
+            {activeTab === 'settings' && (
+              <SettingsStoreView 
+                isLoading={isLoading} 
+                activeSettingsTab={activeSettingsTab} 
+                setActiveSettingsTab={setActiveSettingsTab} 
+              />
+            )}
           </SlidingTabsTransition>
         </div>
 
@@ -1547,6 +1842,63 @@ export const StoreIntegration: React.FC = () => {
             }}
         />
       </main>
+
+      {/* Store Settings Fixed Submenu - Outside main scroll container */}
+      <AnimatePresence>
+        {activeTab === 'settings' && (
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0, transition: { duration: 0.3, delay: 0.2 } }}
+            exit={{ opacity: 0, x: -20, transition: { duration: 0.2 } }}
+            className={`hidden lg:block fixed top-24 w-64 z-30 transition-all duration-300 ${isCollapsed ? 'left-[120px]' : 'left-80'}`}
+          >
+            <div className="space-y-1">
+              <h3 className="px-4 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                Settings
+              </h3>
+              <button
+                onClick={() => setActiveSettingsTab('general')}
+                className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-md transition-all ${
+                  activeSettingsTab === 'general'
+                    ? 'bg-slate-100 text-slate-900'
+                    : 'text-slate-600 hover:bg-white/50 hover:text-slate-900'
+                }`}
+              >
+                <Store className="w-4 h-4" />
+                General Information
+              </button>
+              <button
+                onClick={() => setActiveSettingsTab('shipping')}
+                className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-md transition-all ${
+                  activeSettingsTab === 'shipping'
+                    ? 'bg-slate-100 text-slate-900'
+                    : 'text-slate-600 hover:bg-white/50 hover:text-slate-900'
+                }`}
+              >
+                <Truck className="w-4 h-4" />
+                Shipping
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Store Settings Fixed Save Button - Outside main scroll container */}
+      <AnimatePresence>
+        {activeTab === 'settings' && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0, transition: { duration: 0.3, delay: 0.2 } }}
+            exit={{ opacity: 0, y: 20, transition: { duration: 0.2 } }}
+            className="fixed bottom-6 right-8 z-40"
+          >
+            <button className="px-8 py-3 text-sm font-medium text-white bg-slate-900 rounded-full hover:bg-slate-800 transition-all shadow-lg hover:shadow-xl flex items-center gap-2">
+              <Check className="w-4 h-4" />
+              Save Changes
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

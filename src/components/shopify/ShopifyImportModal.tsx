@@ -3,6 +3,7 @@ import { Search, CheckCircle2, AlertCircle, Loader2, ShoppingBag, ExternalLink, 
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { supabase } from '../../lib/supabase';
+import { TablesInsert } from '../../types/database';
 
 interface ShopifyImportModalProps {
     isOpen: boolean;
@@ -123,14 +124,14 @@ export const ShopifyImportModal: React.FC<ShopifyImportModalProps> = ({
             }
 
             // Insert into Supabase
-            const productsToInsert = selectedProducts.map(p => ({
+            const productsToInsert: TablesInsert<'products'>[] = selectedProducts.map(p => ({
                 name: p.title,
                 description: p.sku ? `SKU: ${p.sku}` : null,
                 price: parseFloat(p.price) || 0,
                 currency: 'BRL',
                 image_url: p.image,
                 store_id: storeId,
-                product_source_type: 'shopify',
+                product_source_type: 'shopify' as const,
                 external_product_id: p.id
             }));
 
@@ -351,4 +352,3 @@ export const ShopifyImportModal: React.FC<ShopifyImportModalProps> = ({
         </Modal>
     );
 };
-

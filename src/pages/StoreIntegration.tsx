@@ -31,6 +31,8 @@ import { Sidebar } from '../components/dashboard/Sidebar';
 import { SlidingTabsTransition, SlideDirection } from '../components/dashboard/SlidingTabsTransition';
 import { ShopifyConnectButton } from '../components/shopify/ShopifyConnectButton';
 import { ShopifyImportModal } from '../components/shopify/ShopifyImportModal';
+import { WooCommerceConnectButton } from '../components/woocommerce/WooCommerceConnectButton';
+import { WooImportModal } from '../components/woocommerce/WooImportModal';
 import { type ConnectionStatus } from '../services/shopify';
 import { Card, CardContent } from '../components/ui/Card';
 import { Sheet } from '../components/ui/Sheet';
@@ -633,6 +635,7 @@ export const StoreIntegration: React.FC = () => {
 
   // Import Modal State
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isWooImportModalOpen, setIsWooImportModalOpen] = useState(false);
 
   // Sheet State
   const [selectedOrder, setSelectedOrder] = useState<OrderDetailsData | null>(null);
@@ -982,6 +985,13 @@ export const StoreIntegration: React.FC = () => {
                     <img src="https://cdn.worldvectorlogo.com/logos/shopify.svg" alt="Shopify" className="h-4 w-4" />
                     Import Shopify
                 </button>
+                <button 
+                    onClick={() => setIsWooImportModalOpen(true)}
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-700 px-4 py-2.5 rounded-md hover:bg-slate-50 transition-colors font-medium text-sm shadow-sm"
+                >
+                    <img src="https://cdn.worldvectorlogo.com/logos/woocommerce.svg" alt="WooCommerce" className="h-4 w-4" />
+                    Import WooCommerce
+                </button>
                 <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-slate-900 text-white px-4 py-2.5 rounded-md hover:bg-slate-800 transition-colors font-medium text-sm shadow-sm">
                     <Plus className="h-4 w-4" />
                     Add Product
@@ -1082,13 +1092,22 @@ export const StoreIntegration: React.FC = () => {
                                             </p>
                                         </div>
                                         {!productSearch && (
-                                            <button 
-                                                onClick={() => setIsImportModalOpen(true)}
-                                                className="mt-2 flex items-center gap-2 text-sm font-medium text-purple-600 hover:text-purple-700"
-                                            >
-                                                <img src="https://cdn.worldvectorlogo.com/logos/shopify.svg" alt="Shopify" className="h-4 w-4" />
-                                                Import from Shopify
-                                            </button>
+                                            <div className="mt-2 flex items-center gap-4">
+                                                <button 
+                                                    onClick={() => setIsImportModalOpen(true)}
+                                                    className="flex items-center gap-2 text-sm font-medium text-purple-600 hover:text-purple-700"
+                                                >
+                                                    <img src="https://cdn.worldvectorlogo.com/logos/shopify.svg" alt="Shopify" className="h-4 w-4" />
+                                                    Import from Shopify
+                                                </button>
+                                                <button 
+                                                    onClick={() => setIsWooImportModalOpen(true)}
+                                                    className="flex items-center gap-2 text-sm font-medium text-purple-600 hover:text-purple-700"
+                                                >
+                                                    <img src="https://cdn.worldvectorlogo.com/logos/woocommerce.svg" alt="WooCommerce" className="h-4 w-4" />
+                                                    Import from WooCommerce
+                                                </button>
+                                            </div>
                                         )}
                                     </div>
                                 </td>
@@ -1232,6 +1251,8 @@ export const StoreIntegration: React.FC = () => {
                         <div className="mt-4 pt-4 border-t border-slate-100">
                             {isShopify ? (
                                 <ShopifyConnectButton />
+                            ) : integration.id === 'woocommerce' ? (
+                                <WooCommerceConnectButton />
                             ) : integration.status === 'Connected' ? (
                                 <button className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-md hover:bg-slate-50 hover:text-slate-900 transition-colors shadow-sm">
                                     <Settings className="w-4 h-4" />
@@ -1543,6 +1564,13 @@ export const StoreIntegration: React.FC = () => {
             onClose={() => setIsImportModalOpen(false)}
             onImportComplete={() => {
                 // In a real app, we would refresh the product list here
+                console.log('Products imported successfully');
+            }}
+        />
+        <WooImportModal 
+            isOpen={isWooImportModalOpen}
+            onClose={() => setIsWooImportModalOpen(false)}
+            onImportComplete={() => {
                 console.log('Products imported successfully');
             }}
         />

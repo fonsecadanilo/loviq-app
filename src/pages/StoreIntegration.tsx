@@ -48,13 +48,23 @@ import { ShopifyImportModal } from '../components/shopify/ShopifyImportModal';
 import { type ConnectionStatus } from '../services/shopify';
 import { Card, CardContent } from '../components/ui/Card';
 import { Sheet } from '../components/ui/Sheet';
+import { Toast } from '../components/ui/Toast';
 import { 
   searchRegions as searchGoogleRegions, 
   resetSessionToken,
   type RegionSuggestion 
 } from '../services/googlePlaces';
 import { OrderDetails, OrderDetailsData } from '../components/dashboard/OrderDetails';
+import { ShippingMethodSheet, ShippingMethod } from '../components/dashboard/ShippingMethodSheet';
 import { useSidebar } from '../contexts/SidebarContext';
+import { 
+  getBrandSettings, 
+  updateBrandSettings, 
+  uploadBrandLogo,
+  BRAND_SEGMENTS,
+  type BrandSettings,
+  type BrandSettingsUpdate
+} from '../services/brandSettings';
 import { DateRangePicker } from '../components/ui/DateRangePicker';
 import { CampaignLiveFilter } from '../components/dashboard/CampaignLiveFilter';
 import { 
@@ -893,26 +903,296 @@ interface SettingsStoreViewProps {
   isLoading: boolean;
   activeSettingsTab: 'general' | 'shipping';
   setActiveSettingsTab: (tab: 'general' | 'shipping') => void;
+  onSaveStateChange: (state: { hasChanges: boolean; isSaving: boolean; onSave: () => void }) => void;
+  saveSuccess: boolean;
+  setSaveSuccess: (success: boolean) => void;
+  saveError: string | null;
+  setSaveError: (error: string | null) => void;
 }
 
 const SettingsStoreView: React.FC<SettingsStoreViewProps> = ({ 
   isLoading, 
   activeSettingsTab, 
-  setActiveSettingsTab 
+  setActiveSettingsTab,
+  onSaveStateChange,
+  saveSuccess,
+  setSaveSuccess,
+  saveError,
+  setSaveError
 }) => {
+  // Store settings state
+  const [brandSettings, setBrandSettings] = useState<BrandSettings | null>(null);
+  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  
+  // Form fields state
+  const [storeName, setStoreName] = useState('');
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [segment, setSegment] = useState('');
+  const [website, setWebsite] = useState('');
+  const [contactEmail, setContactEmail] = useState('');
+  const [contactPhone, setContactPhone] = useState('');
+  const [streetAddress, setStreetAddress] = useState('');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
+  const [zipCode, setZipCode] = useState('');
+  const [country, setCountry] = useState('United States');
+  
+  // Logo upload state
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Shipping state
   const [regionSearch, setRegionSearch] = useState('');
   const [deliveryRegions, setDeliveryRegions] = useState<Array<{ id: string; name: string; fullName: string }>>([
     { id: 'united-states', name: 'United States', fullName: 'United States (All)' }
   ]);
-  const [shippingMethods, setShippingMethods] = useState([
-    { id: 1, name: 'Standard Shipping', price: '5.90', duration: '5-7 business days' },
-    { id: 2, name: 'Express Shipping', price: '12.90', duration: '2-3 business days' }
+  const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>([
+    { id: 1, name: 'Standard Shipping', price: '5.90', duration: '5-7', regionIds: ['united-states'] },
+    { id: 2, name: 'Express Shipping', price: '12.90', duration: '2-3', regionIds: ['united-states'] }
   ]);
   const [freeShippingEnabled, setFreeShippingEnabled] = useState(false);
   const [freeShippingRegions, setFreeShippingRegions] = useState<string[]>([]);
   const [regionSuggestions, setRegionSuggestions] = useState<RegionSuggestion[]>([]);
   const [isSearchingRegions, setIsSearchingRegions] = useState(false);
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Shipping Method Sheet state
+  const [isShippingMethodSheetOpen, setIsShippingMethodSheetOpen] = useState(false);
+  const [editingShippingMethod, setEditingShippingMethod] = useState<ShippingMethod | null>(null);
+  
+  // Store initial values for comparison (to detect changes)
+  const [initialValues, setInitialValues] = useState<{
+    name: string;
+    logo_url: string | null;
+    segment: string;
+    website: string;
+    email: string;
+    phone_number: string;
+    street_address: string;
+    city: string;
+    state: string;
+    zip_code: string;
+    country: string;
+  } | null>(null);
+
+  // Track if there are unsaved changes
+  const hasChanges = useMemo(() => {
+    // If still loading or no initial values set, no changes
+    if (isLoadingSettings || !initialValues) return false;
+    
+    const changes = (
+      storeName !== initialValues.name ||
+      logoUrl !== initialValues.logo_url ||
+      segment !== initialValues.segment ||
+      website !== initialValues.website ||
+      contactEmail !== initialValues.email ||
+      contactPhone !== initialValues.phone_number ||
+      streetAddress !== initialValues.street_address ||
+      city !== initialValues.city ||
+      state !== initialValues.state ||
+      zipCode !== initialValues.zip_code ||
+      country !== initialValues.country
+    );
+    
+    return changes;
+  }, [initialValues, isLoadingSettings, storeName, logoUrl, segment, website, contactEmail, contactPhone, streetAddress, city, state, zipCode, country]);
+
+  // Ref to store the latest save function (will be updated after handleSaveGeneralSettings is defined)
+  const saveRef = useRef<() => void>(() => {});
+  
+  // Load store settings on mount
+  useEffect(() => {
+    const loadSettings = async () => {
+      setIsLoadingSettings(true);
+      const settings = await getBrandSettings();
+      
+      const name = settings?.name || '';
+      const logo = settings?.logo_url || null;
+      const seg = settings?.segment || '';
+      const web = settings?.website || '';
+      const email = settings?.email || '';
+      const phone = settings?.phone_number || '';
+      const street = settings?.street_address || '';
+      const cityVal = settings?.city || '';
+      const stateVal = settings?.state || '';
+      const zip = settings?.zip_code || '';
+      const countryVal = settings?.country || 'United States';
+      
+      if (settings) {
+        setBrandSettings(settings);
+      }
+      
+      // Set form values
+      setStoreName(name);
+      setLogoUrl(logo);
+      setSegment(seg);
+      setWebsite(web);
+      setContactEmail(email);
+      setContactPhone(phone);
+      setStreetAddress(street);
+      setCity(cityVal);
+      setState(stateVal);
+      setZipCode(zip);
+      setCountry(countryVal);
+      
+      // Set initial values for change detection
+      setInitialValues({
+        name,
+        logo_url: logo,
+        segment: seg,
+        website: web,
+        email: email,
+        phone_number: phone,
+        street_address: street,
+        city: cityVal,
+        state: stateVal,
+        zip_code: zip,
+        country: countryVal,
+      });
+      
+      setIsLoadingSettings(false);
+    };
+    loadSettings();
+  }, []);
+  
+  // Handle logo file selection
+  const handleLogoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setUploadError(null);
+    setIsUploadingLogo(true);
+    
+    const result = await uploadBrandLogo(file);
+    
+    if (result.error) {
+      setUploadError(result.error);
+      setIsUploadingLogo(false);
+      return;
+    }
+    
+    if (result.url) {
+      setLogoUrl(result.url);
+    }
+    
+    setIsUploadingLogo(false);
+    
+    // Clear the input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+  
+  // Handle save general settings
+  const handleSaveGeneralSettings = async () => {
+    if (!brandSettings) return;
+    
+    setIsSaving(true);
+    setSaveError(null);
+    setSaveSuccess(false);
+    
+    const updates: BrandSettingsUpdate = {
+      name: storeName,
+      logo_url: logoUrl,
+      segment: segment || null,
+      website: website || null,
+      email: contactEmail || null,
+      phone_number: contactPhone || null,
+      street_address: streetAddress || null,
+      city: city || null,
+      state: state || null,
+      zip_code: zipCode || null,
+      country: country || null,
+    };
+    
+    const result = await updateBrandSettings(brandSettings.id, updates);
+    
+    if (result.success) {
+      // Update the brandSettings state to reflect saved values
+      setBrandSettings({
+        ...brandSettings,
+        name: storeName,
+        logo_url: logoUrl,
+        segment: segment || null,
+        website: website || null,
+        email: contactEmail || null,
+        phone_number: contactPhone || null,
+        street_address: streetAddress || null,
+        city: city || null,
+        state: state || null,
+        zip_code: zipCode || null,
+        country: country || null,
+      });
+      
+      // Update initial values to reset hasChanges
+      setInitialValues({
+        name: storeName,
+        logo_url: logoUrl,
+        segment: segment,
+        website: website,
+        email: contactEmail,
+        phone_number: contactPhone,
+        street_address: streetAddress,
+        city: city,
+        state: state,
+        zip_code: zipCode,
+        country: country,
+      });
+      
+      setSaveSuccess(true);
+      // Clear success message after 3 seconds
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } else {
+      setSaveError(result.error || 'Failed to save settings');
+    }
+    
+    setIsSaving(false);
+  };
+
+  // Update ref whenever the save function would change
+  useEffect(() => {
+    saveRef.current = handleSaveGeneralSettings;
+  });
+
+  // Communicate save state to parent component
+  useEffect(() => {
+    if (activeSettingsTab === 'general') {
+      onSaveStateChange({ 
+        hasChanges, 
+        isSaving, 
+        onSave: () => saveRef.current() 
+      });
+    }
+  }, [activeSettingsTab, hasChanges, isSaving, onSaveStateChange]);
+
+  // Handlers for shipping methods
+  const handleOpenAddShippingMethod = () => {
+    setEditingShippingMethod(null);
+    setIsShippingMethodSheetOpen(true);
+  };
+
+  const handleOpenEditShippingMethod = (method: ShippingMethod) => {
+    setEditingShippingMethod(method);
+    setIsShippingMethodSheetOpen(true);
+  };
+
+  const handleSaveShippingMethod = (method: ShippingMethod) => {
+    if (editingShippingMethod) {
+      // Edit existing method
+      setShippingMethods(prev => prev.map(m => m.id === method.id ? method : m));
+    } else {
+      // Add new method
+      setShippingMethods(prev => [...prev, method]);
+    }
+    setIsShippingMethodSheetOpen(false);
+    setEditingShippingMethod(null);
+  };
+
+  const handleDeleteShippingMethod = (methodId: number | string) => {
+    setShippingMethods(prev => prev.filter(m => m.id !== methodId));
+  };
 
   // Google Places API search for regions with debounce
   useEffect(() => {
@@ -1053,17 +1333,6 @@ const SettingsStoreView: React.FC<SettingsStoreViewProps> = ({
             Settings
           </h3>
           <button
-            onClick={() => setActiveSettingsTab('general')}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-md transition-all ${
-              activeSettingsTab === 'general'
-                ? 'bg-slate-100 text-slate-900'
-                : 'text-slate-600 hover:bg-white/50 hover:text-slate-900'
-            }`}
-          >
-            <Store className="w-4 h-4" />
-            General Information
-          </button>
-          <button
             onClick={() => setActiveSettingsTab('shipping')}
             className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-md transition-all ${
               activeSettingsTab === 'shipping'
@@ -1073,6 +1342,17 @@ const SettingsStoreView: React.FC<SettingsStoreViewProps> = ({
           >
             <Truck className="w-4 h-4" />
             Shipping
+          </button>
+          <button
+            onClick={() => setActiveSettingsTab('general')}
+            className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-md transition-all ${
+              activeSettingsTab === 'general'
+                ? 'bg-slate-100 text-slate-900'
+                : 'text-slate-600 hover:bg-white/50 hover:text-slate-900'
+            }`}
+          >
+            <Store className="w-4 h-4" />
+            General Information
           </button>
         </div>
       </div>
@@ -1086,155 +1366,207 @@ const SettingsStoreView: React.FC<SettingsStoreViewProps> = ({
             transition={{ duration: 0.3 }}
             className="space-y-6"
           >
-            {/* Logo Section */}
-            <div className="bg-white p-8 rounded-lg border border-slate-100 shadow-sm">
-              <h3 className="text-base font-semibold text-slate-900 mb-6">Store Logo</h3>
-              <div className="flex items-center gap-8">
-                <div className="relative group cursor-pointer">
-                  <div className="w-24 h-24 bg-slate-50 rounded-full border-2 border-slate-100 flex items-center justify-center overflow-hidden">
-                    <img 
-                      src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&q=80" 
-                      alt="Store Logo" 
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                      <Upload className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+            {/* Loading State */}
+            {isLoadingSettings ? (
+              <div className="flex items-center justify-center py-20">
+                <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+              </div>
+            ) : (
+              <>
+                {/* Logo Section */}
+                <div className="bg-white p-8 rounded-lg border border-slate-100 shadow-sm">
+                  <h3 className="text-base font-semibold text-slate-900 mb-6">Store Logo</h3>
+                  <div className="flex items-center gap-8">
+                    <div className="relative group">
+                      <div className="w-24 h-24 bg-slate-50 rounded-full border-2 border-slate-100 flex items-center justify-center overflow-hidden">
+                        {logoUrl ? (
+                          <img 
+                            src={logoUrl} 
+                            alt="Store Logo" 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <Store className="w-10 h-10 text-slate-300" />
+                        )}
+                        {isUploadingLogo && (
+                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-full">
+                            <Loader2 className="w-6 h-6 text-white animate-spin" />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png"
+                        onChange={handleLogoSelect}
+                        className="hidden"
+                        id="logo-upload"
+                      />
+                      <button 
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploadingLogo}
+                        className="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-md hover:bg-slate-50 transition-colors mb-2 disabled:opacity-50"
+                      >
+                        {isUploadingLogo ? 'Uploading...' : logoUrl ? 'Change Logo' : 'Upload Logo'}
+                      </button>
+                      <p className="text-xs text-slate-500">Recommended 400x400px. JPG or PNG only.</p>
+                      {uploadError && (
+                        <p className="text-xs text-red-500 mt-1">{uploadError}</p>
+                      )}
                     </div>
                   </div>
                 </div>
-                <div>
-                  <button className="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-md hover:bg-slate-50 transition-colors mb-2">
-                    Change Logo
-                  </button>
-                  <p className="text-xs text-slate-500">Recommended 400x400px. JPG or PNG.</p>
-                </div>
-              </div>
-            </div>
 
-            {/* Basic Info */}
-            <div className="bg-white p-8 rounded-lg border border-slate-100 shadow-sm space-y-6">
-              <h3 className="text-base font-semibold text-slate-900 mb-4">Basic Details</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">Store Name</label>
-                  <input 
-                    type="text" 
-                    className="w-full px-4 py-2.5 rounded-md border border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm"
-                    defaultValue="My Awesome Store"
-                  />
+                {/* Basic Info */}
+                <div className="bg-white p-8 rounded-lg border border-slate-100 shadow-sm space-y-6">
+                  <h3 className="text-base font-semibold text-slate-900 mb-4">Basic Details</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-slate-700">Store Name</label>
+                      <input 
+                        type="text" 
+                        className="w-full px-4 py-2.5 rounded-md border border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm"
+                        value={storeName}
+                        onChange={(e) => setStoreName(e.target.value)}
+                        placeholder="Your store name"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-slate-700">Segment</label>
+                      <select 
+                        className="w-full px-4 py-2.5 rounded-md border border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm bg-white"
+                        value={segment}
+                        onChange={(e) => setSegment(e.target.value)}
+                      >
+                        <option value="">Select a segment...</option>
+                        {BRAND_SEGMENTS.map((seg) => (
+                          <option key={seg} value={seg}>{seg}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-700">Website</label>
+                    <div className="relative">
+                      <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <input 
+                        type="url" 
+                        className="w-full pl-10 pr-4 py-2.5 rounded-md border border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm"
+                        value={website}
+                        onChange={(e) => setWebsite(e.target.value)}
+                        placeholder="https://yourstore.com"
+                      />
+                    </div>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">Segment</label>
-                  <select className="w-full px-4 py-2.5 rounded-md border border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm bg-white">
-                    <option>Fashion & Apparel</option>
-                    <option>Beauty & Cosmetics</option>
-                    <option>Electronics</option>
-                  </select>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Website</label>
-                <div className="relative">
-                  <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <input 
-                    type="url" 
-                    className="w-full pl-10 pr-4 py-2.5 rounded-md border border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm"
-                    defaultValue="https://myawesomestore.com"
-                  />
-                </div>
-              </div>
-            </div>
 
-            {/* Contact Info */}
-            <div className="bg-white p-8 rounded-lg border border-slate-100 shadow-sm space-y-6">
-              <h3 className="text-base font-semibold text-slate-900 mb-4">Contact Information</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">Email</label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <input 
-                      type="email" 
-                      className="w-full pl-10 pr-4 py-2.5 rounded-md border border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm"
-                      defaultValue="contact@store.com"
-                    />
+                {/* Contact Info */}
+                <div className="bg-white p-8 rounded-lg border border-slate-100 shadow-sm space-y-6">
+                  <h3 className="text-base font-semibold text-slate-900 mb-4">Contact Information</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-slate-700">Email</label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <input 
+                          type="email" 
+                          className="w-full pl-10 pr-4 py-2.5 rounded-md border border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm"
+                          value={contactEmail}
+                          onChange={(e) => setContactEmail(e.target.value)}
+                          placeholder="contact@store.com"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-slate-700">Phone</label>
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <input 
+                          type="tel" 
+                          className="w-full pl-10 pr-4 py-2.5 rounded-md border border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm"
+                          value={contactPhone}
+                          onChange={(e) => setContactPhone(e.target.value)}
+                          placeholder="+1 (555) 000-0000"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">Phone</label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <input 
-                      type="tel" 
-                      className="w-full pl-10 pr-4 py-2.5 rounded-md border border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm"
-                      defaultValue="+1 (555) 000-0000"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
 
-            {/* Business Address (Private) */}
-            <div className="bg-white p-8 rounded-lg border border-slate-100 shadow-sm space-y-6 relative overflow-hidden">
-              <div className="absolute top-0 right-0 bg-slate-100 text-slate-500 text-[10px] font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider flex items-center gap-1">
-                <Lock className="w-3 h-3" /> Private
-              </div>
-              <h3 className="text-base font-semibold text-slate-900 mb-4">Business Address</h3>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">Street Address</label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <input 
-                      type="text" 
-                      className="w-full pl-10 pr-4 py-2.5 rounded-md border border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm"
-                      defaultValue="123 Business Ave, Suite 100"
-                      placeholder="Street and number"
-                    />
+                {/* Business Address (Private) */}
+                <div className="bg-white p-8 rounded-lg border border-slate-100 shadow-sm space-y-6 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 bg-slate-100 text-slate-500 text-[10px] font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider flex items-center gap-1">
+                    <Lock className="w-3 h-3" /> Private
+                  </div>
+                  <h3 className="text-base font-semibold text-slate-900 mb-4">Business Address</h3>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-slate-700">Street Address</label>
+                      <div className="relative">
+                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <input 
+                          type="text" 
+                          className="w-full pl-10 pr-4 py-2.5 rounded-md border border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm"
+                          value={streetAddress}
+                          onChange={(e) => setStreetAddress(e.target.value)}
+                          placeholder="123 Business Ave, Suite 100"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-slate-700">City</label>
+                        <input 
+                          type="text" 
+                          className="w-full px-4 py-2.5 rounded-md border border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm"
+                          value={city}
+                          onChange={(e) => setCity(e.target.value)}
+                          placeholder="San Francisco"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-slate-700">State / Province</label>
+                        <input 
+                          type="text" 
+                          className="w-full px-4 py-2.5 rounded-md border border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm"
+                          value={state}
+                          onChange={(e) => setState(e.target.value)}
+                          placeholder="CA"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-slate-700">Zip / Postal Code</label>
+                        <input 
+                          type="text" 
+                          className="w-full px-4 py-2.5 rounded-md border border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm"
+                          value={zipCode}
+                          onChange={(e) => setZipCode(e.target.value)}
+                          placeholder="94107"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-slate-700">Country</label>
+                        <input 
+                          type="text" 
+                          className="w-full px-4 py-2.5 rounded-md border border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm"
+                          value={country}
+                          onChange={(e) => setCountry(e.target.value)}
+                          placeholder="United States"
+                        />
+                      </div>
+                    </div>
+                    <p className="text-xs text-slate-500 flex items-center gap-1 mt-1">
+                      <Info className="w-3 h-3" />
+                      This address will not be publicly displayed on your store profile.
+                    </p>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700">City</label>
-                    <input 
-                      type="text" 
-                      className="w-full px-4 py-2.5 rounded-md border border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm"
-                      defaultValue="San Francisco"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700">State / Province</label>
-                    <input 
-                      type="text" 
-                      className="w-full px-4 py-2.5 rounded-md border border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm"
-                      defaultValue="CA"
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700">Zip / Postal Code</label>
-                    <input 
-                      type="text" 
-                      className="w-full px-4 py-2.5 rounded-md border border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm"
-                      defaultValue="94107"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700">Country</label>
-                    <input 
-                      type="text" 
-                      className="w-full px-4 py-2.5 rounded-md border border-slate-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-sm"
-                      defaultValue="United States"
-                    />
-                  </div>
-                </div>
-                <p className="text-xs text-slate-500 flex items-center gap-1 mt-1">
-                  <Info className="w-3 h-3" />
-                  This address will not be publicly displayed on your store profile.
-                </p>
-              </div>
-            </div>
+              </>
+            )}
           </motion.div>
         )}
 
@@ -1349,7 +1681,10 @@ const SettingsStoreView: React.FC<SettingsStoreViewProps> = ({
                   <h3 className="text-base font-semibold text-slate-900">Shipping Methods</h3>
                   <p className="text-sm text-slate-500 mt-1">Define your shipping rates and times</p>
                 </div>
-                <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-purple-600 bg-purple-50 rounded-md hover:bg-purple-100 transition-colors">
+                <button 
+                  onClick={handleOpenAddShippingMethod}
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-purple-600 bg-purple-50 rounded-md hover:bg-purple-100 transition-colors"
+                >
                   <Plus className="w-4 h-4" />
                   Add Method
                 </button>
@@ -1369,17 +1704,25 @@ const SettingsStoreView: React.FC<SettingsStoreViewProps> = ({
                     {shippingMethods.map((method) => (
                       <tr key={method.id} className="group hover:bg-slate-50/50">
                         <td className="px-4 py-3 font-medium text-slate-900">{method.name}</td>
-                        <td className="px-4 py-3">R$ {method.price}</td>
+                        <td className="px-4 py-3">${method.price}</td>
                         <td className="px-4 py-3 text-slate-500 flex items-center gap-1.5">
                           <Clock className="w-3 h-3" />
-                          {method.duration}
+                          {method.duration} business days
                         </td>
                         <td className="px-4 py-3 text-right">
                           <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button className="p-1 text-slate-400 hover:text-slate-600">
+                            <button 
+                              onClick={() => handleOpenEditShippingMethod(method)}
+                              className="p-1.5 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-md transition-colors"
+                              title="Edit method"
+                            >
                               <Edit2 className="w-4 h-4" />
                             </button>
-                            <button className="p-1 text-slate-400 hover:text-red-600">
+                            <button 
+                              onClick={() => handleDeleteShippingMethod(method.id)}
+                              className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                              title="Delete method"
+                            >
                               <Trash2 className="w-4 h-4" />
                             </button>
                           </div>
@@ -1446,6 +1789,19 @@ const SettingsStoreView: React.FC<SettingsStoreViewProps> = ({
           </motion.div>
         )}
       </div>
+
+      {/* Shipping Method Sheet */}
+      <ShippingMethodSheet
+        isOpen={isShippingMethodSheetOpen}
+        onClose={() => {
+          setIsShippingMethodSheetOpen(false);
+          setEditingShippingMethod(null);
+        }}
+        method={editingShippingMethod}
+        onSave={handleSaveShippingMethod}
+        availableRegions={deliveryRegions}
+      />
+
     </div>
   );
 };
@@ -1506,7 +1862,18 @@ export const StoreIntegration: React.FC = () => {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   // Store Settings Tab State (lifted up for fixed submenu)
-  const [activeSettingsTab, setActiveSettingsTab] = useState<'general' | 'shipping'>('general');
+  const [activeSettingsTab, setActiveSettingsTab] = useState<'general' | 'shipping'>('shipping');
+
+  // Store Settings Save State (lifted up for fixed button)
+  const [settingsSaveState, setSettingsSaveState] = useState<{
+    hasChanges: boolean;
+    isSaving: boolean;
+    onSave: () => void;
+  }>({ hasChanges: false, isSaving: false, onSave: () => {} });
+
+  // Store Settings Alerts (lifted up for fixed alerts)
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   // Monitor scroll position for header styling
   useEffect(() => {
@@ -1996,7 +2363,12 @@ export const StoreIntegration: React.FC = () => {
               <SettingsStoreView 
                 isLoading={isLoading} 
                 activeSettingsTab={activeSettingsTab} 
-                setActiveSettingsTab={setActiveSettingsTab} 
+                setActiveSettingsTab={setActiveSettingsTab}
+                onSaveStateChange={setSettingsSaveState}
+                saveSuccess={saveSuccess}
+                setSaveSuccess={setSaveSuccess}
+                saveError={saveError}
+                setSaveError={setSaveError}
               />
             )}
           </SlidingTabsTransition>
@@ -2038,17 +2410,6 @@ export const StoreIntegration: React.FC = () => {
                 Settings
               </h3>
               <button
-                onClick={() => setActiveSettingsTab('general')}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-md transition-all ${
-                  activeSettingsTab === 'general'
-                    ? 'bg-slate-100 text-slate-900'
-                    : 'text-slate-600 hover:bg-white/50 hover:text-slate-900'
-                }`}
-              >
-                <Store className="w-4 h-4" />
-                General Information
-              </button>
-              <button
                 onClick={() => setActiveSettingsTab('shipping')}
                 className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-md transition-all ${
                   activeSettingsTab === 'shipping'
@@ -2059,6 +2420,17 @@ export const StoreIntegration: React.FC = () => {
                 <Truck className="w-4 h-4" />
                 Shipping
               </button>
+              <button
+                onClick={() => setActiveSettingsTab('general')}
+                className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-md transition-all ${
+                  activeSettingsTab === 'general'
+                    ? 'bg-slate-100 text-slate-900'
+                    : 'text-slate-600 hover:bg-white/50 hover:text-slate-900'
+                }`}
+              >
+                <Store className="w-4 h-4" />
+                General Information
+              </button>
             </div>
           </motion.div>
         )}
@@ -2066,20 +2438,53 @@ export const StoreIntegration: React.FC = () => {
 
       {/* Store Settings Fixed Save Button - Outside main scroll container */}
       <AnimatePresence>
-        {activeTab === 'settings' && (
+        {activeTab === 'settings' && activeSettingsTab === 'general' && (
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0, transition: { duration: 0.3, delay: 0.2 } }}
             exit={{ opacity: 0, y: 20, transition: { duration: 0.2 } }}
             className="fixed bottom-6 right-8 z-40"
           >
-            <button className="px-8 py-3 text-sm font-medium text-white bg-slate-900 rounded-full hover:bg-slate-800 transition-all shadow-lg hover:shadow-xl flex items-center gap-2">
-              <Check className="w-4 h-4" />
-              Save Changes
+            <button 
+              onClick={settingsSaveState.onSave}
+              disabled={settingsSaveState.isSaving || !settingsSaveState.hasChanges}
+              className={`px-6 py-2.5 text-sm font-medium rounded-md transition-all shadow-lg flex items-center gap-2 ${
+                settingsSaveState.hasChanges 
+                  ? 'text-white bg-slate-900 hover:bg-slate-800 hover:shadow-xl' 
+                  : 'text-slate-400 bg-slate-200 cursor-not-allowed'
+              } ${settingsSaveState.isSaving ? 'opacity-70 cursor-not-allowed' : ''}`}
+            >
+              {settingsSaveState.isSaving ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Check className="w-4 h-4" />
+                  Save Changes
+                </>
+              )}
             </button>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Toast Notifications */}
+      <Toast 
+        message="Settings saved successfully"
+        type="success"
+        isVisible={saveSuccess}
+        onClose={() => setSaveSuccess(false)}
+      />
+      
+      <Toast 
+        message={saveError || 'An error occurred'}
+        type="error"
+        isVisible={!!saveError}
+        onClose={() => setSaveError(null)}
+      />
+
     </div>
   );
 };

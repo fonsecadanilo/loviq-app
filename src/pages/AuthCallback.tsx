@@ -63,7 +63,19 @@ export const AuthCallback: React.FC = () => {
             setTimeout(() => navigate('/login?view=reset-password'), 1000);
           } else {
             setMessage('Login successful! Redirecting...');
-            setTimeout(() => navigate('/dashboard'), 1000);
+            
+            // Check if there's a pending Shopify callback URL
+            const pendingShopifyUrl = sessionStorage.getItem('shopify_callback_url');
+            if (pendingShopifyUrl) {
+              sessionStorage.removeItem('shopify_callback_url');
+              setMessage('Resuming Shopify connection...');
+              setTimeout(() => {
+                // Redirect to the saved Shopify callback URL
+                window.location.href = pendingShopifyUrl;
+              }, 1000);
+            } else {
+              setTimeout(() => navigate('/dashboard'), 1000);
+            }
           }
         } else if (accessToken) {
           // Usa os tokens extraídos anteriormente

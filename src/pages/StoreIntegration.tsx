@@ -56,6 +56,7 @@ import {
 } from '../services/googlePlaces';
 import { OrderDetails, OrderDetailsData } from '../components/dashboard/OrderDetails';
 import { ShippingMethodSheet, ShippingMethod } from '../components/dashboard/ShippingMethodSheet';
+import { ShopifyImportShippingSheet } from '../components/dashboard/ShopifyImportShippingSheet';
 import { useSidebar } from '../contexts/SidebarContext';
 import { 
   getBrandSettings, 
@@ -65,6 +66,7 @@ import {
   type BrandSettings,
   type BrandSettingsUpdate
 } from '../services/brandSettings';
+import { ShopifyService } from '../services/shopify';
 import { DateRangePicker } from '../components/ui/DateRangePicker';
 import { CampaignLiveFilter } from '../components/dashboard/CampaignLiveFilter';
 import { 
@@ -962,6 +964,12 @@ const SettingsStoreView: React.FC<SettingsStoreViewProps> = ({
   const [isShippingMethodSheetOpen, setIsShippingMethodSheetOpen] = useState(false);
   const [editingShippingMethod, setEditingShippingMethod] = useState<ShippingMethod | null>(null);
   
+  // Shopify Import Sheet state
+  const [isShopifyImportSheetOpen, setIsShopifyImportSheetOpen] = useState(false);
+  
+  // Shopify store ID for importing shipping methods
+  const [shopifyStoreId, setShopifyStoreId] = useState<number | null>(null);
+  
   // Store initial values for comparison (to detect changes)
   const [initialValues, setInitialValues] = useState<{
     name: string;
@@ -1056,6 +1064,34 @@ const SettingsStoreView: React.FC<SettingsStoreViewProps> = ({
     };
     loadSettings();
   }, []);
+
+  // Load Shopify store ID for importing shipping methods
+  useEffect(() => {
+    const loadShopifyStoreId = async () => {
+      console.log('[SettingsStoreView] loadShopifyStoreId called, brandSettings?.id:', brandSettings?.id);
+      if (!brandSettings?.id) {
+        console.log('[SettingsStoreView] No brandSettings.id, skipping');
+        return;
+      }
+      
+      try {
+        console.log('[SettingsStoreView] Calling ShopifyService.getConnectionStatus with brandId:', brandSettings.id);
+        const connectionStatus = await ShopifyService.getConnectionStatus(brandSettings.id);
+        console.log('[SettingsStoreView] Connection status:', connectionStatus);
+        
+        if (connectionStatus.connected && connectionStatus.store) {
+          console.log('[SettingsStoreView] Setting shopifyStoreId to:', connectionStatus.store.id);
+          setShopifyStoreId(connectionStatus.store.id);
+        } else {
+          console.log('[SettingsStoreView] No connected store found');
+        }
+      } catch (error) {
+        console.error('Error fetching Shopify connection status:', error);
+      }
+    };
+    
+    loadShopifyStoreId();
+  }, [brandSettings?.id]);
   
   // Handle logo file selection
   const handleLogoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1192,6 +1228,10 @@ const SettingsStoreView: React.FC<SettingsStoreViewProps> = ({
 
   const handleDeleteShippingMethod = (methodId: number | string) => {
     setShippingMethods(prev => prev.filter(m => m.id !== methodId));
+  };
+
+  const handleImportShopifyMethods = (methods: ShippingMethod[]) => {
+    setShippingMethods(prev => [...prev, ...methods]);
   };
 
   // Google Places API search for regions with debounce
@@ -1681,13 +1721,22 @@ const SettingsStoreView: React.FC<SettingsStoreViewProps> = ({
                   <h3 className="text-base font-semibold text-slate-900">Shipping Methods</h3>
                   <p className="text-sm text-slate-500 mt-1">Define your shipping rates and times</p>
                 </div>
-                <button 
-                  onClick={handleOpenAddShippingMethod}
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-purple-600 bg-purple-50 rounded-md hover:bg-purple-100 transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
-                  Add Method
-                </button>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => setIsShopifyImportSheetOpen(true)}
+                    className="flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-700 px-4 py-2.5 rounded-md hover:bg-slate-50 transition-colors font-medium text-sm shadow-sm"
+                  >
+                    <img src="https://cdn.worldvectorlogo.com/logos/shopify.svg" alt="Shopify" className="h-4 w-4" />
+                    Import Shopify
+                  </button>
+                  <button 
+                    onClick={handleOpenAddShippingMethod}
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-purple-600 bg-purple-50 rounded-md hover:bg-purple-100 transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Method
+                  </button>
+                </div>
               </div>
 
               <div className="overflow-hidden rounded-lg border border-slate-200">
@@ -1800,6 +1849,15 @@ const SettingsStoreView: React.FC<SettingsStoreViewProps> = ({
         method={editingShippingMethod}
         onSave={handleSaveShippingMethod}
         availableRegions={deliveryRegions}
+      />
+
+      {/* Shopify Import Shipping Sheet */}
+      <ShopifyImportShippingSheet
+        isOpen={isShopifyImportSheetOpen}
+        onClose={() => setIsShopifyImportSheetOpen(false)}
+        storeId={shopifyStoreId}
+        onImport={handleImportShopifyMethods}
+        existingMethodNames={shippingMethods.map(m => m.name)}
       />
 
     </div>

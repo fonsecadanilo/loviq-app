@@ -9,7 +9,8 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 // Environment variables
 const SHOPIFY_API_KEY = Deno.env.get('SHOPIFY_API_KEY')
-const SHOPIFY_SCOPES = Deno.env.get('SHOPIFY_SCOPES') || 'read_products,read_orders,read_inventory'
+// Updated scopes to include read_shipping and read_locations for importing shipping methods
+const SHOPIFY_SCOPES = Deno.env.get('SHOPIFY_SCOPES') || 'read_products,read_orders,read_inventory,read_shipping,read_locations'
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 

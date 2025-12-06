@@ -65,8 +65,19 @@ export const AuthPage: React.FC<AuthPageProps> = ({ initialView = 'login' }) => 
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated && !authLoading && view !== 'reset-password') {
-      const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/dashboard';
-      navigate(from, { replace: true });
+      // Check if there's a pending Shopify callback URL in sessionStorage
+      const pendingShopifyUrl = sessionStorage.getItem('shopify_callback_url');
+      if (pendingShopifyUrl) {
+        sessionStorage.removeItem('shopify_callback_url');
+        // Redirect to the saved Shopify callback URL with OAuth params
+        window.location.href = pendingShopifyUrl;
+        return;
+      }
+      
+      // Check location state for redirect after login
+      const from = (location.state as { from?: { pathname: string; search?: string } })?.from;
+      const redirectPath = from?.pathname ? `${from.pathname}${from.search || ''}` : '/dashboard';
+      navigate(redirectPath, { replace: true });
     }
   }, [isAuthenticated, authLoading, navigate, location.state, view]);
 

@@ -37,6 +37,75 @@ export interface ShopifyStore {
 }
 
 /**
+ * Região normalizada (país, estado ou província)
+ */
+export interface ShopifyNormalizedRegion {
+    id: string
+    name: string
+    code: string
+    type: 'country' | 'province' | 'state'
+    country_code?: string
+    country_name?: string
+}
+
+/**
+ * Taxa de envio normalizada
+ */
+export interface ShopifyNormalizedShippingRate {
+    id: number
+    name: string
+    price: number
+    currency: string
+    type: 'flat' | 'weight_based' | 'price_based' | 'carrier'
+    conditions?: {
+        min_weight?: number
+        max_weight?: number
+        min_order_subtotal?: number
+        max_order_subtotal?: number
+    }
+}
+
+/**
+ * Zona de envio normalizada
+ */
+export interface ShopifyNormalizedShippingZone {
+    id: number
+    name: string
+    regions: ShopifyNormalizedRegion[]
+    rates: ShopifyNormalizedShippingRate[]
+}
+
+/**
+ * Localização física normalizada
+ */
+export interface ShopifyNormalizedLocation {
+    id: number
+    name: string
+    address: {
+        line1: string | null
+        line2: string | null
+        city: string | null
+        province: string | null
+        province_code: string | null
+        country: string | null
+        country_code: string | null
+        zip: string | null
+    }
+    phone: string | null
+    active: boolean
+}
+
+/**
+ * Resposta completa de dados de shipping
+ */
+export interface ShopifyShippingData {
+    success: boolean
+    shipping_zones: ShopifyNormalizedShippingZone[]
+    locations: ShopifyNormalizedLocation[]
+    error?: string
+}
+
+/**
  * Produto com informações do Shopify
  */
 export interface ShopifyProductWithDetails extends Product {
@@ -85,8 +154,11 @@ export const ShopifyService = {
     async getConnectionStatus(brandId: number): Promise<ConnectionStatus> {
         const defaultStatus: ConnectionStatus = { connected: false, store: null, productsCount: 0, lastSync: null };
         
+        console.log('[ShopifyService.getConnectionStatus] Called with brandId:', brandId);
+        
         // Verifica se Supabase está configurado
         if (!isSupabaseConfigured()) {
+            console.log('[ShopifyService.getConnectionStatus] Supabase not configured');
             return defaultStatus;
         }
 
@@ -95,12 +167,51 @@ export const ShopifyService = {
             (async () => {
                 try {
                     // Busca loja Shopify da marca
-                    const { data: store, error: storeError } = await supabase
+                    console.log('[ShopifyService.getConnectionStatus] Querying stores table for brandId:', brandId);
+                    let { data: store, error: storeError } = await supabase
                         .from('stores')
                         .select('id, brand_id, name, external_store_id, created_at')
                         .eq('brand_id', brandId)
                         .eq('store_type', 'shopify')
                         .maybeSingle()
+
+                    console.log('[ShopifyService.getConnectionStatus] Query result:', { store, storeError });
+
+                    // Se não encontrou por brand_id, tenta buscar qualquer loja Shopify
+                    // Isso resolve o problema quando o OAuth salvou com brand_id errado
+                    if (!store && !storeError) {
+                        console.log('[ShopifyService.getConnectionStatus] No store found for brandId, trying to find any Shopify store...');
+                        
+                        const { data: anyStore, error: anyStoreError } = await supabase
+                            .from('stores')
+                            .select('id, brand_id, name, external_store_id, created_at')
+                            .eq('store_type', 'shopify')
+                            .order('created_at', { ascending: false })
+                            .limit(1)
+                            .maybeSingle()
+                        
+                        console.log('[ShopifyService.getConnectionStatus] Any Shopify store:', { anyStore, anyStoreError });
+                        
+                        if (anyStore && !anyStoreError) {
+                            // Se encontrou uma loja com brand_id diferente, atualiza o brand_id
+                            if (anyStore.brand_id !== brandId) {
+                                console.log('[ShopifyService.getConnectionStatus] Updating store brand_id from', anyStore.brand_id, 'to', brandId);
+                                
+                                const { error: updateError } = await supabase
+                                    .from('stores')
+                                    .update({ brand_id: brandId })
+                                    .eq('id', anyStore.id)
+                                
+                                if (updateError) {
+                                    console.error('[ShopifyService.getConnectionStatus] Error updating brand_id:', updateError);
+                                } else {
+                                    console.log('[ShopifyService.getConnectionStatus] Successfully updated brand_id');
+                                    anyStore.brand_id = brandId;
+                                }
+                            }
+                            store = anyStore;
+                        }
+                    }
 
                     if (storeError && !isSilentError(storeError.code)) {
                         console.error('Erro ao buscar loja Shopify:', storeError)
@@ -108,6 +219,7 @@ export const ShopifyService = {
                     }
 
                     if (!store) {
+                        console.log('[ShopifyService.getConnectionStatus] No store found for brandId:', brandId);
                         return defaultStatus;
                     }
 
@@ -545,6 +657,156 @@ export const ShopifyService = {
             console.error('[ShopifyService] Erro ao verificar pedido:', error)
             return false
         }
+    },
+
+    /**
+     * Busca dados de envio (shipping zones, rates) e localizações do Shopify
+     * 
+     * IMPORTANTE: Requer os escopos OAuth adicionais:
+     * - read_shipping (para shipping zones e rates)
+     * - read_locations (para locations)
+     * 
+     * @param storeId - ID da loja Shopify no banco de dados
+     * @param includeRaw - Se true, inclui dados brutos do Shopify na resposta (útil para debug)
+     */
+    async fetchShippingData(storeId: number, includeRaw = false): Promise<ShopifyShippingData> {
+        console.log('[ShopifyService] fetchShippingData called with:', { storeId, includeRaw })
+
+        const defaultResponse: ShopifyShippingData = {
+            success: false,
+            shipping_zones: [],
+            locations: [],
+            error: 'Supabase não configurado'
+        }
+
+        if (!isSupabaseConfigured()) {
+            console.warn('[ShopifyService] Supabase não configurado. Retornando dados vazios.')
+            return defaultResponse
+        }
+
+        try {
+            // Invoca Edge Function para buscar dados de shipping
+            console.log('[ShopifyService] Invoking shopify-fetch-shipping Edge Function...')
+
+            const { data, error } = await supabase.functions.invoke('shopify-fetch-shipping', {
+                body: { 
+                    store_id: storeId,
+                    include_raw: includeRaw
+                }
+            })
+
+            console.log('[ShopifyService] Edge Function response:', { 
+                success: data?.success, 
+                zones: data?.shipping_zones?.length,
+                locations: data?.locations?.length,
+                error 
+            })
+
+            if (error) {
+                console.error('[ShopifyService] Edge Function error:', error)
+                return {
+                    success: false,
+                    shipping_zones: [],
+                    locations: [],
+                    error: `Erro ao buscar dados de envio: ${error.message || 'Edge Function falhou'}`
+                }
+            }
+
+            if (data?.error) {
+                console.error('[ShopifyService] Edge Function returned error:', data.error)
+                return {
+                    success: false,
+                    shipping_zones: [],
+                    locations: [],
+                    error: data.message || data.error
+                }
+            }
+
+            if (data?.success) {
+                return {
+                    success: true,
+                    shipping_zones: data.shipping_zones || [],
+                    locations: data.locations || []
+                }
+            }
+
+            // Resposta inesperada
+            return {
+                success: false,
+                shipping_zones: [],
+                locations: [],
+                error: 'Resposta inesperada da Edge Function'
+            }
+        } catch (error) {
+            console.error('[ShopifyService] Erro ao buscar dados de envio:', error)
+            return {
+                success: false,
+                shipping_zones: [],
+                locations: [],
+                error: error instanceof Error ? error.message : 'Erro inesperado ao buscar dados de envio'
+            }
+        }
+    },
+
+    /**
+     * Retorna todas as regiões únicas configuradas no Shopify
+     * Útil para preencher o campo de "Delivery Regions" na tela de configurações
+     */
+    async getAllShippingRegions(storeId: number): Promise<ShopifyNormalizedRegion[]> {
+        const data = await this.fetchShippingData(storeId)
+        
+        if (!data.success) {
+            console.warn('[ShopifyService] Falha ao buscar regiões:', data.error)
+            return []
+        }
+
+        // Extrai todas as regiões de todas as zonas
+        const allRegions: ShopifyNormalizedRegion[] = []
+        const seenIds = new Set<string>()
+
+        for (const zone of data.shipping_zones) {
+            for (const region of zone.regions) {
+                if (!seenIds.has(region.id)) {
+                    seenIds.add(region.id)
+                    allRegions.push(region)
+                }
+            }
+        }
+
+        // Ordena: países primeiro, depois estados/províncias por nome
+        return allRegions.sort((a, b) => {
+            if (a.type === 'country' && b.type !== 'country') return -1
+            if (a.type !== 'country' && b.type === 'country') return 1
+            return a.name.localeCompare(b.name)
+        })
+    },
+
+    /**
+     * Retorna todas as taxas de envio configuradas no Shopify
+     */
+    async getAllShippingRates(storeId: number): Promise<ShopifyNormalizedShippingRate[]> {
+        const data = await this.fetchShippingData(storeId)
+        
+        if (!data.success) {
+            console.warn('[ShopifyService] Falha ao buscar taxas:', data.error)
+            return []
+        }
+
+        // Extrai todas as taxas de todas as zonas
+        const allRates: ShopifyNormalizedShippingRate[] = []
+        const seenIds = new Set<number>()
+
+        for (const zone of data.shipping_zones) {
+            for (const rate of zone.rates) {
+                if (!seenIds.has(rate.id)) {
+                    seenIds.add(rate.id)
+                    allRates.push(rate)
+                }
+            }
+        }
+
+        // Ordena por preço
+        return allRates.sort((a, b) => a.price - b.price)
     }
 }
 

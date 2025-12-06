@@ -10,6 +10,7 @@ import {
   Check
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 
 interface ShopifyProduct {
   id: string;
@@ -34,6 +35,7 @@ type FlowStep = 'loading' | 'exchanging' | 'select_products' | 'importing' | 'su
 export const ShopifyCallback: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   
   // Ref to prevent duplicate API calls in StrictMode
   const hasCalledExchange = useRef(false);
@@ -57,8 +59,26 @@ export const ShopifyCallback: React.FC = () => {
   const shop = searchParams.get('shop');
   const state = searchParams.get('state');
 
+  // Check authentication and redirect to login if not authenticated
   useEffect(() => {
-    // Prevent duplicate calls (React StrictMode calls useEffect twice)
+    // Wait for auth to finish loading
+    if (authLoading) return;
+
+    // If not authenticated, save current URL and redirect to login
+    if (!isAuthenticated) {
+      // Save the full callback URL to sessionStorage so we can return after login
+      const callbackUrl = window.location.href;
+      sessionStorage.setItem('shopify_callback_url', callbackUrl);
+      
+      // Redirect to login
+      navigate('/login', { 
+        state: { from: { pathname: '/shopify/callback', search: window.location.search } },
+        replace: true 
+      });
+      return;
+    }
+
+    // User is authenticated, proceed with OAuth callback
     if (hasCalledExchange.current) return;
     
     if (code && shop) {
@@ -77,7 +97,7 @@ export const ShopifyCallback: React.FC = () => {
         setErrorDetails('The callback URL is missing required parameters (code or shop).');
       }
     }
-  }, []);
+  }, [authLoading, isAuthenticated]);
 
   const handleOAuthCallback = async () => {
     setStep('exchanging');

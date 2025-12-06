@@ -66,11 +66,8 @@ export default function App() {
                 <StoreIntegration />
               </ProtectedRoute>
             } />
-            <Route path="/shopify/callback" element={
-              <ProtectedRoute>
-                <ShopifyCallback />
-              </ProtectedRoute>
-            } />
+            {/* Shopify callback - public route to handle OAuth redirect */}
+            <Route path="/shopify/callback" element={<ShopifyCallback />} />
             <Route path="/chat" element={
               <ProtectedRoute>
                 <Chat />

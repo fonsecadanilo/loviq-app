@@ -130,7 +130,7 @@ export const ShopifyImportModal: React.FC<ShopifyImportModalProps> = ({
                 currency: 'BRL',
                 image_url: p.image,
                 store_id: storeId,
-                product_source_type: 'shopify',
+                product_source_type: 'shopify' as const,
                 external_product_id: p.id
             }));
 
